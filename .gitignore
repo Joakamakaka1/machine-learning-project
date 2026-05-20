@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets — NUNCA commitear
+.env
+
+# Dataset & archivos grandes  →  descargar aparte o usar DVC
+data/raw/*.csv
+data/raw/*.parquet
+data/raw/*.feather
+data/processed/
+
+# Modelos entrenados
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.keras
+models/saved_model/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Outputs generados (plots, reportes)
+outputs/*.png
+outputs/*.pdf
+outputs/*.html
+
+# uv lock (opcional: sí commitearlo si quieres reproducibilidad exacta)
+# uv.lock
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/settings.json
+*.swp
