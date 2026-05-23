@@ -15,10 +15,11 @@ Clasificación binaria sobre el dataset `dataset_practica_final.csv`.
 ## Setup
 
 ```bash
-cp .env.example .env          # ajusta variables de entorno
+cp .env.example .env           # ajusta variables de entorno
 uv sync                        # instala dependencias (crea .venv)
 uv sync --extra dev            # + herramientas de desarrollo
 uv sync --extra notebook       # + Jupyter
+uv sync --all-extras           # instala todas las dependencias
 ```
 
 Coloca el dataset en `data/raw/dataset_practica_final.csv`.

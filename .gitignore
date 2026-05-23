@@ -1,5 +1,7 @@
 # Python
 __pycache__/
+.pytest_cache/
+
 *.py[cod]
 *.pyo
 .Python
@@ -51,3 +53,6 @@ Thumbs.db
 .idea/
 .vscode/settings.json
 *.swp
+
+# Ruff
+.ruff_cache/
