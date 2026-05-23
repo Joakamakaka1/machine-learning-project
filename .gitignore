@@ -21,7 +21,9 @@ env/
 data/raw/*.csv
 data/raw/*.parquet
 data/raw/*.feather
-data/processed/
+data/processed/*.csv
+data/processed/*.parquet
+data/processed/*.feather
 
 # Modelos entrenados
 models/*.pkl

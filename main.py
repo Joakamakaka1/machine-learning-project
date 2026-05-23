@@ -40,11 +40,13 @@ def main():
         mlflow.set_experiment(mlflow_experiment_name)
         mlflow_enabled = True
         print(
-            f"MLflow configurado. URI: {mlflow_tracking_uri} | Experimento: {mlflow_experiment_name}"
+            f"MLflow configurado. URI: {mlflow_tracking_uri} | "
+            f"Experimento: {mlflow_experiment_name}"
         )
     except Exception as e:
         print(
-            f"Advertencia: No se pudo conectar a MLflow. Se procedera sin tracking remoto. Detalle: {e}"
+            "Advertencia: No se pudo conectar a MLflow. "
+            f"Se procedera sin tracking remoto. Detalle: {e}"
         )
 
     # Inicializar el run de MLflow si esta habilitado
@@ -134,7 +136,8 @@ def main():
     # Copiar el mejor archivo pkl como best_model.pkl
     if best_model_key == "neural_network":
         print(
-            "Advertencia: El mejor modelo es la Red Neuronal. Guardando pipeline en pkl simplificado..."
+            "Advertencia: El mejor modelo es la Red Neuronal. "
+            "Guardando pipeline en pkl simplificado..."
         )
         shutil.copy(MODELS_DIR / "xgboost.pkl", MODELS_DIR / "best_model.pkl")
     else:

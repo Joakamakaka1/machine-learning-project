@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
+from api.exceptions import ModelNotLoadedError, PredictionError
 from api.schemas.booking import BookingCreate, PredictionResult
 from api.services.predictor import prediction_service
 
@@ -10,10 +11,7 @@ router = APIRouter()
 def predict_cancellation(booking: BookingCreate):
     """Endpoint para predecir si una reserva hotelera será cancelada."""
     if prediction_service is None:
-        raise HTTPException(
-            status_code=500,
-            detail="El servicio de predicción no está disponible porque el modelo no se ha entrenado aún.",
-        )
+        raise ModelNotLoadedError()
 
     try:
         # Extraemos los campos dict desde Pydantic y los pasamos al servicio
@@ -25,7 +23,6 @@ def predict_cancellation(booking: BookingCreate):
 
         return PredictionResult(prediction=pred, probability=prob, label=label, message=message)
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Error al realizar la inferencia sobre los datos de entrada: {str(e)}",
+        raise PredictionError(
+            detail=f"Error al realizar la inferencia sobre los datos de entrada: {str(e)}"
         )

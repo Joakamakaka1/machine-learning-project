@@ -7,7 +7,8 @@ st.set_page_config(page_title="Predictor de Cancelaciones de Hotel", layout="wid
 
 st.title("Predictor de Cancelaciones de Hotel")
 st.markdown(
-    "Esta aplicación predice la probabilidad de que un cliente cancele su reserva de hotel basándose en el mejor modelo de ML entrenado."
+    "Esta aplicación predice la probabilidad de que un cliente cancele su "
+    "reserva de hotel basándose en el mejor modelo de ML entrenado."
 )
 
 
