@@ -37,7 +37,6 @@ mlruns/
 mlartifacts/
 
 # Outputs generados (plots, reportes)
-outputs/*.png
 outputs/*.pdf
 outputs/*.html
 
