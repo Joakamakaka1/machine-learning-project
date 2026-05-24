@@ -3,4 +3,4 @@ Logistic Regression,0.819,0.8147,0.8964
 Decision Tree,0.8442,0.8424,0.9221
 Random Forest,0.8142,0.7985,0.9287
 Xgboost,0.8688,0.8672,0.9446
-Neural Network,0.8573,0.8545,0.935
+Neural Network,0.8563,0.8537,0.9336
