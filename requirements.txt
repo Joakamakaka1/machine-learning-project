@@ -1,0 +1,40 @@
+# Dependencias directas del proyecto. Para el entorno completo usar: uv sync
+# Generado manualmente desde pyproject.toml
+
+# Data
+pandas>=2.2
+numpy>=1.26
+
+# ML
+scikit-learn>=1.4
+xgboost>=2.0
+
+# Deep Learning
+tensorflow>=2.16
+
+# Serialization & tracking
+joblib>=1.3
+mlflow>=2.13
+
+# API
+fastapi>=0.111
+uvicorn[standard]>=0.29
+pydantic>=2.7
+python-multipart>=0.0.9
+
+# Config
+python-dotenv>=1.0
+
+# Visualization
+matplotlib>=3.9
+seaborn>=0.13
+plotly>=5.22
+
+# Bonus UI
+streamlit>=1.35
+
+# Dev / testing
+pytest>=8.2
+pytest-cov>=5.0
+httpx>=0.27
+ruff>=0.4

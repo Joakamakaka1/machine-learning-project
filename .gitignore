@@ -1,5 +1,7 @@
 # Python
 __pycache__/
+.pytest_cache/
+
 *.py[cod]
 *.pyo
 .Python
@@ -19,7 +21,9 @@ env/
 data/raw/*.csv
 data/raw/*.parquet
 data/raw/*.feather
-data/processed/
+data/processed/*.csv
+data/processed/*.parquet
+data/processed/*.feather
 
 # Modelos entrenados
 models/*.pkl
@@ -33,7 +37,6 @@ mlruns/
 mlartifacts/
 
 # Outputs generados (plots, reportes)
-outputs/*.png
 outputs/*.pdf
 outputs/*.html
 
@@ -51,3 +54,9 @@ Thumbs.db
 .idea/
 .vscode/settings.json
 *.swp
+
+# Ruff
+.ruff_cache/
+
+# MLFlow DB
+mlflow.db
