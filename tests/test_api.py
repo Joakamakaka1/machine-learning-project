@@ -1,7 +1,9 @@
 from unittest.mock import MagicMock
+
 from fastapi.testclient import TestClient
-from api.main import app
+
 import api.router as router_module
+from api.main import app
 
 client = TestClient(app)
 

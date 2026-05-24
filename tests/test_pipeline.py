@@ -1,4 +1,5 @@
 import pandas as pd
+
 from src.predictor import BookingPredictor
 
 
