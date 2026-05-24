@@ -15,9 +15,9 @@ MODELS_DIR = BASE_DIR / "models"
 OUTPUTS_DIR = BASE_DIR / "outputs"
 
 # Crear carpetas si no existen
-MODELS_DIR.mkdir(exist_ok=True)
-OUTPUTS_DIR.mkdir(exist_ok=True)
-PROCESSED_DATA_DIR.mkdir(exist_ok=True)
+MODELS_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Variables a eliminar por fuga de datos o irrelevancia
 COLS_TO_DROP = ["reservation_status", "reservation_status_date", "company"]
