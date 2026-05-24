@@ -3,7 +3,6 @@ from src.predictor import BookingPredictor
 
 
 def test_clean_data_coercion(monkeypatch):
-    """Prueba que el método de limpieza de datos convierta strings nulos en NaN y coaccione números."""
     # Mockear __init__ para evitar cargar el modelo real y no requerir dependencias del disco
     monkeypatch.setattr(BookingPredictor, "__init__", lambda self: None)
 
@@ -29,4 +28,4 @@ def test_clean_data_coercion(monkeypatch):
     assert pd.isna(cleaned_df.loc[0, "agent"])
     assert pd.isna(cleaned_df.loc[0, "adr"])
     assert pd.isna(cleaned_df.loc[0, "total_of_special_requests"])
-    assert cleaned_df.loc[0, "hotel"] == "Resort Hotel"  # Columna de texto no se altera
+    assert cleaned_df.loc[0, "hotel"] == "Resort Hotel"

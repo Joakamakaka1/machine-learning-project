@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 from api.main import app
-import api.endpoints.v1.predict as predict_module
+import api.router as router_module
 
 client = TestClient(app)
 
@@ -18,10 +18,11 @@ def test_health_check():
 
 def test_predict_endpoint_success(monkeypatch):
     """Valida que el endpoint de predicción retorne resultados exitosos."""
-    # Mockear el prediction_service para aislar la llamada de ML en test
-    mock_service = MagicMock()
-    mock_service.predict_booking.return_value = (1, 0.854)
-    monkeypatch.setattr(predict_module, "prediction_service", mock_service)
+    # Mockear el predictor para aislar la llamada de ML en test
+    mock_predictor = MagicMock()
+    mock_predictor.predict.return_value = [1]
+    mock_predictor.predict_proba.return_value = [0.854]
+    monkeypatch.setattr(router_module, "_predictor", mock_predictor)
 
     booking_payload = {
         "hotel": "City Hotel",
@@ -65,8 +66,8 @@ def test_predict_endpoint_success(monkeypatch):
 
 def test_predict_endpoint_model_not_loaded(monkeypatch):
     """Valida el comportamiento si el modelo no está cargado (503 Service Unavailable)."""
-    # Forzar que el prediction_service sea None
-    monkeypatch.setattr(predict_module, "prediction_service", None)
+    # Forzar que el predictor sea None para simular modelo no cargado
+    monkeypatch.setattr(router_module, "_predictor", None)
 
     booking_payload = {
         "hotel": "City Hotel",
