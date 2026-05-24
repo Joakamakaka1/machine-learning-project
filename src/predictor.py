@@ -6,10 +6,12 @@
 import joblib
 import pandas as pd
 
-from src.config import MODELS_DIR
+from src.config import MODELS_DIR, NUM_COLS
 
 
-# Clase para cargar el modelo y hacer predicciones
+# Clase encargada de:
+# - Cargar el modelo
+# - Hacer predicciones
 class BookingPredictor:
     def __init__(self):
         # Cargar el mejor modelo guardado
@@ -21,32 +23,11 @@ class BookingPredictor:
 
         self.model = joblib.load(self.model_path)
 
-    # Función interna para limpiar y preparar los datos antes de la predicción
+    # Función encargada de limpiar y preparar los datos antes de la predicción
     def _clean_data(self, data: pd.DataFrame) -> pd.DataFrame:
         df = data.copy()
-        # Lista de columnas numéricas conocidas en el dataset
-        num_cols = [
-            "lead_time",
-            "arrival_date_year",
-            "arrival_date_week_number",
-            "arrival_date_day_of_month",
-            "stays_in_weekend_nights",
-            "stays_in_week_nights",
-            "adults",
-            "children",
-            "babies",
-            "is_repeated_guest",
-            "previous_cancellations",
-            "previous_bookings_not_canceled",
-            "booking_changes",
-            "agent",
-            "days_in_waiting_list",
-            "adr",
-            "required_car_parking_spaces",
-            "total_of_special_requests",
-        ]
-
-        for col in num_cols:
+        # Columnas numéricas definidas en src/config.py
+        for col in NUM_COLS:
             if col in df.columns:
                 # Convertir a string, limpiar valores nulos textuales y coaccionar a numérico
                 df[col] = pd.to_numeric(

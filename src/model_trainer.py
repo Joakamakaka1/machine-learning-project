@@ -30,7 +30,9 @@ def build_keras_model(input_dim):
     return model
 
 
-# Clase para gestionar el entrenamiento de modelos tradicionales y de la red neuronal de Keras
+# Clase para gestionar:
+# - El entrenamiento de modelos tradicionales
+# - La red neuronal de Keras
 class ModelTrainer:
     def __init__(self, preprocessor):
         self.preprocessor = preprocessor
@@ -59,8 +61,9 @@ class ModelTrainer:
 
     def train_neural_network(self, X_train, y_train, epochs=10, batch_size=64):
         print("Entrenando Red Neuronal de Keras...")
-        # Primero procesamos los datos para saber la dimensión de entrada
-        X_train_processed = self.preprocessor.fit_transform(X_train)
+        # Transformamos los datos de entrenamiento usando el preprocesador
+        # El preprocessor ya fue ajustado en train_classical_models (main.py)
+        X_train_processed = self.preprocessor.transform(X_train)
         input_dim = X_train_processed.shape[1]
 
         keras_clf = build_keras_model(input_dim)
