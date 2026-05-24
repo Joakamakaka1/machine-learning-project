@@ -25,12 +25,11 @@ El sistema incluye un pipeline completo de Machine Learning (carga, preprocesami
 ```
 machine-learning-project/
 ├── .github/workflows/   # CI/CD: GitHub Actions pipeline
-├── api/                 # API REST Modular (FastAPI)
-│   ├── config/          # Variables de entorno y configuraciones
-│   ├── endpoints/v1/    # Endpoints organizados por versión (salud, predicción)
-│   ├── exceptions/      # Excepciones personalizadas globales de la API
-│   ├── schemas/         # Modelos de validación Pydantic para peticiones/respuestas
-│   ├── services/        # Lógica de negocio (adaptación y consumo de modelos)
+├── api/                 # API REST (FastAPI)
+│   ├── config.py        # Variables de entorno y constantes
+│   ├── exceptions.py    # Excepciones personalizadas de la API
+│   ├── router.py        # Endpoints de salud y predicción
+│   ├── schemas.py       # Modelos Pydantic para peticiones y respuestas
 │   └── main.py          # Punto de entrada de la API REST
 ├── src/                 # Pipeline de Machine Learning
 │   ├── config.py        # Configuraciones globales de carpetas y hiperparámetros
@@ -38,7 +37,6 @@ machine-learning-project/
 │   ├── model_trainer.py # Entrenamiento de los 5 algoritmos y red de Keras
 │   ├── evaluator.py     # Métricas avanzadas, matrices de confusión y curvas ROC
 │   ├── predictor.py     # Clase de inferencia segura con coacción de tipos
-│   └── theory.md        # Documentación teórica detallada
 ├── notebooks/           # Notebooks Jupyter interactivos e hiper-explicativos
 ├── tests/               # Pruebas automatizadas unitarias y de integración
 ├── data/
