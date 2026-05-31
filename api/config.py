@@ -2,20 +2,32 @@
 Configuracion de la API: constantes del proyecto y variables de entorno.
 """
 
-import os
 from pathlib import Path
 
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-PROJECT_NAME = "Hotel Booking Cancellation Predictor API"
-VERSION = "1.0.0"
-API_V1_STR = "/api/v1"
+    PROJECT_NAME: str = "Hotel Booking Cancellation Predictor API"
+    VERSION: str = "1.0.0"
+    API_V1_STR: str = "/api/v1"
 
-MODEL_PATH = BASE_DIR / "models" / "best_model.pkl"
+    API_HOST: str = "0.0.0.0"
+    API_PORT: int = 8000
 
-API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
-API_PORT: int = int(os.getenv("API_PORT", 8000))
+    @property
+    def MODEL_PATH(self) -> Path:
+        return Path(__file__).resolve().parent.parent / "models" / "best_model.pkl"
+
+
+settings = Settings()
+
+# Aliases de modulo para compatibilidad con el resto del codigo
+PROJECT_NAME = settings.PROJECT_NAME
+VERSION = settings.VERSION
+API_V1_STR = settings.API_V1_STR
+MODEL_PATH = settings.MODEL_PATH
+API_HOST = settings.API_HOST
+API_PORT = settings.API_PORT

@@ -20,9 +20,11 @@ OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Variables a eliminar por fuga de datos o irrelevancia
-# Reservation_status es la etiqueta de cancelación codificada como texto. El modelo podría aprender a identificar literalmente.
+# Reservation_status es la etiqueta de cancelación codificada como texto.
+# El modelo podría aprender a identificar literalmente.
 # Reservation_status_date es la fecha de esa etiqueta, lo que también causaría fuga de datos.
-# Company es un ID de empresa que hizo la reserva. No aporta información útil y podría causar sobreajuste.
+# Company es un ID de empresa que hizo la reserva.
+# No aporta información útil y podría causar sobreajuste.
 COLS_TO_DROP = ["reservation_status", "reservation_status_date", "company"]
 
 # Variable objetivo
