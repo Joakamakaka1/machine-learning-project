@@ -51,12 +51,9 @@ NUM_COLS = [
     "required_car_parking_spaces",
     "total_of_special_requests",
     # Features derivadas por engineer_features()
-    "total_nights",
-    "total_guests",
     "adr_per_night",
     "room_type_changed",
     "previous_cancel_rate",
-    "is_new_guest",
 ]
 
 # Columnas categóricas de baja cardinalidad → OneHotEncoder
@@ -72,7 +69,3 @@ CAT_COLS = [
     "customer_type",
 ]
 
-# Columnas categóricas de alta cardinalidad → TargetEncoder.
-# OneHotEncoder generaría:
-# + 400 columnas dispersas para country (~180 valores) y agent (~300 valores).
-HIGH_CARD_CAT_COLS = ["country", "agent"]

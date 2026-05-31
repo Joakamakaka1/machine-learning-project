@@ -13,12 +13,11 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.config import (
     CAT_COLS,
     COLS_TO_DROP,
-    HIGH_CARD_CAT_COLS,
     NA_TOKENS,
     NUM_COLS,
     RAW_DATA_PATH,
@@ -34,12 +33,9 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
     se calculen correctamente dentro de cada fold de la validación cruzada.
 
     Features creadas:
-    - total_nights: noches totales de estancia.
-    - total_guests: total de huéspedes (mínimo 1).
-    - adr_per_night: precio efectivo por noche.
+    - adr_per_night: precio efectivo por noche (adr / noches totales).
     - room_type_changed: si la habitación asignada difiere de la reservada.
     - previous_cancel_rate: tasa histórica de cancelación del cliente.
-    - is_new_guest: cliente sin ningún historial previo.
     """
 
     def fit(self, X, y=None):
@@ -48,26 +44,14 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         df = pd.DataFrame(X).copy() if not isinstance(X, pd.DataFrame) else X.copy()
 
-        df["total_nights"] = df["stays_in_weekend_nights"] + df["stays_in_week_nights"]
-        df["total_guests"] = (df["adults"] + df["children"].fillna(0) + df["babies"]).clip(lower=1)
+        total_nights = df["stays_in_weekend_nights"] + df["stays_in_week_nights"]
         df["adr_per_night"] = np.where(
-            df["total_nights"] > 0, df["adr"] / df["total_nights"], df["adr"]
+            total_nights > 0, df["adr"] / total_nights, df["adr"]
         )
         df["room_type_changed"] = (df["reserved_room_type"] != df["assigned_room_type"]).astype(int)
         df["previous_cancel_rate"] = df["previous_cancellations"] / (
             df["previous_cancellations"] + df["previous_bookings_not_canceled"] + 1
         )
-        df["is_new_guest"] = (
-            (df["is_repeated_guest"] == 0)
-            & (df["previous_cancellations"] == 0)
-            & (df["previous_bookings_not_canceled"] == 0)
-        ).astype(int)
-
-        # agent es un ID de agencia sin significado ordinal: se trata como categoría.
-        # Los NaN se convierten a "Unknown" antes de que lleguen al TargetEncoder.
-        if "agent" in df.columns:
-            agent_series = df["agent"].astype("Int64").astype("object")
-            df["agent"] = agent_series.where(agent_series.notna(), other="Unknown").astype(str)
 
         return df
 
@@ -104,7 +88,6 @@ def preprocess_and_split(df):
     # 4: Filtrar solo las columnas presentes en el dataset para cada grupo
     num_cols = [c for c in NUM_COLS if c in X.columns]
     cat_low_cols = [c for c in CAT_COLS if c in X.columns]
-    cat_high_cols = [c for c in HIGH_CARD_CAT_COLS if c in X.columns]
 
     # 5: Sub-pipelines por tipo de columna
     num_pipeline = Pipeline(
@@ -122,22 +105,11 @@ def preprocess_and_split(df):
         ]
     )
 
-    # Alta cardinalidad (country ~180, agent ~300) → TargetEncoder.
-    # Sustituye cada categoría por su probabilidad media de cancelación,
-    # reduciendo >400 columnas OHE a solo 2 columnas densas y más informativas.
-    cat_high_pipeline = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
-            ("target_enc", TargetEncoder(random_state=42)),
-        ]
-    )
-
-    # 6: Combinar los tres sub-pipelines en un ColumnTransformer
+    # 6: Combinar los dos sub-pipelines en un ColumnTransformer
     col_transformer = ColumnTransformer(
         [
             ("num", num_pipeline, num_cols),
             ("cat_low", cat_low_pipeline, cat_low_cols),
-            ("cat_high", cat_high_pipeline, cat_high_cols),
         ],
         remainder="drop",
     )
