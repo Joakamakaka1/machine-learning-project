@@ -11,15 +11,14 @@ import logging
 import joblib
 import numpy as np
 import tensorflow as tf
-
-from tensorflow import keras
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.utils.class_weight import compute_class_weight
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils.class_weight import compute_class_weight
+from tensorflow import keras
 from xgboost import XGBClassifier
 
 from src.config import MODELS_DIR

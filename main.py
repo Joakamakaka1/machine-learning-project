@@ -96,9 +96,9 @@ def main():
         "neural_network",
     ]
     best_model_key = max(all_model_names, key=lambda name: results[name]["roc_auc"])
-    print(
-        f"\n>>> Mejor modelo: {best_model_key.replace('_', ' ').title()} (ROC-AUC máximo: {results[best_model_key]['roc_auc']:.4f})"
-    )
+    best_name = best_model_key.replace('_', ' ').title()
+    best_roc = results[best_model_key]['roc_auc']
+    print(f"\n>>> Mejor modelo: {best_name} (ROC-AUC máximo: {best_roc:.4f})")
 
     shutil.copy(MODELS_DIR / f"{best_model_key}.pkl", MODELS_DIR / "best_model.pkl")
     print("El mejor modelo ha sido guardado en models/best_model.pkl")
