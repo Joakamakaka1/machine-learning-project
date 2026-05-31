@@ -23,7 +23,7 @@ from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
 from src.config import MODELS_DIR
-from src.tuning_utils import _TuningProgressPipeline
+from utils.tuning_utils import _TuningProgressPipeline
 
 logger = logging.getLogger(__name__)
 
