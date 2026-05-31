@@ -53,9 +53,7 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
         df["adr_per_night"] = np.where(
             df["total_nights"] > 0, df["adr"] / df["total_nights"], df["adr"]
         )
-        df["room_type_changed"] = (
-            df["reserved_room_type"] != df["assigned_room_type"]
-        ).astype(int)
+        df["room_type_changed"] = (df["reserved_room_type"] != df["assigned_room_type"]).astype(int)
         df["previous_cancel_rate"] = df["previous_cancellations"] / (
             df["previous_cancellations"] + df["previous_bookings_not_canceled"] + 1
         )
@@ -109,24 +107,30 @@ def preprocess_and_split(df):
     cat_high_cols = [c for c in HIGH_CARD_CAT_COLS if c in X.columns]
 
     # 5: Sub-pipelines por tipo de columna
-    num_pipeline = Pipeline([
-        ("imputer", SimpleImputer(strategy="median")),
-        ("scaler", StandardScaler()),
-    ])
+    num_pipeline = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ]
+    )
 
     # Baja cardinalidad (hotel, meal, deposit_type, etc.) → OneHotEncoder
-    cat_low_pipeline = Pipeline([
-        ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
-        ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
-    ])
+    cat_low_pipeline = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
+            ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
+        ]
+    )
 
     # Alta cardinalidad (country ~180, agent ~300) → TargetEncoder.
     # Sustituye cada categoría por su probabilidad media de cancelación,
     # reduciendo >400 columnas OHE a solo 2 columnas densas y más informativas.
-    cat_high_pipeline = Pipeline([
-        ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
-        ("target_enc", TargetEncoder(random_state=42)),
-    ])
+    cat_high_pipeline = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
+            ("target_enc", TargetEncoder(random_state=42)),
+        ]
+    )
 
     # 6: Combinar los tres sub-pipelines en un ColumnTransformer
     col_transformer = ColumnTransformer(
@@ -139,10 +143,11 @@ def preprocess_and_split(df):
     )
 
     # 7: Pipeline completo: ingeniería de features → transformación de columnas
-    preprocessor = Pipeline([
-        ("features", FeatureEngineer()),
-        ("col_transform", col_transformer),
-    ])
+    preprocessor = Pipeline(
+        [
+            ("features", FeatureEngineer()),
+            ("col_transform", col_transformer),
+        ]
+    )
 
     return X_train, X_test, y_train, y_test, preprocessor
-

@@ -73,6 +73,6 @@ CAT_COLS = [
 ]
 
 # Columnas categóricas de alta cardinalidad → TargetEncoder.
-# OneHotEncoder generaría: 
+# OneHotEncoder generaría:
 # + 400 columnas dispersas para country (~180 valores) y agent (~300 valores).
 HIGH_CARD_CAT_COLS = ["country", "agent"]
