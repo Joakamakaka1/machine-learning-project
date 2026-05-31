@@ -27,6 +27,7 @@ dependencies = [
     "fastapi>=0.111",
     "uvicorn[standard]>=0.29",
     "pydantic>=2.7",
+    "pydantic-settings>=2.14",
     "python-multipart>=0.0.9",
 
     # Config
