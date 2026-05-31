@@ -53,12 +53,15 @@ NUM_COLS = [
     "required_car_parking_spaces",
     "total_of_special_requests",
     # Features derivadas por engineer_features()
+    "total_nights",
+    "total_guests",
     "adr_per_night",
     "room_type_changed",
     "previous_cancel_rate",
+    "is_new_guest",
 ]
 
-# Columnas categóricas de baja cardinalidad → OneHotEncoder
+# Columnas categóricas → OneHotEncoder
 CAT_COLS = [
     "hotel",
     "arrival_date_month",
@@ -69,5 +72,7 @@ CAT_COLS = [
     "assigned_room_type",
     "deposit_type",
     "customer_type",
+    "country",
+    "agent",
 ]
 

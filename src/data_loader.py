@@ -32,9 +32,12 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
     se calculen correctamente dentro de cada fold de la validación cruzada.
 
     Features creadas:
-    - adr_per_night: precio efectivo por noche (adr / noches totales).
+    - total_nights: noches totales de estancia.
+    - total_guests: total de huéspedes (mínimo 1).
+    - adr_per_night: precio efectivo por noche.
     - room_type_changed: si la habitación asignada difiere de la reservada.
     - previous_cancel_rate: tasa histórica de cancelación del cliente.
+    - is_new_guest: cliente sin ningún historial previo.
     """
 
     def fit(self, X, y=None):
@@ -43,14 +46,20 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         df = pd.DataFrame(X).copy() if not isinstance(X, pd.DataFrame) else X.copy()
 
-        total_nights = df["stays_in_weekend_nights"] + df["stays_in_week_nights"]
+        df["total_nights"] = df["stays_in_weekend_nights"] + df["stays_in_week_nights"]
+        df["total_guests"] = (df["adults"] + df["children"].fillna(0) + df["babies"]).clip(lower=1)
         df["adr_per_night"] = np.where(
-            total_nights > 0, df["adr"] / total_nights, df["adr"]
+            df["total_nights"] > 0, df["adr"] / df["total_nights"], df["adr"]
         )
         df["room_type_changed"] = (df["reserved_room_type"] != df["assigned_room_type"]).astype(int)
         df["previous_cancel_rate"] = df["previous_cancellations"] / (
             df["previous_cancellations"] + df["previous_bookings_not_canceled"] + 1
         )
+        df["is_new_guest"] = (
+            (df["is_repeated_guest"] == 0)
+            & (df["previous_cancellations"] == 0)
+            & (df["previous_bookings_not_canceled"] == 0)
+        ).astype(int)
 
         return df
 
