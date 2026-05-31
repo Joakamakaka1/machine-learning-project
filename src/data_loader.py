@@ -69,6 +69,27 @@ def load_data(file_path=RAW_DATA_PATH):
     return pd.read_csv(file_path, na_values=NA_TOKENS, keep_default_na=True)
 
 
+class CastToString(BaseEstimator, TransformerMixin):
+    """Convierte todas las columnas a str para uniformar los tipos antes del OneHotEncoder.
+
+    Necesario cuando una columna categórica (e.g. agent) contiene valores numéricos
+    (float/int) mezclados con la cadena 'Unknown' introducida por el SimpleImputer.
+    """
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        if hasattr(X, "astype"):
+            return X.astype(str)
+        return np.array(X, dtype=str)
+
+    def get_feature_names_out(self, input_features=None):
+        if input_features is not None:
+            return np.array(input_features, dtype=object)
+        return np.array([], dtype=object)
+
+
 def preprocess_and_split(df):
     """Limpia el dataframe, lo divide en train/test y construye el preprocessor sklearn.
 
@@ -109,6 +130,7 @@ def preprocess_and_split(df):
     cat_pipeline = Pipeline(
         [
             ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
+            ("cast_str", CastToString()),
             ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
         ]
     )

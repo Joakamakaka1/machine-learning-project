@@ -49,7 +49,10 @@ class KerasMLPClassifier(ClassifierMixin, BaseEstimator):
         random_state=config.RANDOM_STATE,
         verbose=0,
     ):
-        """Inicializa el clasificador con los hiperparámetros de la red neuronal con valores por defecto razonables."""
+        """
+        Inicializa el clasificador con los hiperparámetros de la red neuronal
+        con valores por defecto razonables.
+        """
         self.epochs = epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate

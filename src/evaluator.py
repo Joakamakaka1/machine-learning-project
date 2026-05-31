@@ -152,7 +152,10 @@ def plot_feature_importances(model_name="xgboost", top_n=15):
 
 
 def plot_model_comparison_chart(models_results):
-    """Dibuja y guarda un barplot agrupado comparando Accuracy, Precision, Recall, F1 y AUC por modelo."""
+    """
+    Dibuja y guarda un barplot agrupado comparando:
+      Accuracy, Precision, Recall, F1 y AUC por modelo.
+      """
     records = []
     for name, metrics in models_results.items():
         label = name.replace("_", " ").title()

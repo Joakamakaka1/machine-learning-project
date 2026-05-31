@@ -7,9 +7,9 @@ import mlflow
 from src.config import (
     MODEL_NAMES,
     MODELS_DIR,
-    PROCESSED_DATA_DIR,
-    NN_EPOCHS,
     NN_BATCH_SIZE,
+    NN_EPOCHS,
+    PROCESSED_DATA_DIR,
     setup_dirs,
 )
 from src.data_loader import load_data, preprocess_and_split
