@@ -18,18 +18,23 @@ from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     precision_recall_curve,
+    precision_score,
+    recall_score,
     roc_curve,
 )
 
 from src.config import MODELS_DIR, OUTPUTS_DIR
 
 
-# Función encargada de:
-# - Evaluar cualquier modelo (todos son Pipeline sklearn, incluida la red neuronal)
-# - Devolver métricas
 def evaluate_model(model_name, X_test, y_test):
-    # Los modelos son Pipelines sklearn
-    # Estan serializados en un único .pkl, por lo que se evalúan de la misma forma.
+    """Evalúa cualquier modelo (todos son Pipeline sklearn, incluida la red neuronal).
+
+    Los modelos están serializados en un único .pkl, por lo que se evalúan de la misma forma.
+
+    Returns:
+        dict: Métricas de evaluación: accuracy, precision, recall, f1_score,
+              roc_auc, fpr, tpr, y_preds e y_probs.
+    """
     pipeline = joblib.load(MODELS_DIR / f"{model_name}.pkl")
     y_preds = pipeline.predict(X_test)
 
@@ -42,6 +47,8 @@ def evaluate_model(model_name, X_test, y_test):
     report = classification_report(y_test, y_preds, output_dict=True)
     accuracy = report["accuracy"]
     f1 = report["weighted avg"]["f1-score"]
+    precision = precision_score(y_test, y_preds, zero_division=0)
+    recall = recall_score(y_test, y_preds, zero_division=0)
 
     # Calcular ROC AUC
     fpr, tpr, _ = roc_curve(y_test, y_probs)
@@ -49,6 +56,8 @@ def evaluate_model(model_name, X_test, y_test):
 
     return {
         "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
         "f1_score": f1,
         "roc_auc": roc_auc,
         "fpr": fpr,
@@ -58,16 +67,16 @@ def evaluate_model(model_name, X_test, y_test):
     }
 
 
-# Función encargada de:
-# - Generar la tabla comparativa de los modelos
-# - Guardarla en un CSV
 def generate_comparison_report(models_results):
+    """Genera la tabla comparativa de modelos y la guarda como CSV en outputs/."""
     records = []
     for name, metrics in models_results.items():
         records.append(
             {
                 "Modelo": name.replace("_", " ").title(),
                 "Accuracy": round(metrics["accuracy"], 4),
+                "Precision": round(metrics["precision"], 4),
+                "Recall": round(metrics["recall"], 4),
                 "F1-Score": round(metrics["f1_score"], 4),
                 "ROC-AUC": round(metrics["roc_auc"], 4),
             }
@@ -82,10 +91,8 @@ def generate_comparison_report(models_results):
 # --------- FUNCIONES QUE DIBUJAN LOS RESULTADOS DE LA EVALUACION DE LOS MODELOS ---------
 
 
-# Función encargada de:
-# - Dibujar la matriz de confusión
-# - Guardarla como imagen
 def plot_confusion_matrix(y_true, y_pred, model_name):
+    """Dibuja y guarda la matriz de confusión normalizada del modelo indicado."""
     cm = confusion_matrix(y_true, y_pred)
     cm_norm = cm.astype(float) / cm.sum(axis=1)[:, np.newaxis]
 
@@ -119,10 +126,8 @@ def plot_confusion_matrix(y_true, y_pred, model_name):
     plt.close()
 
 
-# Función encargada de:
-# - Extraer la importancia de variables del pipeline de un modelo basado en árboles
-# - Dibujar y guardar el gráfico
 def plot_feature_importances(model_name="xgboost", top_n=15):
+    """Extrae, dibuja y guarda la importancia de variables de un modelo basado en árboles."""
     pipeline = joblib.load(MODELS_DIR / f"{model_name}.pkl")
     preprocessor_step = pipeline.named_steps["preprocessor"]
     classifier_step = pipeline.named_steps["classifier"]
@@ -146,16 +151,16 @@ def plot_feature_importances(model_name="xgboost", top_n=15):
     print(f"Feature importances guardadas en: {OUTPUTS_DIR / 'feature_importances.png'}")
 
 
-# Función encargada de:
-# - Dibujar un barplot agrupado (Accuracy / F1 / AUC) por modelo
-# - Comparar visualmente los resultados de la tabla comparativa
 def plot_model_comparison_chart(models_results):
+    """Dibuja y guarda un barplot agrupado comparando Accuracy, Precision, Recall, F1 y AUC por modelo."""
     records = []
     for name, metrics in models_results.items():
         label = name.replace("_", " ").title()
         records.extend(
             [
                 {"Modelo": label, "Métrica": "Accuracy", "Valor": metrics["accuracy"]},
+                {"Modelo": label, "M\u00e9trica": "Precision", "Valor": metrics["precision"]},
+                {"Modelo": label, "M\u00e9trica": "Recall", "Valor": metrics["recall"]},
                 {"Modelo": label, "Métrica": "F1-Score", "Valor": metrics["f1_score"]},
                 {"Modelo": label, "Métrica": "ROC-AUC", "Valor": metrics["roc_auc"]},
             ]
@@ -176,10 +181,11 @@ def plot_model_comparison_chart(models_results):
     print(f"Gráfico comparativo guardado en: {OUTPUTS_DIR / 'comparativa_modelos_chart.png'}")
 
 
-# Función encargada de:
-# - Dibujar las curvas Precision-Recall de todos los modelos
-# - Complementa la curva ROC. Útil con desbalanceo de clases
 def plot_precision_recall_curves(models_results, y_test):
+    """Dibuja y guarda las curvas Precision-Recall de todos los modelos.
+
+    Complementa la curva ROC. Especialmente útil con desbalanceo de clases.
+    """
     no_skill = float(y_test.mean())
 
     plt.figure(figsize=(8, 6))
@@ -209,10 +215,8 @@ def plot_precision_recall_curves(models_results, y_test):
     print(f"Curvas PR guardadas en: {OUTPUTS_DIR / 'precision_recall_curves.png'}")
 
 
-# Función encargada de:
-# - Dibujar las curvas ROC de todos los modelos en un mismo gráfico
-# - Compararlas
 def plot_roc_curves(models_results, y_test):
+    """Dibuja y guarda las curvas ROC comparativas de todos los modelos en un mismo gráfico."""
     plt.figure(figsize=(8, 6))
     for name, res in models_results.items():
         plt.plot(res["fpr"], res["tpr"], label=f"{name} (AUC = {res['roc_auc']:.3f})")

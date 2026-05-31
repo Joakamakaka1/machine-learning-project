@@ -4,7 +4,14 @@ import shutil
 
 import mlflow
 
-from src.config import MODELS_DIR, PROCESSED_DATA_DIR
+from src.config import (
+    MODEL_NAMES,
+    MODELS_DIR,
+    PROCESSED_DATA_DIR,
+    NN_EPOCHS,
+    NN_BATCH_SIZE,
+    setup_dirs,
+)
 from src.data_loader import load_data, preprocess_and_split
 from src.evaluator import (
     evaluate_model,
@@ -25,6 +32,8 @@ def main():
         format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
         datefmt="%H:%M:%S",
     )
+    logger = logging.getLogger(__name__)
+    setup_dirs()
     print("--- INICIANDO PIPELINE DE MACHINE LEARNING ---")
 
     # 1. Cargar y separar los datos
@@ -49,26 +58,16 @@ def main():
 
     # 50 epochs con patience=3 (early stopping) — la red ampliada (128-64-32)
     # necesita más epochs para converger; early stopping corta antes si ya no mejora.
-    nn_epochs = 50
-    nn_batch_size = 256
-
     trainer = ModelTrainer(preprocessor)
     trainer.train_all_models(
-        X_train, y_train, nn_epochs=nn_epochs, nn_batch_size=nn_batch_size, tune_xgboost=True
+        X_train, y_train, nn_epochs=NN_EPOCHS, nn_batch_size=NN_BATCH_SIZE, tune_xgboost=True
     )
 
     # 4. Evaluar los modelos
     print("\nEvaluando modelos...")
     results = {}
-    model_names = [
-        "logistic_regression",
-        "decision_tree",
-        "random_forest",
-        "xgboost",
-        "neural_network",
-    ]
 
-    for name in model_names:
+    for name in MODEL_NAMES:
         metrics = evaluate_model(name, X_test, y_test)
         results[name] = metrics
         plot_confusion_matrix(y_test, metrics["y_preds"], name)
@@ -88,16 +87,9 @@ def main():
     # Se usa ROC-AUC (y no accuracy o F1) porque es independiente del umbral de
     # decisión y robusto al desbalance de clases (~37 % de cancelaciones).
     # Este mide la capacidad del modelo de ordenar las reservas por riesgo de cancelación.
-    all_model_names = [
-        "logistic_regression",
-        "decision_tree",
-        "random_forest",
-        "xgboost",
-        "neural_network",
-    ]
-    best_model_key = max(all_model_names, key=lambda name: results[name]["roc_auc"])
-    best_name = best_model_key.replace('_', ' ').title()
-    best_roc = results[best_model_key]['roc_auc']
+    best_model_key = max(MODEL_NAMES, key=lambda name: results[name]["roc_auc"])
+    best_name = best_model_key.replace("_", " ").title()
+    best_roc = results[best_model_key]["roc_auc"]
     print(f"\n>>> Mejor modelo: {best_name} (ROC-AUC máximo: {best_roc:.4f})")
 
     shutil.copy(MODELS_DIR / f"{best_model_key}.pkl", MODELS_DIR / "best_model.pkl")
@@ -112,14 +104,14 @@ def main():
         with mlflow.start_run(run_name="Hotel Booking Pipeline Run"):
             mlflow.log_params(
                 {
-                    "nn_epochs": nn_epochs,
-                    "nn_batch_size": nn_batch_size,
+                    "nn_epochs": NN_EPOCHS,
+                    "nn_batch_size": NN_BATCH_SIZE,
                     "train_rows": X_train.shape[0],
                     "test_rows": X_test.shape[0],
                     "best_model": best_model_key,
                 }
             )
-            for name in model_names:
+            for name in MODEL_NAMES:
                 mlflow.log_metric(f"{name}_f1_score", results[name]["f1_score"])
                 mlflow.log_metric(f"{name}_roc_auc", results[name]["roc_auc"])
                 mlflow.log_metric(f"{name}_accuracy", results[name]["accuracy"])
@@ -128,7 +120,7 @@ def main():
             mlflow.log_artifact(str(MODELS_DIR / "best_model.pkl"))
         print("Experimento registrado en MLflow.")
     except Exception as e:
-        print(f"MLflow no disponible, se omite el tracking. Detalle: {e}")
+        logger.warning("MLflow no disponible, se omite el tracking. Detalle: %s", e)
 
     print("--- PIPELINE FINALIZADO CON EXITO ---")
 

@@ -6,15 +6,13 @@
 import joblib
 import pandas as pd
 
-from src.config import MODELS_DIR, NUM_COLS
+from src.config import MODELS_DIR
 
 
-# Clase encargada de:
-# - Cargar el modelo
-# - Hacer predicciones
 class BookingPredictor:
+    """Carga el mejor modelo entrenado y expone métodos para realizar predicciones."""
     def __init__(self):
-        # Cargar el mejor modelo guardado
+        """Carga el mejor modelo guardado desde disco."""
         self.model_path = MODELS_DIR / "best_model.pkl"
         if not self.model_path.exists():
             raise FileNotFoundError(
@@ -23,37 +21,33 @@ class BookingPredictor:
 
         self.model = joblib.load(self.model_path)
 
-    # Función encargada de limpiar y preparar los datos antes de la predicción
-    def _clean_data(self, data: pd.DataFrame) -> pd.DataFrame:
-        df = data.copy()
-        # Columnas numéricas definidas en src/config.py
-        for col in NUM_COLS:
-            if col in df.columns:
-                # Convertir a string, limpiar valores nulos textuales y coaccionar a numérico
-                df[col] = pd.to_numeric(
-                    df[col]
-                    .astype(str)
-                    .replace(["NULL", "None", "nan", "NaN", "nan.0", "", " "], None),
-                    errors="coerce",
-                )
-        return df
-
-    # Funcion encargada de:
-    # - Predecir la cancelación de una reserva
-    # - Recibe un DataFrame con las características y devuelve predicciones (0 o 1)
     def predict(self, data: pd.DataFrame):
-        cleaned_data = self._clean_data(data)
-        predictions = self.model.predict(cleaned_data)
+        """Predice la cancelación de una reserva.
+
+        El Pipeline guardado ya incluye FeatureEngineer + preprocesado completo,
+        por lo que no es necesario ningún paso adicional antes de llamar a predict.
+
+        Args:
+            data: DataFrame con las características de la reserva.
+
+        Returns:
+            list: Predicciones binarias (0 = no cancela, 1 = cancela).
+        """
+        predictions = self.model.predict(data)
         return predictions.tolist()
 
-    # Funcion encargada de:
-    # - Predecir la probabilidad de cancelación de una reserva
-    # - Recibe un DataFrame con las características y devuelve probabilidades (0.0 a 1.0)
     def predict_proba(self, data: pd.DataFrame):
-        cleaned_data = self._clean_data(data)
+        """Predice la probabilidad de cancelación de una reserva.
+
+        Args:
+            data: DataFrame con las características de la reserva.
+
+        Returns:
+            list: Probabilidades de cancelación entre 0.0 y 1.0.
+        """
         if hasattr(self.model, "predict_proba"):
-            probabilities = self.model.predict_proba(cleaned_data)[:, 1]
+            probabilities = self.model.predict_proba(data)[:, 1]
         else:
             # Se aproxima si el modelo no tiene predict_proba (eg. SVM sin probabilidad)
-            probabilities = self.model.predict(cleaned_data)
+            probabilities = self.model.predict(data)
         return probabilities.tolist()

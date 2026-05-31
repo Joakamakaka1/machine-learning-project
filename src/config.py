@@ -14,10 +14,27 @@ PROCESSED_DATA_DIR = BASE_DIR / "data" / "processed"
 MODELS_DIR = BASE_DIR / "models"
 OUTPUTS_DIR = BASE_DIR / "outputs"
 
-# Crear carpetas si no existen
-MODELS_DIR.mkdir(parents=True, exist_ok=True)
-OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
-PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+# Función para crear directorios si no existen
+def setup_dirs() -> None:
+    """Crea los directorios necesarios si no existen. Llamar explícitamente desde main()."""
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+# Constantes de entrenamiento y reproducibilidad
+RANDOM_STATE = 42
+TEST_SIZE = 0.2
+NN_EPOCHS = 50
+NN_BATCH_SIZE = 256
+
+# Nombres de los modelos — fuente única para evitar duplicación en trainer y main
+MODEL_NAMES = [
+    "logistic_regression",
+    "decision_tree",
+    "random_forest",
+    "xgboost",
+    "neural_network",
+]
 
 # Variables a eliminar por fuga de datos o irrelevancia
 # Reservation_status es la etiqueta de cancelación codificada como texto.
@@ -75,4 +92,3 @@ CAT_COLS = [
     "country",
     "agent",
 ]
-

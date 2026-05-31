@@ -21,37 +21,35 @@ from sklearn.utils.class_weight import compute_class_weight
 from tensorflow import keras
 from xgboost import XGBClassifier
 
+from src import config
 from src.config import MODELS_DIR
 from utils.tuning_utils import _TuningProgressPipeline
 
 logger = logging.getLogger(__name__)
 
 
-# Wrapper de la red neuronal Keras con interfaz compatible con scikit-learn.
-# Implementa:
-# - fit
-# - predict
-# - predict_proba
-# Se integra en un pipeline de sklearn, exactamente igual que los modelos clásicos.
-
-
-# Esto permite:
-# - Serializar el pipeline completo (preprocesado + red) en un único .pkl.
-# - Evaluar la red con el mismo código que el resto de modelos.
-# - Incluirla en la selección del mejor modelo.
-# El preprocesado lo aplica el Pipeline externo, ya que este wrapper recibe los datos
-# ya transformados (matriz de floats).
 class KerasMLPClassifier(ClassifierMixin, BaseEstimator):
-    # Hiperparámetros de la red neuronal con valores por defecto razonables.
+    """Wrapper de la red neuronal Keras con interfaz compatible con scikit-learn.
+
+    Implementa fit, predict y predict_proba, integrándose en un pipeline de sklearn
+    exactamente igual que los modelos clásicos. Esto permite:
+    - Serializar el pipeline completo (preprocesado + red) en un único .pkl.
+    - Evaluar la red con el mismo código que el resto de modelos.
+    - Incluirla en la selección del mejor modelo.
+
+    El preprocesado lo aplica el Pipeline externo; este wrapper recibe los datos
+    ya transformados (matriz de floats).
+    """
     def __init__(
         self,
         epochs=10,
         batch_size=64,
         learning_rate=1e-3,
         validation_split=0.1,
-        random_state=42,
+        random_state=config.RANDOM_STATE,
         verbose=0,
     ):
+        """Inicializa el clasificador con los hiperparámetros de la red neuronal con valores por defecto razonables."""
         self.epochs = epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -59,10 +57,12 @@ class KerasMLPClassifier(ClassifierMixin, BaseEstimator):
         self.random_state = random_state
         self.verbose = verbose
 
-    # Función para construir la arquitectura de la red neuronal.
-    # Arquitectura ampliada (128→64→32) con BatchNormalization para estabilizar
-    # el entrenamiento, siguiendo el patrón visto en clase 4.
     def _build_model(self, n_features):
+        """Construye la arquitectura de la red neuronal.
+
+        Arquitectura ampliada con BatchNormalization para estabilizar
+        el entrenamiento, siguiendo el patrón visto en clase 4.
+        """
 
         tf.keras.utils.set_random_seed(self.random_state)
         model = keras.Sequential(
@@ -84,8 +84,8 @@ class KerasMLPClassifier(ClassifierMixin, BaseEstimator):
         )
         return model
 
-    # Función para entrenar la red neuronal con los datos de entrenamiento
     def fit(self, X, y):
+        """Entrena la red neuronal con los datos de entrenamiento."""
         X = np.asarray(X, dtype="float32")
         y = np.asarray(y, dtype="float32")
         self.classes_ = np.array([0, 1])
@@ -109,35 +109,38 @@ class KerasMLPClassifier(ClassifierMixin, BaseEstimator):
         )
         return self
 
-    # Función para predecir probabilidades con la red neuronal
     def predict_proba(self, X):
+        """Devuelve probabilidades de clase para cada muestra."""
         X = np.asarray(X, dtype="float32")
         proba = self.model_.predict(X, verbose=0).flatten()
         return np.column_stack([1 - proba, proba])
 
-    # Función para predecir clases con la red neuronal usando un umbral de 0.5
     def predict(self, X):
+        """Predice la clase de cada muestra usando un umbral de 0.5."""
         return (self.predict_proba(X)[:, 1] >= 0.5).astype(int)
 
 
-# Clase para gestionar el entrenamiento de todos los modelos de forma uniforme.
-# Los modelos se envuelven en un Pipeline sklearn. Esto garantiza:
-# - Competición en igualdad de condiciones
-# - Se serializan de la misma forma (un único .pkl por modelo)
 class ModelTrainer:
+    """Gestiona el entrenamiento de todos los modelos de forma uniforme.
+
+    Los modelos se envuelven en un Pipeline sklearn, lo que garantiza competición
+    en igualdad de condiciones y serialización homogénea (un único .pkl por modelo).
+    """
     def __init__(self, preprocessor):
         self.preprocessor = preprocessor
         self.models = {}
 
-    # Busqueda aleatoria de hiperparámetros para XGBoost usando validacion cruzada.
-    # Entrena el pipeline completo (preprocesado + clasificador) en cada fold para
-    # evitar fuga de datos y guarda el mejor modelo y sus parametros en outputs/.
-    #
-    # Paralelismo: n_jobs=1 en RSCV (fits secuenciales) + n_jobs=-1 en XGBoost
-    # (paralelismo interno via OpenMP por fit). Esto evita el oversubscription de
-    # CPU que ocurre cuando RSCV lanza procesos en paralelo y cada uno a su vez
-    # intenta usar todos los cores, causando que el pipeline nunca termine.
     def _tune_xgboost(self, clf, X_train, y_train):
+        """Búsqueda aleatoria de hiperparámetros para XGBoost con validación cruzada.
+
+        Entrena el pipeline completo (preprocesado + clasificador) en cada fold para
+        evitar fuga de datos y guarda el mejor modelo y sus parámetros en outputs/.
+
+        Paralelismo: n_jobs=1 en RSCV (fits secuenciales) + n_jobs=-1 en XGBoost
+        (paralelismo interno vía OpenMP por fit). Esto evita el oversubscription de
+        CPU que ocurre cuando RSCV lanza procesos en paralelo y cada uno intenta
+        usar todos los cores, causando que el pipeline nunca termine.
+        """
         n_iter = 30
         cv_folds = 3
         total_fits = n_iter * cv_folds
@@ -175,7 +178,7 @@ class ModelTrainer:
             cv=cv_folds,
             scoring="roc_auc",
             n_jobs=1,
-            random_state=42,
+            random_state=config.RANDOM_STATE,
             verbose=0,
             refit=True,
         )
@@ -199,10 +202,13 @@ class ModelTrainer:
             # en los tres modelos clásicos, igual que scale_pos_weight en XGBoost
             # y class_weight_dict en la red neuronal.
             "logistic_regression": LogisticRegression(
-                max_iter=1000, class_weight="balanced", random_state=42
+                max_iter=1000, class_weight="balanced", random_state=config.RANDOM_STATE
             ),
             "decision_tree": DecisionTreeClassifier(
-                max_depth=12, min_samples_leaf=50, class_weight="balanced", random_state=42
+                max_depth=12,
+                min_samples_leaf=50,
+                class_weight="balanced",
+                random_state=config.RANDOM_STATE,
             ),
             "random_forest": RandomForestClassifier(
                 n_estimators=200,
@@ -210,7 +216,7 @@ class ModelTrainer:
                 min_samples_leaf=20,
                 class_weight="balanced",
                 n_jobs=-1,
-                random_state=42,
+                random_state=config.RANDOM_STATE,
             ),
             # tree_method='hist' acelera el entrenamiento; scale_pos_weight compensa
             # el desbalance de clases (~63% no cancela / ~37% cancela ≈ 1.7).
@@ -224,36 +230,45 @@ class ModelTrainer:
                 tree_method="hist",
                 scale_pos_weight=1.7,
                 n_jobs=-1,
-                random_state=42,
+                random_state=config.RANDOM_STATE,
             ),
             "neural_network": KerasMLPClassifier(
-                epochs=nn_epochs, batch_size=nn_batch_size, random_state=42
+                epochs=nn_epochs, batch_size=nn_batch_size, random_state=config.RANDOM_STATE
             ),
         }
 
     def train_all_models(
-        self, X_train, y_train, nn_epochs=10, nn_batch_size=64, tune_xgboost=False
+        self,
+        X_train,
+        y_train,
+        nn_epochs=config.NN_EPOCHS,
+        nn_batch_size=config.NN_BATCH_SIZE,
+        tune_xgboost=False,
     ):
         """Entrena los 5 modelos requeridos por el enunciado.
 
         Todos se envuelven en un Pipeline sklearn (preprocessor + clasificador),
         garantizando evaluación homógenea y ausencia de fuga de datos.
+        Cada pipeline recibe su propio clone del preprocessor para evitar
+        que el fit de un modelo sobreescriba el estado del objeto compartido.
         """
         algorithms = self._build_algorithms(nn_epochs, nn_batch_size)
 
         for name, clf in algorithms.items():
-            print(f"Entrenando modelo: {name}...")
+            logger.info("Entrenando modelo: %s", name)
 
             # Para XGBoost: opción de realizar búsqueda aleatoria de hiperparámetros.
             if name == "xgboost" and tune_xgboost:
                 best_pipeline = self._tune_xgboost(clf, X_train, y_train)
                 self.models[name] = best_pipeline
                 joblib.dump(best_pipeline, MODELS_DIR / f"{name}.pkl")
-                print(f"  -> Guardado en {MODELS_DIR / f'{name}.pkl'}")
+                logger.info("Guardado en %s", MODELS_DIR / f"{name}.pkl")
                 continue
 
-            pipeline = Pipeline([("preprocessor", self.preprocessor), ("classifier", clf)])
+            # clone() crea una copia sin estado del preprocessor para que cada
+            # pipeline sea independiente y el fit no mute el objeto compartido.
+            pipeline = Pipeline([("preprocessor", clone(self.preprocessor)), ("classifier", clf)])
             pipeline.fit(X_train, y_train)
             self.models[name] = pipeline
             joblib.dump(pipeline, MODELS_DIR / f"{name}.pkl")
-            print(f"  -> Guardado en {MODELS_DIR / f'{name}.pkl'}")
+            logger.info("Guardado en %s", MODELS_DIR / f"{name}.pkl")

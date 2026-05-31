@@ -12,11 +12,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
-
-
-def _to_str(X):
-    return X.astype(str)
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.config import (
     CAT_COLS,
@@ -99,7 +95,7 @@ def preprocess_and_split(df):
 
     # 4: Filtrar solo las columnas presentes en el dataset para cada grupo
     num_cols = [c for c in NUM_COLS if c in X.columns]
-    cat_low_cols = [c for c in CAT_COLS if c in X.columns]
+    cat_cols = [c for c in CAT_COLS if c in X.columns]
 
     # 5: Sub-pipelines por tipo de columna
     num_pipeline = Pipeline(
@@ -109,20 +105,19 @@ def preprocess_and_split(df):
         ]
     )
 
-    # Baja cardinalidad (hotel, meal, deposit_type, etc.) → OneHotEncoder
-    cat_low_pipeline = Pipeline(
+    # Categóricas (hotel, meal, country, agent, etc.) → OneHotEncoder
+    cat_pipeline = Pipeline(
         [
             ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
-            ("to_str", FunctionTransformer(_to_str, feature_names_out="one-to-one")),
             ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
         ]
     )
 
-    # 6: Combinar los dos sub-pipelines en un ColumnTransformer
+    # 6: Combinar los sub-pipelines en un ColumnTransformer
     col_transformer = ColumnTransformer(
         [
             ("num", num_pipeline, num_cols),
-            ("cat_low", cat_low_pipeline, cat_low_cols),
+            ("cat", cat_pipeline, cat_cols),
         ],
         remainder="drop",
     )
