@@ -127,7 +127,7 @@ def plot_feature_importances(model_name="xgboost", top_n=15):
     preprocessor_step = pipeline.named_steps["preprocessor"]
     classifier_step = pipeline.named_steps["classifier"]
 
-    feature_names = preprocessor_step.get_feature_names_out()
+    feature_names = preprocessor_step["col_transform"].get_feature_names_out()
     importances = classifier_step.feature_importances_
     indices = np.argsort(importances)[-top_n:]
 

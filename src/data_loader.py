@@ -12,7 +12,11 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
+
+
+def _to_str(X):
+    return X.astype(str)
 
 from src.config import (
     CAT_COLS,
@@ -109,6 +113,7 @@ def preprocess_and_split(df):
     cat_low_pipeline = Pipeline(
         [
             ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
+            ("to_str", FunctionTransformer(_to_str, feature_names_out="one-to-one")),
             ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
         ]
     )
