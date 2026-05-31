@@ -71,7 +71,14 @@ def main():
         metrics = evaluate_model(name, X_test, y_test)
         results[name] = metrics
         plot_confusion_matrix(y_test, metrics["y_preds"], name)
-        print(f"Modelo {name} evaluado. F1-Score: {metrics['f1_score']:.4f}")
+        print(
+            f"Modelo {name:<20} evaluado — "
+            f"Acc: {metrics['accuracy']:.4f} | "
+            f"Prec: {metrics['precision']:.4f} | "
+            f"Rec: {metrics['recall']:.4f} | "
+            f"F1: {metrics['f1_score']:.4f} | "
+            f"ROC-AUC: {metrics['roc_auc']:.4f}"
+        )
 
     # Generar los graficos comparativos
     plot_roc_curves(results, y_test)
