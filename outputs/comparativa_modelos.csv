@@ -1,6 +1,6 @@
 Modelo,Accuracy,F1-Score,ROC-AUC
-Logistic Regression,0.819,0.8147,0.8964
-Decision Tree,0.8442,0.8424,0.9221
-Random Forest,0.8142,0.7985,0.9287
-Xgboost,0.8688,0.8672,0.9446
-Neural Network,0.8575,0.8558,0.9349
+Logistic Regression,0.8365,0.834,0.916
+Decision Tree,0.8615,0.8602,0.9362
+Random Forest,0.8254,0.8132,0.9292
+Xgboost,0.8923,0.8929,0.9626
+Neural Network,0.8771,0.8772,0.9503

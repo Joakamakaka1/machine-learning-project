@@ -20,11 +20,18 @@ OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Variables a eliminar por fuga de datos o irrelevancia
+# Reservation_status es la etiqueta de cancelación codificada como texto. El modelo podría aprender a identificar literalmente.
+# Reservation_status_date es la fecha de esa etiqueta, lo que también causaría fuga de datos.
+# Company es un ID de empresa que hizo la reserva. No aporta información útil y podría causar sobreajuste.
 COLS_TO_DROP = ["reservation_status", "reservation_status_date", "company"]
+
+# Variable objetivo
 TARGET_COL = "is_canceled"
 
-# Columnas numéricas del dataset — usadas en la capa de inferencia (predictor.py)
-# Se usa para convertir de forma segura los valores nulos textuales ("NULL", "None") a NaN
+# Tokens que el CSV codifica como valor ausente
+NA_TOKENS = ["NULL", "NA", "NaN", ""]
+
+# Columnas numéricas continuas/discretas.
 NUM_COLS = [
     "lead_time",
     "arrival_date_year",
@@ -39,9 +46,33 @@ NUM_COLS = [
     "previous_cancellations",
     "previous_bookings_not_canceled",
     "booking_changes",
-    "agent",
     "days_in_waiting_list",
     "adr",
     "required_car_parking_spaces",
     "total_of_special_requests",
+    # Features derivadas por engineer_features()
+    "total_nights",
+    "total_guests",
+    "adr_per_night",
+    "room_type_changed",
+    "previous_cancel_rate",
+    "is_new_guest",
 ]
+
+# Columnas categóricas de baja cardinalidad → OneHotEncoder
+CAT_COLS = [
+    "hotel",
+    "arrival_date_month",
+    "meal",
+    "market_segment",
+    "distribution_channel",
+    "reserved_room_type",
+    "assigned_room_type",
+    "deposit_type",
+    "customer_type",
+]
+
+# Columnas categóricas de alta cardinalidad → TargetEncoder.
+# OneHotEncoder generaría: 
+# + 400 columnas dispersas para country (~180 valores) y agent (~300 valores).
+HIGH_CARD_CAT_COLS = ["country", "agent"]

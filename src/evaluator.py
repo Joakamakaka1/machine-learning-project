@@ -1,6 +1,7 @@
 """
 - Archivo encargado de:
-- Evaluar todos los modelos
+- Evaluar todos los modelos (incluyendo la red neuronal, que ahora es un
+  Pipeline sklearn igual que los demás)
 - Generar la tabla comparativa exigida
 - Guardar los gráficos necesarios
 """
@@ -10,7 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import tensorflow as tf
+import shap
+
 from sklearn.metrics import (
     auc,
     average_precision_score,
@@ -24,28 +26,18 @@ from src.config import MODELS_DIR, OUTPUTS_DIR
 
 
 # Función encargada de:
-# - Evaluar los modelos tradicionales o la red neuronal
+# - Evaluar cualquier modelo (todos son Pipeline sklearn, incluida la red neuronal)
 # - Devolver métricas
 def evaluate_model(model_name, X_test, y_test):
-    # 1. Evaluamos primero el modelo de red neuronal
-    if model_name == "neural_network":
-        # Cargar componentes
-        preprocessor = joblib.load(MODELS_DIR / "nn_preprocessor.pkl")
-        keras_model = tf.keras.models.load_model(MODELS_DIR / "neural_network.keras")
+    # Los modelos son Pipelines sklearn
+    # Estan serializados en un único .pkl, por lo que se evalúan de la misma forma.
+    pipeline = joblib.load(MODELS_DIR / f"{model_name}.pkl")
+    y_preds = pipeline.predict(X_test)
 
-        X_test_processed = preprocessor.transform(X_test)
-        y_probs = keras_model.predict(X_test_processed).flatten()
-        y_preds = (y_probs >= 0.5).astype(int)
-    # 2. Evaluamos los modelos tradicionales basados en sklearn
+    if hasattr(pipeline, "predict_proba"):
+        y_probs = pipeline.predict_proba(X_test)[:, 1]
     else:
-        # Cargar pipeline
-        pipeline = joblib.load(MODELS_DIR / f"{model_name}.pkl")
-        y_preds = pipeline.predict(X_test)
-
-        if hasattr(pipeline, "predict_proba"):
-            y_probs = pipeline.predict_proba(X_test)[:, 1]
-        else:
-            y_probs = y_preds
+        y_probs = y_preds
 
     # Calcular métricas
     report = classification_report(y_test, y_preds, output_dict=True)
@@ -236,3 +228,52 @@ def plot_roc_curves(models_results, y_test):
     plt.tight_layout()
     plt.savefig(OUTPUTS_DIR / "roc_curve_comparison.png")
     plt.close()
+
+
+def plot_shap_summary(model_name, X_test, max_display=15):
+    """Genera un beeswarm plot SHAP para el modelo indicado y lo guarda en outputs/.
+
+    SHAP (SHapley Additive exPlanations) complementa feature_importances_ mostrando
+    no solo la magnitud de cada variable sino también su dirección: valores altos
+    de lead_time empujan la predicción hacia cancelación, por ejemplo.
+
+    Usa TreeExplainer para modelos de árbol (XGBoost, RF), que es instantáneo.
+    Para Logistic Regression usa LinearExplainer.
+    """
+    pipeline = joblib.load(MODELS_DIR / f"{model_name}.pkl")
+    classifier = pipeline.named_steps["classifier"]
+
+    # Transformar X_test con todos los pasos del pipeline excepto el clasificador
+    X_transformed = pipeline[:-1].transform(X_test)
+
+    # Obtener nombres de features del ColumnTransformer (segundo paso del preprocessor)
+    try:
+        col_transformer = pipeline.named_steps["preprocessor"].named_steps["col_transform"]
+        feature_names = col_transformer.get_feature_names_out()
+    except Exception:
+        feature_names = [f"feature_{i}" for i in range(X_transformed.shape[1])]
+
+    # Seleccionar explainer según el tipo de modelo
+    if hasattr(classifier, "feature_importances_"):
+        explainer = shap.TreeExplainer(classifier)
+        shap_values = explainer.shap_values(X_transformed)
+        # XGBoost devuelve directamente un array 2D; RF devuelve lista [clase0, clase1]
+        if isinstance(shap_values, list):
+            shap_values = shap_values[1]
+    else:
+        explainer = shap.LinearExplainer(classifier, X_transformed)
+        shap_values = explainer.shap_values(X_transformed)
+
+    plt.figure(figsize=(10, 7))
+    shap.summary_plot(
+        shap_values,
+        X_transformed,
+        feature_names=feature_names,
+        max_display=max_display,
+        show=False,
+    )
+    plt.title(f"SHAP Summary — {model_name.replace('_', ' ').title()}", fontsize=13, pad=12)
+    plt.tight_layout()
+    plt.savefig(OUTPUTS_DIR / f"shap_summary_{model_name}.png", dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"SHAP summary guardado en: {OUTPUTS_DIR / f'shap_summary_{model_name}.png'}")

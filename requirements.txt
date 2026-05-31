@@ -8,6 +8,7 @@ numpy>=1.26
 # ML
 scikit-learn>=1.4
 xgboost>=2.0
+shap>=0.46
 
 # Deep Learning
 tensorflow>=2.16

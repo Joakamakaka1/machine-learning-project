@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 
@@ -13,11 +14,17 @@ from src.evaluator import (
     plot_model_comparison_chart,
     plot_precision_recall_curves,
     plot_roc_curves,
+    plot_shap_summary,
 )
 from src.model_trainer import ModelTrainer
 
 
 def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+        datefmt="%H:%M:%S",
+    )
     print("--- INICIANDO PIPELINE DE MACHINE LEARNING ---")
 
     # 1. Cargar y separar los datos
@@ -34,12 +41,21 @@ def main():
     print(f"Archivos train.csv y test.csv guardados con exito en: {PROCESSED_DATA_DIR}")
 
     # 3. Entrenar los modelos
-    nn_epochs = 5
-    nn_batch_size = 128
+    # Todos los modelos se entrenan dentro de un
+    # Pipeline sklearn (preprocesado + clasificador), lo que garantiza:
+    #   - Una única serialización por modelo (.pkl).
+    #   - Evaluación y selección homogéneas (la red neuronal puede ganar).
+    #   - Ausencia de fuga de datos entre preprocesado y test.
+
+    # 50 epochs con patience=3 (early stopping) — la red ampliada (128-64-32)
+    # necesita más epochs para converger; early stopping corta antes si ya no mejora.
+    nn_epochs = 50
+    nn_batch_size = 256
 
     trainer = ModelTrainer(preprocessor)
-    trainer.train_classical_models(X_train, y_train)
-    trainer.train_neural_network(X_train, y_train, epochs=nn_epochs, batch_size=nn_batch_size)
+    trainer.train_all_models(
+        X_train, y_train, nn_epochs=nn_epochs, nn_batch_size=nn_batch_size, tune_xgboost=True
+    )
 
     # 4. Evaluar los modelos
     print("\nEvaluando modelos...")
@@ -61,17 +77,27 @@ def main():
     # Generar los graficos comparativos
     plot_roc_curves(results, y_test)
     plot_feature_importances("xgboost")
+    plot_shap_summary("xgboost", X_test)
     plot_model_comparison_chart(results)
     plot_precision_recall_curves(results, y_test)
 
     # Generar tabla comparativa en consola y guardarla en la carpeta de outputs/
     generate_comparison_report(results)
 
-    # 5. Se selecciona el mejor modelo sklearn por F1-Score
-    sklearn_model_names = ["logistic_regression", "decision_tree", "random_forest", "xgboost"]
-    best_model_key = max(sklearn_model_names, key=lambda name: results[name]["f1_score"])
+    # 5. Selección del mejor modelo por ROC-AUC.
+    # Se usa ROC-AUC (y no accuracy o F1) porque es independiente del umbral de
+    # decisión y robusto al desbalance de clases (~37 % de cancelaciones).
+    # Este mide la capacidad del modelo de ordenar las reservas por riesgo de cancelación.
+    all_model_names = [
+        "logistic_regression",
+        "decision_tree",
+        "random_forest",
+        "xgboost",
+        "neural_network",
+    ]
+    best_model_key = max(all_model_names, key=lambda name: results[name]["roc_auc"])
     print(
-        f"\n>>> Mejor modelo sklearn: {best_model_key.replace('_', ' ').title()} (F1-Score maximo)"
+        f"\n>>> Mejor modelo: {best_model_key.replace('_', ' ').title()} (ROC-AUC máximo: {results[best_model_key]['roc_auc']:.4f})"
     )
 
     shutil.copy(MODELS_DIR / f"{best_model_key}.pkl", MODELS_DIR / "best_model.pkl")
