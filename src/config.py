@@ -14,12 +14,14 @@ PROCESSED_DATA_DIR = BASE_DIR / "data" / "processed"
 MODELS_DIR = BASE_DIR / "models"
 OUTPUTS_DIR = BASE_DIR / "outputs"
 
+
 # Función para crear directorios si no existen
 def setup_dirs() -> None:
     """Crea los directorios necesarios si no existen. Llamar explícitamente desde main()."""
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
     PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 
 # Constantes de entrenamiento y reproducibilidad
 RANDOM_STATE = 42
@@ -37,12 +39,20 @@ MODEL_NAMES = [
 ]
 
 # Variables a eliminar por fuga de datos o irrelevancia
-# Reservation_status es la etiqueta de cancelación codificada como texto.
-# El modelo podría aprender a identificar literalmente.
-# Reservation_status_date es la fecha de esa etiqueta, lo que también causaría fuga de datos.
-# Company es un ID de empresa que hizo la reserva.
-# No aporta información útil y podría causar sobreajuste.
-COLS_TO_DROP = ["reservation_status", "reservation_status_date", "company"]
+# reservation_status: etiqueta de cancelación codificada como texto (leakage directo).
+# reservation_status_date: fecha de esa etiqueta (leakage directo).
+# company: ID de empresa con alta cardinalidad y bajo poder predictivo.
+# required_car_parking_spaces: proxy de check-in (leakage — cancelados tienen 0.0%).
+# arrival_date_year: no generaliza a años futuros (solo contiene 2015-2017).
+# assigned_room_type: se asigna al check-in, no al momento de reserva (leakage).
+COLS_TO_DROP = [
+    "reservation_status",
+    "reservation_status_date",
+    "company",
+    "required_car_parking_spaces",
+    "arrival_date_year",
+    "assigned_room_type",
+]
 
 # Variable objetivo
 TARGET_COL = "is_canceled"
@@ -53,7 +63,6 @@ NA_TOKENS = ["NULL", "NA", "NaN", ""]
 # Columnas numéricas continuas/discretas.
 NUM_COLS = [
     "lead_time",
-    "arrival_date_year",
     "arrival_date_week_number",
     "arrival_date_day_of_month",
     "stays_in_weekend_nights",
@@ -67,15 +76,16 @@ NUM_COLS = [
     "booking_changes",
     "days_in_waiting_list",
     "adr",
-    "required_car_parking_spaces",
     "total_of_special_requests",
-    # Features derivadas por engineer_features()
+    # Features derivadas por FeatureEngineer
     "total_nights",
     "total_guests",
     "adr_per_night",
-    "room_type_changed",
     "previous_cancel_rate",
     "is_new_guest",
+    "is_domestic",
+    "is_agent_booking",
+    "log_lead_time",
 ]
 
 # Columnas categóricas → OneHotEncoder
@@ -86,9 +96,11 @@ CAT_COLS = [
     "market_segment",
     "distribution_channel",
     "reserved_room_type",
-    "assigned_room_type",
     "deposit_type",
     "customer_type",
     "country",
     "agent",
+    # Features derivadas categóricas por FeatureEngineer
+    "guest_composition",
+    "stay_category",
 ]

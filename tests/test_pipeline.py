@@ -1,32 +1,80 @@
 import pandas as pd
+import pytest
 
-from src.predictor import BookingPredictor
+from src.data_loader import FeatureEngineer
+from src.predictor import load_model
 
 
-def test_clean_data_coercion(monkeypatch):
-    # Mockear __init__ para evitar cargar el modelo real y no requerir dependencias del disco
-    monkeypatch.setattr(BookingPredictor, "__init__", lambda self: None)
+def test_load_model_missing_file():
+    """Verifica que load_model lanza FileNotFoundError si el modelo no existe."""
+    with pytest.raises(FileNotFoundError):
+        load_model("modelo_inexistente_xyz")
 
-    predictor = BookingPredictor()
 
-    # DataFrame con strings sucios en columnas numéricas y una columna categórica
-    test_df = pd.DataFrame(
+def test_feature_engineer_creates_derived_columns():
+    """Verifica que FeatureEngineer crea las columnas derivadas correctamente."""
+    df = pd.DataFrame(
         [
             {
-                "lead_time": "120",
-                "agent": "NULL",
-                "adr": "None",
-                "hotel": "Resort Hotel",
-                "total_of_special_requests": " ",
+                "stays_in_weekend_nights": 2,
+                "stays_in_week_nights": 3,
+                "adults": 2,
+                "children": 1.0,
+                "babies": 0,
+                "adr": 100.0,
+                "reserved_room_type": "A",
+                "assigned_room_type": "B",
+                "is_repeated_guest": 0,
+                "previous_cancellations": 0,
+                "previous_bookings_not_canceled": 0,
+                "country": "PRT",
+                "agent": 9.0,
+                "lead_time": 10,
             }
         ]
     )
 
-    cleaned_df = predictor._clean_data(test_df)
+    fe = FeatureEngineer()
+    result = fe.transform(df)
 
-    # Validar la coacción correcta a numérico y nulo
-    assert cleaned_df.loc[0, "lead_time"] == 120.0
-    assert pd.isna(cleaned_df.loc[0, "agent"])
-    assert pd.isna(cleaned_df.loc[0, "adr"])
-    assert pd.isna(cleaned_df.loc[0, "total_of_special_requests"])
-    assert cleaned_df.loc[0, "hotel"] == "Resort Hotel"
+    assert result.loc[0, "total_nights"] == 5
+    assert result.loc[0, "total_guests"] == 3.0
+    assert result.loc[0, "adr_per_night"] == 20.0
+    assert result.loc[0, "is_new_guest"] == 1
+    assert result.loc[0, "is_domestic"] == 1
+    assert result.loc[0, "is_agent_booking"] == 1
+    assert result.loc[0, "guest_composition"] == "family"
+    assert result.loc[0, "stay_category"] == "mixed"
+    assert abs(result.loc[0, "log_lead_time"] - np.log1p(10)) < 1e-5
+
+
+def test_feature_engineer_no_division_by_zero():
+    """Verifica que adr_per_night no divide por cero cuando total_nights == 0."""
+    import numpy as np
+    df = pd.DataFrame(
+        [
+            {
+                "stays_in_weekend_nights": 0,
+                "stays_in_week_nights": 0,
+                "adults": 1,
+                "children": 0.0,
+                "babies": 0,
+                "adr": 50.0,
+                "reserved_room_type": "A",
+                "assigned_room_type": "A",
+                "is_repeated_guest": 0,
+                "previous_cancellations": 0,
+                "previous_bookings_not_canceled": 0,
+                "country": "ESP",
+                "agent": None,
+                "lead_time": 0,
+            }
+        ]
+    )
+
+    fe = FeatureEngineer()
+    result = fe.transform(df)
+
+    # Cuando total_nights == 0, adr_per_night debe ser igual a adr
+    assert result.loc[0, "adr_per_night"] == 50.0
+

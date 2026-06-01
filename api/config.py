@@ -23,11 +23,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-# Aliases de modulo para compatibilidad con el resto del codigo
-PROJECT_NAME = settings.PROJECT_NAME
-VERSION = settings.VERSION
-API_V1_STR = settings.API_V1_STR
-MODEL_PATH = settings.MODEL_PATH
-API_HOST = settings.API_HOST
-API_PORT = settings.API_PORT

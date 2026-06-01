@@ -19,8 +19,10 @@ from src.config import (
     COLS_TO_DROP,
     NA_TOKENS,
     NUM_COLS,
+    RANDOM_STATE,
     RAW_DATA_PATH,
     TARGET_COL,
+    TEST_SIZE,
 )
 
 
@@ -35,9 +37,13 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
     - total_nights: noches totales de estancia.
     - total_guests: total de huéspedes (mínimo 1).
     - adr_per_night: precio efectivo por noche.
-    - room_type_changed: si la habitación asignada difiere de la reservada.
     - previous_cancel_rate: tasa histórica de cancelación del cliente.
     - is_new_guest: cliente sin ningún historial previo.
+    - is_domestic: 1 si el país es Portugal (mercado doméstico con ~57% cancelación).
+    - is_agent_booking: 1 si la reserva fue gestionada por agencia (~39% vs 25%).
+    - guest_composition: perfil del huésped (solo/couple/family/group/other).
+    - stay_category: tipo de estancia (weekend_only/week_only/mixed/no_stay).
+    - log_lead_time: log1p(lead_time) para suavizar la cola de outliers.
     """
 
     def fit(self, X, y=None):
@@ -46,12 +52,12 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         df = pd.DataFrame(X).copy() if not isinstance(X, pd.DataFrame) else X.copy()
 
+        # --- Cálculo de las 10 features derivadas ---
         df["total_nights"] = df["stays_in_weekend_nights"] + df["stays_in_week_nights"]
         df["total_guests"] = (df["adults"] + df["children"].fillna(0) + df["babies"]).clip(lower=1)
         df["adr_per_night"] = np.where(
             df["total_nights"] > 0, df["adr"] / df["total_nights"], df["adr"]
         )
-        df["room_type_changed"] = (df["reserved_room_type"] != df["assigned_room_type"]).astype(int)
         df["previous_cancel_rate"] = df["previous_cancellations"] / (
             df["previous_cancellations"] + df["previous_bookings_not_canceled"] + 1
         )
@@ -60,6 +66,35 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
             & (df["previous_cancellations"] == 0)
             & (df["previous_bookings_not_canceled"] == 0)
         ).astype(int)
+
+        # is_domestic: huéspedes portugueses cancelan mucho más (~57% vs ~24%)
+        df["is_domestic"] = (df["country"] == "PRT").astype(int)
+
+        # is_agent_booking: reservas con agencia cancelan más (~39% vs ~25%)
+        df["is_agent_booking"] = df["agent"].notna().astype(int)
+
+        # guest_composition: perfil socio-demográfico de la reserva
+        df["guest_composition"] = "other"
+        children_filled = df["children"].fillna(0)
+        mask_solo = (df["adults"] == 1) & (children_filled == 0) & (df["babies"] == 0)
+        mask_couple = (df["adults"] == 2) & (children_filled == 0) & (df["babies"] == 0)
+        mask_group = (df["adults"] > 2) & (children_filled == 0) & (df["babies"] == 0)
+        mask_family = (children_filled > 0) | (df["babies"] > 0)
+        df.loc[mask_solo, "guest_composition"] = "solo"
+        df.loc[mask_couple, "guest_composition"] = "couple"
+        df.loc[mask_group, "guest_composition"] = "group"
+        df.loc[mask_family, "guest_composition"] = "family"
+
+        # stay_category: tipo de estancia (ocio fin de semana vs negocios)
+        df["stay_category"] = "no_stay"
+        wknd = df["stays_in_weekend_nights"] > 0
+        week = df["stays_in_week_nights"] > 0
+        df.loc[wknd & ~week, "stay_category"] = "weekend_only"
+        df.loc[~wknd & week, "stay_category"] = "week_only"
+        df.loc[wknd & week, "stay_category"] = "mixed"
+
+        # log_lead_time: suaviza la distribución sesgada de lead_time
+        df["log_lead_time"] = np.log1p(df["lead_time"])
 
         return df
 
@@ -111,12 +146,14 @@ def preprocess_and_split(df):
 
     # 3: Dividir en train/test con estratificación para mantener la proporción de clases
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
+        X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y
     )
 
-    # 4: Filtrar solo las columnas presentes en el dataset para cada grupo
-    num_cols = [c for c in NUM_COLS if c in X.columns]
-    cat_cols = [c for c in CAT_COLS if c in X.columns]
+    # 4: Definir las columnas numéricas y categóricas para el ColumnTransformer.
+    # Dado que FeatureEngineer se ejecuta primero, todas las columnas de NUM_COLS y CAT_COLS
+    # estarán presentes en el flujo antes del ColumnTransformer.
+    num_cols = NUM_COLS
+    cat_cols = CAT_COLS
 
     # 5: Sub-pipelines por tipo de columna
     num_pipeline = Pipeline(

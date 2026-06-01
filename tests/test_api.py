@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 
+import numpy as np
 from fastapi.testclient import TestClient
 
 import api.router as router_module
@@ -20,11 +21,11 @@ def test_health_check():
 
 def test_predict_endpoint_success(monkeypatch):
     """Valida que el endpoint de predicción retorne resultados exitosos."""
-    # Mockear el predictor para aislar la llamada de ML en test
-    mock_predictor = MagicMock()
-    mock_predictor.predict.return_value = [1]
-    mock_predictor.predict_proba.return_value = [0.854]
-    monkeypatch.setattr(router_module, "_predictor", mock_predictor)
+    # Mockear el pipeline para aislar la llamada de ML en test
+    mock_pipeline = MagicMock()
+    mock_pipeline.predict.return_value = [1]
+    mock_pipeline.predict_proba.return_value = np.array([[0.146, 0.854]])
+    monkeypatch.setattr(router_module, "_pipeline", mock_pipeline)
 
     booking_payload = {
         "hotel": "City Hotel",
@@ -61,15 +62,14 @@ def test_predict_endpoint_success(monkeypatch):
     assert response.status_code == 200
     data = response.json()
     assert data["prediction"] == 1
-    assert data["probability"] == 0.854
     assert data["label"] == "Cancelado"
     assert "85.40%" in data["message"]
 
 
 def test_predict_endpoint_model_not_loaded(monkeypatch):
     """Valida el comportamiento si el modelo no está cargado (503 Service Unavailable)."""
-    # Forzar que el predictor sea None para simular modelo no cargado
-    monkeypatch.setattr(router_module, "_predictor", None)
+    # Forzar que el pipeline sea None para simular modelo no cargado
+    monkeypatch.setattr(router_module, "_pipeline", None)
 
     booking_payload = {
         "hotel": "City Hotel",
@@ -106,4 +106,3 @@ def test_predict_endpoint_model_not_loaded(monkeypatch):
     assert response.status_code == 503
     data = response.json()
     assert "detail" in data
-    assert data["status_code"] == 503

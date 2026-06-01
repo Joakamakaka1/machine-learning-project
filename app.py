@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from src.predictor import BookingPredictor
+from src.predictor import load_model
 
 st.set_page_config(page_title="Predictor de Cancelaciones de Hotel", layout="wide")
 
@@ -14,12 +14,12 @@ st.markdown(
 
 # Cargar el predictor
 @st.cache_resource
-def load_predictor():
-    return BookingPredictor()
+def get_pipeline():
+    return load_model()
 
 
 try:
-    predictor = load_predictor()
+    pipeline = get_pipeline()
     model_loaded = True
 except Exception as e:
     model_loaded = False
@@ -81,7 +81,7 @@ if model_loaded:
             ],
         )
         distribution_channel = st.selectbox(
-            "Canal de Distribución", ["Direct", "TA/TO", "Corporate", "Corporate", "GDS"]
+            "Canal de Distribución", ["Direct", "TA/TO", "Corporate", "GDS"]
         )
 
     st.sidebar.subheader("Políticas e Historial")
@@ -143,8 +143,8 @@ if model_loaded:
         )
 
         # Inferencia
-        pred = predictor.predict(input_data)[0]
-        prob = predictor.predict_proba(input_data)[0]
+        pred = pipeline.predict(input_data)[0]
+        prob = pipeline.predict_proba(input_data)[:, 1][0]
 
         st.subheader("Resultado de la Predicción")
 

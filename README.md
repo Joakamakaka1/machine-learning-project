@@ -72,8 +72,9 @@ preprocess_and_split()       ← Elimina columnas con fuga de datos, divide trai
   Pipeline sklearn
   ┌────────────────────────────────────────────────────────────┐
   │  FeatureEngineer (transformer)                             │
-  │    · total_nights, total_guests, adr_per_night             │
-  │    · room_type_changed, previous_cancel_rate, is_new_guest │
+  │    · total_nights, total_guests, adr_per_night, is_new_guest│
+  │    · previous_cancel_rate, is_domestic, is_agent_booking   │
+  │    · guest_composition, stay_category, log_lead_time       │
   │                                                            │
   │  ColumnTransformer                                         │
   │    · Numéricas   → SimpleImputer(median) + StandardScaler  │
@@ -161,16 +162,20 @@ Ocurre cuando se introduce información del futuro en el conjunto de entrenamien
 
 ### 2. Ingeniería de Features (`FeatureEngineer`)
 
-El transformer `FeatureEngineer` genera 6 variables derivadas dentro del pipeline sklearn, garantizando que se calculen correctamente en cada fold de la validación cruzada:
+El transformer `FeatureEngineer` genera 10 variables derivadas dentro del pipeline sklearn, garantizando que se calculen correctamente en cada fold de la validación cruzada:
 
-| Feature derivada       | Descripción                                              |
-| :--------------------- | :------------------------------------------------------- |
-| `total_nights`         | Noches de semana + noches de fin de semana               |
-| `total_guests`         | Adults + children + babies (mínimo 1)                    |
-| `adr_per_night`        | Precio efectivo por noche (`adr / total_nights`)         |
-| `room_type_changed`    | 1 si la habitación asignada difiere de la reservada      |
-| `previous_cancel_rate` | Tasa histórica de cancelación del cliente                |
-| `is_new_guest`         | 1 si el cliente no tiene historial previo de ningún tipo |
+| Feature derivada       | Descripción                                                                              |
+| :--------------------- | :--------------------------------------------------------------------------------------- |
+| `total_nights`         | Noches de semana + noches de fin de semana                                               |
+| `total_guests`         | Adults + children + babies (mínimo 1)                                                    |
+| `adr_per_night`        | Precio efectivo por noche (`adr / total_nights`)                                         |
+| `previous_cancel_rate` | Tasa histórica de cancelación del cliente                                                |
+| `is_new_guest`         | 1 si el cliente no tiene historial previo de ningún tipo                                 |
+| `is_domestic`          | 1 si el país es Portugal (mercado doméstico)                                             |
+| `is_agent_booking`     | 1 si la reserva fue realizada a través de agencia                                        |
+| `guest_composition`    | Clasificación sociodemográfica (solo, couple, family, group, other)                      |
+| `stay_category`        | Clasificación temporal de estancia (weekend_only, week_only, mixed, no_stay)             |
+| `log_lead_time`        | Transformación logarítmica de la anticipación de la reserva (`log1p(lead_time)`)         |
 
 ### 3. La Métrica Principal: ROC-AUC
 

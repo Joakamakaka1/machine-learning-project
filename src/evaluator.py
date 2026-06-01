@@ -6,7 +6,8 @@
 - Guardar los gráficos necesarios
 """
 
-import joblib
+import logging
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -23,19 +24,18 @@ from sklearn.metrics import (
     roc_curve,
 )
 
-from src.config import MODELS_DIR, OUTPUTS_DIR
+from src.config import OUTPUTS_DIR
+
+logger = logging.getLogger(__name__)
 
 
-def evaluate_model(model_name, X_test, y_test):
-    """Evalúa cualquier modelo (todos son Pipeline sklearn, incluida la red neuronal).
-
-    Los modelos están serializados en un único .pkl, por lo que se evalúan de la misma forma.
+def evaluate_model(pipeline, X_test, y_test):
+    """Evalúa un pipeline sklearn ya entrenado.
 
     Returns:
         dict: Métricas de evaluación: accuracy, precision, recall, f1_score,
               roc_auc, fpr, tpr, y_preds e y_probs.
     """
-    pipeline = joblib.load(MODELS_DIR / f"{model_name}.pkl")
     y_preds = pipeline.predict(X_test)
 
     if hasattr(pipeline, "predict_proba"):
@@ -83,8 +83,7 @@ def generate_comparison_report(models_results):
         )
     df = pd.DataFrame(records)
     df.to_csv(OUTPUTS_DIR / "comparativa_modelos.csv", index=False)
-    print("\nTabla Comparativa de Modelos:")
-    print(df.to_string(index=False))
+    logger.info("Tabla Comparativa de Modelos:\n%s", df.to_string(index=False))
     return df
 
 
@@ -126,9 +125,8 @@ def plot_confusion_matrix(y_true, y_pred, model_name):
     plt.close()
 
 
-def plot_feature_importances(model_name="xgboost", top_n=15):
+def plot_feature_importances(pipeline, model_name="xgboost", top_n=15):
     """Extrae, dibuja y guarda la importancia de variables de un modelo basado en árboles."""
-    pipeline = joblib.load(MODELS_DIR / f"{model_name}.pkl")
     preprocessor_step = pipeline.named_steps["preprocessor"]
     classifier_step = pipeline.named_steps["classifier"]
 
@@ -148,14 +146,14 @@ def plot_feature_importances(model_name="xgboost", top_n=15):
     plt.tight_layout()
     plt.savefig(OUTPUTS_DIR / "feature_importances.png", dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"Feature importances guardadas en: {OUTPUTS_DIR / 'feature_importances.png'}")
+    logger.info("Feature importances guardadas en: %s", OUTPUTS_DIR / "feature_importances.png")
 
 
 def plot_model_comparison_chart(models_results):
     """
     Dibuja y guarda un barplot agrupado comparando:
       Accuracy, Precision, Recall, F1 y AUC por modelo.
-      """
+    """
     records = []
     for name, metrics in models_results.items():
         label = name.replace("_", " ").title()
@@ -181,7 +179,9 @@ def plot_model_comparison_chart(models_results):
     plt.tight_layout()
     plt.savefig(OUTPUTS_DIR / "comparativa_modelos_chart.png", dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"Gráfico comparativo guardado en: {OUTPUTS_DIR / 'comparativa_modelos_chart.png'}")
+    logger.info(
+        "Gráfico comparativo guardado en: %s", OUTPUTS_DIR / "comparativa_modelos_chart.png"
+    )
 
 
 def plot_precision_recall_curves(models_results, y_test):
@@ -215,7 +215,7 @@ def plot_precision_recall_curves(models_results, y_test):
     plt.tight_layout()
     plt.savefig(OUTPUTS_DIR / "precision_recall_curves.png", dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"Curvas PR guardadas en: {OUTPUTS_DIR / 'precision_recall_curves.png'}")
+    logger.info("Curvas PR guardadas en: %s", OUTPUTS_DIR / "precision_recall_curves.png")
 
 
 def plot_roc_curves(models_results, y_test):
@@ -236,7 +236,7 @@ def plot_roc_curves(models_results, y_test):
     plt.close()
 
 
-def plot_shap_summary(model_name, X_test, max_display=15):
+def plot_shap_summary(pipeline, model_name, X_test, max_display=15):
     """Genera un beeswarm plot SHAP para el modelo indicado y lo guarda en outputs/.
 
     SHAP (SHapley Additive exPlanations) complementa feature_importances_ mostrando
@@ -246,7 +246,6 @@ def plot_shap_summary(model_name, X_test, max_display=15):
     Usa TreeExplainer para modelos de árbol (XGBoost, RF), que es instantáneo.
     Para Logistic Regression usa LinearExplainer.
     """
-    pipeline = joblib.load(MODELS_DIR / f"{model_name}.pkl")
     classifier = pipeline.named_steps["classifier"]
 
     # Transformar X_test con todos los pasos del pipeline excepto el clasificador
@@ -282,4 +281,4 @@ def plot_shap_summary(model_name, X_test, max_display=15):
     plt.tight_layout()
     plt.savefig(OUTPUTS_DIR / f"shap_summary_{model_name}.png", dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"SHAP summary guardado en: {OUTPUTS_DIR / f'shap_summary_{model_name}.png'}")
+    logger.info("SHAP summary guardado en: %s", OUTPUTS_DIR / f"shap_summary_{model_name}.png")
