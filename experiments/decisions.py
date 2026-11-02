@@ -53,6 +53,20 @@ def calendar(development: pd.DataFrame) -> common.ExperimentResult:
     )
 
 
+def company(development: pd.DataFrame) -> common.ExperimentResult:
+    """Does `company` help? Without an effect, the simpler model keeps it out."""
+    return common.compare(
+        "company",
+        development,
+        [
+            common.Variant("19_variables", common.tabular_predictor(_reference)),
+            common.Variant(
+                "plus_company", common.tabular_predictor(_reference, extra_categorical=("company",))
+            ),
+        ],
+    )
+
+
 def _deduplicated(fit_predict: common.FitPredict) -> common.FitPredict:
     def run(train: pd.DataFrame, valid: pd.DataFrame) -> NDArray[np.float64]:
         content = [column for column in train.columns if column not in _NOT_BOOKING_CONTENT]

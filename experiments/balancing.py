@@ -1,7 +1,8 @@
 """Does balancing the classes help? SMOTE, undersampling and class weights against nothing.
 
-Balancing changes the prevalence that the model learns, which should distort its probabilities. The
-Brier score, the calibration slope and the cost measure that, even where the ROC-AUC does not move.
+The Brier score, the calibration slope and the cost are reported next to the ROC-AUC. SMOTE with
+XGBoost improves the Brier score (0.15362 against 0.15387), so the decision not to balance rests on
+the ROC-AUC and on simplicity, not on balancing distorting the probabilities.
 """
 
 from collections.abc import Callable

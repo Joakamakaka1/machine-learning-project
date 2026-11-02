@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 from xgboost import XGBClassifier
 
-from experiments import common, decisions, encodings
-from hotel_cancellation import config, data_loader
+from experiments import calibration_sensitivity, common, decisions, encodings
+from hotel_cancellation import config, data_loader, models
 from tests.conftest import synthetic_raw
 
 
@@ -88,6 +88,37 @@ def test_decisions_run_on_synthetic_rows(synthetic_development: pd.DataFrame) ->
     for experiment in (decisions.duplicates, decisions.per_hotel, decisions.tree_depth):
         result = experiment(synthetic_development)
         assert result.summary["roc_auc"].between(0.5, 1).all()
+
+
+def test_company_compares_the_final_variables_with_company(
+    synthetic_development: pd.DataFrame,
+) -> None:
+    summary = decisions.company(synthetic_development).summary
+    assert list(summary["variant"]) == ["19_variables", "plus_company"]
+    assert summary["roc_auc"].between(0.5, 1).all()
+
+
+def test_the_slope_sensitivity_gives_every_clip_per_model(
+    synthetic_development: pd.DataFrame,
+) -> None:
+    catalog = models.model_catalog("fast")[:2]
+    names = [spec.name for spec in catalog]
+    table = calibration_sensitivity.sensitivity(
+        synthetic_development,
+        catalog,
+        {name: {} for name in names},
+        {names[0]: "isotonic", names[1]: "none"},
+    )
+    assert list(table["model"]) == names
+    assert {"calibration_slope", "calibration_slope_clip_1e6", "share_probability_one"} <= set(
+        table
+    )
+
+
+def test_the_slope_sensitivity_refuses_rows_of_the_test_period() -> None:
+    cleaned = data_loader.clean(synthetic_raw(rows_per_month=10))
+    with pytest.raises(ValueError, match="2017-01-01"):
+        calibration_sensitivity.sensitivity(cleaned, [], {}, {})
 
 
 def test_every_encoding_runs_on_synthetic_rows(synthetic_development: pd.DataFrame) -> None:

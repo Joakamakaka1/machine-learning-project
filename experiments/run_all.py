@@ -14,6 +14,7 @@ from experiments import balancing, common, decisions, embeddings, encodings
 
 EXPERIMENTS: dict[str, Callable[[pd.DataFrame], common.ExperimentResult]] = {
     "calendar": decisions.calendar,
+    "company": decisions.company,
     "duplicates": decisions.duplicates,
     "per_hotel": decisions.per_hotel,
     "tree_depth": decisions.tree_depth,
