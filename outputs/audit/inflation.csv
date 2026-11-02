@@ -1,0 +1,5 @@
+step,label,model,train_rows,test_rows,test_rows_already_in_train,roc_auc,pr_auc,brier
+random_split_reference_variables,"Partición aleatoria, variables de la referencia",xgboost_reference,94850,23713,0.319529,0.9524037002557606,0.933867,0.083766
+temporal_split_reference_variables,"Partición temporal, variables de la referencia",xgboost_reference,78054,40509,0.0,0.8682686082926021,0.827046,0.16302
+temporal_split_without_documented_leaks,"Partición temporal, sin country ni booking_changes",xgboost_reference,78054,40509,0.0,0.818389542577363,0.780203,0.177497
+official_model,"Modelo oficial: 19 variables, sin calendario ni variables acumuladas",random_forest,78054,40509,,0.817532,0.760781,0.162726
