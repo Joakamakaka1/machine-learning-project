@@ -1,0 +1,43 @@
+{
+  "champion": {
+    "name": "random_forest",
+    "sha256": "41d3a28592ae93367b8a88ca80ed60bb1e5ac2356ec2344d4984c0770f13d7f1"
+  },
+  "candidates": {
+    "decision_tree": {
+      "file": "candidates/decision_tree.joblib",
+      "sha256": "a2f7df01c92e4071f7c2ed725f1efb48dfbcb93353b712e662fbb2b1cb3b8fa7",
+      "size_bytes": 13297
+    },
+    "dummy": {
+      "file": "candidates/dummy.joblib",
+      "sha256": "01fb10f36027f65b3ef60e2fdc17b75219c151d840623827f0f34b6dd1638c78",
+      "size_bytes": 3430
+    },
+    "logistic_regression": {
+      "file": "candidates/logistic_regression.joblib",
+      "sha256": "bd1b0f56d8ff23589ec99ce19b8e797436ff9724126676043352352e9b8191ca",
+      "size_bytes": 6298
+    },
+    "mlp": {
+      "file": "candidates/mlp.joblib",
+      "sha256": "bf1df560b7a22813ab496fb11c91ebabe97455c351df9636e3f61b36d583d708",
+      "size_bytes": 302113
+    },
+    "random_forest": {
+      "file": "candidates/random_forest.joblib",
+      "sha256": "41d3a28592ae93367b8a88ca80ed60bb1e5ac2356ec2344d4984c0770f13d7f1",
+      "size_bytes": 8662030
+    },
+    "xgboost": {
+      "file": "candidates/xgboost.joblib",
+      "sha256": "8e73985dc10b652d7ba86aa8d005d4ea54f65ea9d323500b5a8f773cd6ffb6ab",
+      "size_bytes": 357270
+    }
+  },
+  "scenario": {
+    "file": "scenario/special_requests.joblib",
+    "sha256": "b198522e7465f56fa00fc01783dcf065251490ffc7c7be1b9742d8426447d8e5",
+    "size_bytes": 10255584
+  }
+}
