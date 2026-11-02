@@ -124,7 +124,9 @@ def test_xgboost_pipeline_predicts_unseen_categories_and_survives_joblib(
     restored = joblib.load(path)
     np.testing.assert_array_equal(restored.predict_proba(features)[:, 1], probabilities)
 
-    unseen = features.head(3).assign(agent=["never-seen", "never-seen", None])
+    unseen = features.head(3).assign(
+        agent=pd.Series(["never-seen", "never-seen", None], dtype="str")
+    )
     assert restored.predict_proba(unseen).shape == (3, 2)
 
 
