@@ -71,6 +71,12 @@ class Candidate:
     model: Any
 
 
+def scenario_frame(rows: pd.DataFrame) -> pd.DataFrame:
+    """Give the inputs of the informative scenario: the 19 features and the special requests."""
+    values = pd.to_numeric(rows[schema.SPECIAL_REQUESTS]).astype("float64")
+    return data_loader.coerce_features(rows).assign(**{schema.SPECIAL_REQUESTS: values})
+
+
 def select_by_one_standard_error(window_scores: Mapping[str, Sequence[float]]) -> Selection:
     """Apply the one standard error rule on paired differences per window.
 
@@ -252,6 +258,35 @@ class ModelTrainer:
             return base
         rows = self._between(cut.base_end, cut.calibration_end)
         return _calibrate(base, method, self._features[rows], self._target[rows])
+
+    def fit_special_requests_scenario(
+        self, spec: models.ModelSpec, params: Mapping[str, Any], method: str
+    ) -> Any:
+        """Train the informative scenario on the windows of the champion, plus the forbidden input.
+
+        This is the only model that skips the leakage guard, on purpose, and the guard rejects it
+        when saving a champion. The protocol publishes it next to the official figure.
+
+        Args:
+            spec: The model of the champion.
+            params: Its hyperparameters.
+            method: Its calibration method, or `none`.
+
+        Returns:
+            The fitted model. It expects the columns of `scenario_frame`.
+        """
+        cut = config.CHAMPION_CUT
+        frame = scenario_frame(self.development)
+        preprocessor = features.build_preprocessor(
+            spec.family, numeric=(*schema.NUMERIC_FEATURES, schema.SPECIAL_REQUESTS)
+        )
+        pipeline = features.build_pipeline(preprocessor, spec.estimator(self.seed))
+        rows = self._dates < cut.base_end
+        base = pipeline.set_params(**params).fit(frame[rows], self._target[rows])
+        if method == NO_CALIBRATION:
+            return base
+        calibration_rows = self._between(cut.base_end, cut.calibration_end)
+        return _calibrate(base, method, frame[calibration_rows], self._target[calibration_rows])
 
     def train_candidates(self, outcomes: Mapping[str, SearchOutcome]) -> dict[str, Candidate]:
         """Choose the calibration of each model and train its final version.

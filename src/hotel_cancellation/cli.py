@@ -1,14 +1,20 @@
-"""Command line: `hotel-ml tune|train|run-all|evaluate`.
+"""Command line: `hotel-ml tune|train|train-scenario|run-all|rehearse|evaluate`.
 
-Only `evaluate` reads the test period, and it refuses to repeat. The others use `load_development`,
-which drops its rows.
+Only `evaluate` reads the test period, after checking everything it needs, and it refuses to repeat.
+The others use `load_development`, which drops its rows.
 """
 
 import argparse
 import logging
+import tempfile
 from collections.abc import Sequence
+from pathlib import Path
 
-from hotel_cancellation import config, evaluator, model_trainer, pipeline, tracking
+from hotel_cancellation import champion, config, evaluator, model_trainer, pipeline, tracking
+
+logger = logging.getLogger(__name__)
+
+_FORCE_HELP = "Sustituye al campeón aunque el test ya se haya ejecutado, y hay que declararlo."
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -30,6 +36,21 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument(
                 "--only", nargs="+", help="Busca solo estos modelos y conserva los demás."
             )
+        else:
+            command.add_argument("--force", action="store_true", help=_FORCE_HELP)
+
+    description = "Entrena el escenario informativo del campeón y registra su hash."
+    scenario = commands.add_parser("train-scenario", help=description, description=description)
+    scenario.add_argument("--force", action="store_true", help=_FORCE_HELP)
+
+    description = "Ensaya evaluate completo con una ventana de 2016, en un directorio temporal."
+    rehearse = commands.add_parser("rehearse", help=description, description=description)
+    rehearse.add_argument("--window", default="2016Q4", help="Ventana usada como pseudotest.")
+    rehearse.add_argument("--output", type=Path, help="Directorio de salida.")
+    rehearse.add_argument(
+        "--replicates", type=int, default=evaluator.BOOTSTRAP_REPLICATES, help="Réplicas bootstrap."
+    )
+
     evaluate = commands.add_parser(
         "evaluate",
         help="Ejecuta el test de 2017, una sola vez.",
@@ -42,30 +63,31 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _evaluate(arguments: argparse.Namespace, settings: config.Settings) -> int:
-    try:
-        pipeline.evaluate(
-            pipeline.load_test(),
-            pipeline.load_development(),
-            settings=settings,
-            replicates=arguments.replicates,
-            force=arguments.force,
-        )
-    except pipeline.TestAlreadyEvaluatedError:
-        logging.getLogger(__name__).exception("The test was not executed again")
-        return 1
-    return 0
+def _evaluate(arguments: argparse.Namespace, settings: config.Settings) -> None:
+    # The checks come first, because the rows of the test must not be read if they fail.
+    pipeline.prepare_evaluation(settings, force=arguments.force)
+    pipeline.evaluate(
+        pipeline.load_test(),
+        pipeline.load_development(),
+        settings=settings,
+        replicates=arguments.replicates,
+        force=arguments.force,
+    )
+    logger.info("Results in %s", settings.final_evaluation_dir)
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    """Run a command and return its exit code."""
-    arguments = build_parser().parse_args(argv)
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+def _rehearse(arguments: argparse.Namespace, settings: config.Settings) -> None:
+    output = arguments.output or Path(tempfile.mkdtemp(prefix="hotel-ml-rehearsal-"))
+    folder = pipeline.rehearse(
+        settings=settings,
+        window=arguments.window,
+        output_dir=output,
+        replicates=arguments.replicates,
+    )
+    logger.info("Rehearsal in %s. Its figures do not count as an evaluation.", folder)
 
-    settings = config.get_settings()
-    if arguments.command == "evaluate":
-        return _evaluate(arguments, settings)
 
+def _train(arguments: argparse.Namespace, settings: config.Settings) -> None:
     tracker: tracking.Tracker = (
         tracking.NullTracker()
         if arguments.no_tracking
@@ -81,7 +103,33 @@ def main(argv: Sequence[str] | None = None) -> int:
     if arguments.command == "tune":
         pipeline.tune(development, only=arguments.only, **common)
     elif arguments.command == "train":
-        pipeline.train(development, **common)
+        pipeline.train(development, force=arguments.force, **common)
     else:
-        pipeline.run_all(development, **common)
+        pipeline.run_all(development, force=arguments.force, **common)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run a command and return its exit code."""
+    arguments = build_parser().parse_args(argv)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
+    settings = config.get_settings()
+    try:
+        if arguments.command == "evaluate":
+            _evaluate(arguments, settings)
+        elif arguments.command == "rehearse":
+            _rehearse(arguments, settings)
+        elif arguments.command == "train-scenario":
+            pipeline.train_scenario(
+                pipeline.load_development(), settings=settings, force=arguments.force
+            )
+        else:
+            _train(arguments, settings)
+    except (
+        pipeline.TestAlreadyEvaluatedError,
+        pipeline.EvaluationNotReadyError,
+        champion.ChampionIntegrityError,
+    ) as error:
+        logger.error("%s", error)
+        return 1
     return 0

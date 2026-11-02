@@ -211,6 +211,39 @@ class TestServedModel:
             features.assert_no_forbidden_inputs(candidate.model)
 
 
+class TestSpecialRequestsScenario:
+    def test_it_adds_only_that_variable_on_the_windows_of_the_champion(
+        self, trainer: model_trainer.ModelTrainer, synthetic_development: pd.DataFrame
+    ) -> None:
+        spec = _catalog_spec("logistic_regression")
+        cut = config.CHAMPION_CUT
+        scenario = trainer.fit_special_requests_scenario(spec, {"model__C": 1.0}, "sigmoid")
+
+        frame = model_trainer.scenario_frame(synthetic_development)
+        assert list(frame.columns) == [*schema.INPUT_FEATURES, schema.SPECIAL_REQUESTS]
+        dates = synthetic_development[schema.ARRIVAL_DATE]
+        target = synthetic_development[schema.TARGET]
+        base_rows = dates < cut.base_end
+        calibration_rows = (dates >= cut.base_end) & (dates < cut.calibration_end)
+        base = features.build_pipeline(
+            features.build_preprocessor(
+                spec.family, numeric=(*schema.NUMERIC_FEATURES, schema.SPECIAL_REQUESTS)
+            ),
+            spec.estimator(0),
+        ).set_params(model__C=1.0)
+        base.fit(frame[base_rows], target[base_rows])
+        expected = CalibratedClassifierCV(FrozenEstimator(base), method="sigmoid")
+        expected.fit(frame[calibration_rows], target[calibration_rows])
+        probe = frame.head(50)
+        np.testing.assert_allclose(scenario.predict_proba(probe), expected.predict_proba(probe))
+
+    def test_it_can_never_pass_as_a_champion(self, trainer: model_trainer.ModelTrainer) -> None:
+        spec = _catalog_spec("logistic_regression")
+        scenario = trainer.fit_special_requests_scenario(spec, {}, "none")
+        with pytest.raises(features.LeakageError, match=schema.SPECIAL_REQUESTS):
+            features.assert_no_forbidden_inputs(scenario)
+
+
 class TestLeakageGuard:
     def test_searching_with_a_forbidden_column_fails_before_fitting(
         self, trainer: model_trainer.ModelTrainer, monkeypatch: pytest.MonkeyPatch

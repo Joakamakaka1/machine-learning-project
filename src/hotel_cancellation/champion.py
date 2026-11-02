@@ -58,20 +58,32 @@ def write_json(path: Path, content: Any) -> None:
     path.write_text(text + "\n", encoding="utf-8", newline="\n")
 
 
+def _git(*arguments: str) -> str:
+    completed = subprocess.run(  # noqa: S603
+        [_GIT, "-C", str(config.PROJECT_ROOT), *arguments],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return completed.stdout.strip()
+
+
 def code_state() -> dict[str, Any]:
     """Identify the code: its commit, and whether what trains differs from that commit."""
-    root = config.PROJECT_ROOT
-
-    def git(*arguments: str) -> str:
-        completed = subprocess.run(  # noqa: S603
-            [_GIT, "-C", str(root), *arguments], capture_output=True, text=True, check=True
-        )
-        return completed.stdout.strip()
-
     return {
-        "commit": git("rev-parse", "HEAD"),
-        "dirty": bool(git("status", "--porcelain", "--", *_CODE_PATHS)),
+        "commit": _git("rev-parse", "HEAD"),
+        "dirty": bool(_git("status", "--porcelain", "--", *_CODE_PATHS)),
     }
+
+
+def tree_is_clean() -> bool:
+    """Tell whether git sees no change at all: neither modified nor untracked files."""
+    return not _git("status", "--porcelain")
+
+
+def sha256_of(path: Path) -> str:
+    """Hash a file."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def library_versions() -> dict[str, str]:

@@ -12,6 +12,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+DEFAULT_MODELS_DIR = PROJECT_ROOT / "models"
+DEFAULT_OUTPUTS_DIR = PROJECT_ROOT / "outputs"
+
 RAW_DATASET_FILENAME = "dataset_practica_final.csv.gz"
 # Hash of the uncompressed CSV, so it does not depend on how the file was compressed.
 RAW_DATASET_SHA256 = "d10cdeb07de9309007f528d6499a2c0467ae7a6b287b80ffd759e11e61801639"
@@ -25,8 +28,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="HOTEL_ML_", env_file=".env", extra="ignore")
 
     data_dir: Path = PROJECT_ROOT / "data"
-    models_dir: Path = PROJECT_ROOT / "models"
-    outputs_dir: Path = PROJECT_ROOT / "outputs"
+    models_dir: Path = DEFAULT_MODELS_DIR
+    outputs_dir: Path = DEFAULT_OUTPUTS_DIR
     mlflow_tracking_uri: str = f"sqlite:///{(PROJECT_ROOT / 'mlflow.db').as_posix()}"
     mlflow_artifacts_dir: Path = PROJECT_ROOT / "mlartifacts"
 
@@ -69,6 +72,16 @@ class Settings(BaseSettings):
     def candidates_dir(self) -> Path:
         """Every final model, kept out of git, to compare them on the test."""
         return self.models_dir / "candidates"
+
+    @property
+    def scenario_model_path(self) -> Path:
+        """Model of the informative scenario, kept out of git."""
+        return self.models_dir / "scenario" / "special_requests.joblib"
+
+    @property
+    def candidates_registry_path(self) -> Path:
+        """Versioned hashes of the models that git does not keep."""
+        return self.models_dir / "candidates.json"
 
 
 def get_settings() -> Settings:

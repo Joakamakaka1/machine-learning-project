@@ -41,6 +41,9 @@ CATEGORICAL_FEATURES: tuple[str, ...] = (
 
 INPUT_FEATURES: tuple[str, ...] = NUMERIC_FEATURES + CATEGORICAL_FEATURES
 
+# Forbidden in every model that can win. It only enters the informative scenario of the protocol.
+SPECIAL_REQUESTS = "total_of_special_requests"
+
 _CALENDAR_REASON = "Calendar variable: it does not generalize and it adds variance across windows."
 
 FORBIDDEN_FEATURES: Mapping[str, str] = MappingProxyType(

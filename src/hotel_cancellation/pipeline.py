@@ -1,11 +1,13 @@
-"""Training workflow: search, select, train the candidates and package the champion.
+"""Training workflow and the single execution on the test.
 
-Nothing here reads the test rows: `load_development` drops them as soon as the contract has
-checked the file, and `ModelTrainer` refuses them if they arrive some other way.
+Training never reads the test rows: `load_development` drops them as soon as the contract has
+checked the file, and `ModelTrainer` refuses them if they arrive some other way. Only `load_test`
+returns them, and only `hotel-ml evaluate` calls it, after `prepare_evaluation`.
 """
 
 import json
 import logging
+import shutil
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -32,10 +34,17 @@ _COMPRESSION_LEVEL = 3
 _SEGMENTS = ("hotel", "market_segment", "customer_type", "distribution_channel", "deposit_type")
 
 
+SCENARIO_NAME = "special_requests_scenario"
+
+
 class TestAlreadyEvaluatedError(RuntimeError):
     """The test was already executed, and it is executed only once."""
 
     __test__ = False
+
+
+class EvaluationNotReadyError(RuntimeError):
+    """The models or the environment are not the ones the single execution demands."""
 
 
 @dataclass(frozen=True)
@@ -219,6 +228,7 @@ def train(
     profile: models.ProfileName = "full",
     seed: int = model_trainer.DEFAULT_SEED,
     tracker: Tracker | None = None,
+    force: bool = False,
 ) -> TrainingReport:
     """Select the champion, train every candidate on the final windows and package the champion.
 
@@ -228,10 +238,15 @@ def train(
         profile: Must match the profile of the search.
         seed: Seed of the models.
         tracker: Where to track the runs.
+        force: Replace the champion although the test already ran.
 
     Returns:
         The selection, the candidates and the manifest of the champion.
+
+    Raises:
+        TestAlreadyEvaluatedError: If the test already ran and `force` is false.
     """
+    _assert_champion_can_change(settings, force=force)
     tracker = tracker or NullTracker()
     content, outcomes = _load_outcomes(settings, profile)
     selection = model_trainer.select_by_one_standard_error(
@@ -265,6 +280,8 @@ def train(
         profile=profile,
         development_rows=len(development),
     )
+    _fit_and_save_scenario(development, settings, manifest)
+    _write_registry(settings, manifest, keep_candidates=False)
 
     settings.validation_dir.mkdir(parents=True, exist_ok=True)
     selection.table.to_csv(
@@ -291,6 +308,101 @@ def train(
     )
     _log_validation(selection, manifest)
     return TrainingReport(selection=selection, candidates=candidates, manifest=manifest)
+
+
+def _same_path(first: Path, second: Path) -> bool:
+    return first.resolve() == second.resolve()
+
+
+def _assert_champion_can_change(settings: config.Settings, *, force: bool) -> None:
+    """Refuse to change what was evaluated, looking also at the record in its default place."""
+    if force:
+        return
+    records = [settings.final_evaluation_record]
+    if _same_path(settings.models_dir, config.DEFAULT_MODELS_DIR):
+        default = settings.model_copy(update={"outputs_dir": config.DEFAULT_OUTPUTS_DIR})
+        records.append(default.final_evaluation_record)
+    if any(record.exists() for record in records):
+        raise TestAlreadyEvaluatedError(
+            "The test already ran with the current champion. Replace it with --force, "
+            "and declare it in the report."
+        )
+
+
+def _artifact_entry(path: Path, settings: config.Settings) -> dict[str, Any]:
+    return {
+        "file": path.relative_to(settings.models_dir).as_posix(),
+        "sha256": champion.sha256_of(path),
+        "size_bytes": path.stat().st_size,
+    }
+
+
+def _write_registry(
+    settings: config.Settings, manifest: Mapping[str, Any], *, keep_candidates: bool
+) -> None:
+    """Record the hash of every model that git does not keep.
+
+    Args:
+        settings: Where the models are.
+        manifest: Manifest of the champion.
+        keep_candidates: Trust the registered candidates instead of hashing them again.
+
+    Raises:
+        EvaluationNotReadyError: If the candidate that won is not the saved champion.
+    """
+    path = settings.candidates_registry_path
+    candidates = None
+    if keep_candidates and path.exists():
+        candidates = json.loads(path.read_text("utf-8"))["candidates"]
+    if candidates is None:
+        candidates = {
+            model.stem: _artifact_entry(model, settings)
+            for model in sorted(settings.candidates_dir.glob("*.joblib"))
+        }
+    name, digest = manifest["model"]["name"], manifest["model"]["sha256"]
+    if candidates.get(name, {}).get("sha256") != digest:
+        raise EvaluationNotReadyError(f"Candidate {name} is not the champion: hashes differ.")
+    champion.write_json(
+        path,
+        {
+            "champion": {"name": name, "sha256": digest},
+            "candidates": candidates,
+            "scenario": _artifact_entry(settings.scenario_model_path, settings),
+        },
+    )
+
+
+def _fit_and_save_scenario(
+    development: pd.DataFrame, settings: config.Settings, manifest: Mapping[str, Any]
+) -> None:
+    profile = manifest["profile"]
+    spec = _specs(profile)[manifest["model"]["name"]]
+    scenario = _trainer(development, profile, manifest["seed"]).fit_special_requests_scenario(
+        spec, manifest["model"]["params"], manifest["model"]["calibration"]
+    )
+    settings.scenario_model_path.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(scenario, settings.scenario_model_path, compress=_COMPRESSION_LEVEL)
+
+
+def train_scenario(
+    development: pd.DataFrame, *, settings: config.Settings, force: bool = False
+) -> None:
+    """Train the informative scenario of the saved champion and register its hash.
+
+    The champion and the registered candidates stay as they are.
+
+    Args:
+        development: Development rows.
+        settings: Where the models are.
+        force: Train it although the test already ran.
+
+    Raises:
+        TestAlreadyEvaluatedError: If the test already ran and `force` is false.
+    """
+    _assert_champion_can_change(settings, force=force)
+    manifest = champion.load_champion(settings.champion_dir).manifest
+    _fit_and_save_scenario(development, settings, manifest)
+    _write_registry(settings, manifest, keep_candidates=True)
 
 
 def _log_validation(selection: model_trainer.Selection, manifest: Mapping[str, Any]) -> None:
@@ -325,17 +437,13 @@ def _measure(
     measures = evaluator.validation_metrics(target, probabilities, rows)
     return {
         "rows": len(target),
-        "prevalence": float(target.mean()),
+        "prevalence": float(target.mean()) if len(target) else float("nan"),
         "threshold": threshold,
-        **{
-            metric: measures[metric]
-            for metric in ("roc_auc", "pr_auc", "brier", "calibration_slope")
-        },
+        **{metric: measures[metric] for metric in ("roc_auc", "pr_auc", "brier")},
+        **evaluator.calibration_diagnostics(target, probabilities),
         **evaluator.classification_metrics(target, probabilities, threshold),
-        **{
-            scenario.name: evaluator.cost_per_booking(target, probabilities, threshold, scenario)
-            for scenario in evaluator.COST_SCENARIOS
-        },
+        **evaluator.costs_at_own_threshold(target, probabilities),
+        **evaluator.costs_at_threshold(target, probabilities, threshold),
         "tp": int((predicted & actual).sum()),
         "fp": int((predicted & ~actual).sum()),
         "fn": int((~predicted & actual).sum()),
@@ -396,6 +504,80 @@ def _monthly_table(
     return pd.DataFrame(records)
 
 
+def _previous_executions(settings: config.Settings) -> list[dict[str, Any]]:
+    path = settings.final_evaluation_record
+    if not path.exists():
+        return []
+    executions: list[dict[str, Any]] = json.loads(path.read_text("utf-8"))["executions"]
+    return executions
+
+
+def _assert_real_execution(settings: config.Settings, manifest: Mapping[str, Any]) -> None:
+    """Demand what makes this execution the official one, so nothing can escape the record."""
+    if manifest["profile"] != "full":
+        raise EvaluationNotReadyError(f"Profile must be full, not {manifest['profile']}.")
+    if not champion.tree_is_clean():
+        raise EvaluationNotReadyError("The git tree must be clean: commit everything first.")
+    if not _same_path(settings.outputs_dir, config.DEFAULT_OUTPUTS_DIR):
+        raise EvaluationNotReadyError("Unset HOTEL_ML_OUTPUTS_DIR: the record has one place.")
+    if not _same_path(settings.models_dir, config.DEFAULT_MODELS_DIR):
+        raise EvaluationNotReadyError("Unset HOTEL_ML_MODELS_DIR: the champion has one place.")
+
+
+def _verify_entry(name: str, entry: Mapping[str, Any], settings: config.Settings) -> None:
+    path = settings.models_dir / entry["file"]
+    if not path.exists():
+        raise EvaluationNotReadyError(f"{name}: {path} does not exist. Run `hotel-ml train`.")
+    if champion.sha256_of(path) != entry["sha256"]:
+        raise EvaluationNotReadyError(f"{name}: {path} does not match its registered hash.")
+
+
+def _verify_registry(settings: config.Settings, manifest: Mapping[str, Any]) -> None:
+    path = settings.candidates_registry_path
+    if not path.exists():
+        raise EvaluationNotReadyError(f"{path} does not exist. Run `hotel-ml train-scenario`.")
+    registry = json.loads(path.read_text("utf-8"))
+    candidates = registry["candidates"]
+    missing = sorted(set(_specs(manifest["profile"])).difference(candidates))
+    if missing:
+        raise EvaluationNotReadyError(f"Models missing from {path}: {', '.join(missing)}.")
+    for name, entry in candidates.items():
+        _verify_entry(name, entry, settings)
+    _verify_entry(SCENARIO_NAME, registry["scenario"], settings)
+    name, digest = manifest["model"]["name"], manifest["model"]["sha256"]
+    if candidates[name]["sha256"] != digest:
+        raise EvaluationNotReadyError(f"Candidate {name} is not the champion: hashes differ.")
+
+
+def prepare_evaluation(
+    settings: config.Settings, *, force: bool = False, strict: bool = True
+) -> None:
+    """Check everything the single execution needs, before reading a row of the test.
+
+    Args:
+        settings: Where the models and the record are.
+        force: Allow a repetition.
+        strict: Demand the conditions of the official execution.
+
+    Raises:
+        TestAlreadyEvaluatedError: If it already ran and `force` is false.
+        EvaluationNotReadyError: If a model or the environment is not the expected one.
+        ChampionIntegrityError: If the champion is not what its manifest says.
+    """
+    executions = _previous_executions(settings)
+    if executions and not force:
+        raise TestAlreadyEvaluatedError(
+            f"The test already ran on {executions[-1]['executed_at']}. "
+            "Repeat it with --force, and declare it in the report."
+        )
+    if not (settings.champion_dir / champion.MANIFEST_FILE).exists():
+        raise EvaluationNotReadyError(f"There is no champion in {settings.champion_dir}.")
+    manifest = champion.load_champion(settings.champion_dir).manifest
+    if strict:
+        _assert_real_execution(settings, manifest)
+    _verify_registry(settings, manifest)
+
+
 def evaluate(
     test: pd.DataFrame,
     development: pd.DataFrame,
@@ -404,11 +586,12 @@ def evaluate(
     replicates: int = evaluator.BOOTSTRAP_REPLICATES,
     force: bool = False,
     seed: int = model_trainer.DEFAULT_SEED,
+    strict: bool = True,
 ) -> None:
     """Execute the test once, on the models exactly as they were saved, and write every table.
 
-    Nothing gets trained here. The record is written first, so that even a failure halfway counts
-    as having read the test, and the results can be rebuilt from the saved predictions.
+    Nothing gets trained here. Everything is computed in memory, and the record appears together
+    with the results, so a failure leaves no figures to read and does not spend the test.
 
     Args:
         test: Rows of the test period.
@@ -417,42 +600,76 @@ def evaluate(
         replicates: Bootstrap replicates.
         force: Repeat the execution. The record declares it.
         seed: Seed of the bootstrap.
+        strict: Demand the conditions of the official execution. Only the tests turn it off.
 
     Raises:
         TestAlreadyEvaluatedError: If it already ran and `force` is false.
+        EvaluationNotReadyError: If a model or the environment is not the expected one.
         ValueError: If a row is outside the test period.
     """
+    prepare_evaluation(settings, force=force, strict=strict)
     dates = test[schema.ARRIVAL_DATE]
     if dates.min() < config.TEST_START or dates.max() >= config.TEST_END:
         raise ValueError("Only rows of the test period can be evaluated.")
+    _execute(test, development, settings=settings, replicates=replicates, seed=seed)
 
-    record_path = settings.final_evaluation_record
-    executions: list[dict[str, Any]] = []
-    if record_path.exists():
-        executions = json.loads(record_path.read_text("utf-8"))["executions"]
-        if not force:
-            raise TestAlreadyEvaluatedError(
-                f"The test already ran on {executions[-1]['executed_at']}. "
-                "Repeat it with --force, and declare it in the report."
-            )
 
+def rehearse(
+    *,
+    settings: config.Settings,
+    window: str = "2016Q4",
+    output_dir: Path,
+    replicates: int = evaluator.BOOTSTRAP_REPLICATES,
+    seed: int = model_trainer.DEFAULT_SEED,
+) -> Path:
+    """Run the whole evaluation with a window of 2016 as a pseudo test, in another folder.
+
+    It proves that the code works on real rows without reading the test. Its figures do not count:
+    the calibrator of the champion was fitted on 2016T4.
+
+    Args:
+        settings: Where the models are.
+        window: Name of an expanding window.
+        output_dir: Where to write instead of the real outputs.
+        replicates: Bootstrap replicates.
+        seed: Seed of the bootstrap.
+
+    Returns:
+        The folder with the results.
+
+    Raises:
+        ValueError: If the window does not exist.
+    """
+    chosen = next((w for w in config.EXPANDING_WINDOWS if w.name == window), None)
+    if chosen is None:
+        raise ValueError(f"{window} is not a window of the protocol.")
+    target = settings.model_copy(update={"outputs_dir": output_dir})
+    prepare_evaluation(target, strict=False)
+    development = load_development()
+    dates = development[schema.ARRIVAL_DATE]
+    rows = development[(dates >= chosen.start) & (dates < chosen.end)].reset_index(drop=True)
+    _execute(rows, development, settings=target, replicates=replicates, seed=seed)
+    return target.final_evaluation_dir
+
+
+def _execute(
+    test: pd.DataFrame,
+    development: pd.DataFrame,
+    *,
+    settings: config.Settings,
+    replicates: int,
+    seed: int,
+) -> None:
+    """Compute every table in memory and publish them together with the record."""
+    dates = test[schema.ARRIVAL_DATE]
     loaded = champion.load_champion(settings.champion_dir)
     manifest = loaded.manifest
+    registry = json.loads(settings.candidates_registry_path.read_text("utf-8"))
     candidates = {
-        path.stem: joblib.load(path) for path in sorted(settings.candidates_dir.glob("*.joblib"))
+        name: joblib.load(settings.models_dir / entry["file"])
+        for name, entry in sorted(registry["candidates"].items())
     }
-
-    executions.append(
-        {
-            "executed_at": datetime.now(tz=UTC).isoformat(timespec="seconds"),
-            "code": champion.code_state(),
-            "champion_sha256": manifest["model"]["sha256"],
-            "champion_name": manifest["model"]["name"],
-            "test_rows": len(test),
-            "forced": bool(executions),
-        }
-    )
-    champion.write_json(record_path, {"executions": executions})
+    scenario = joblib.load(settings.models_dir / registry["scenario"]["file"])
 
     rows = data_loader.coerce_features(test)
     target = test[schema.TARGET]
@@ -461,29 +678,39 @@ def evaluate(
         index=test.index,
     )
     served = pd.Series(loaded.model.predict_proba(rows)[:, 1], index=test.index, name="champion")
+    informative = pd.DataFrame(
+        {SCENARIO_NAME: scenario.predict_proba(model_trainer.scenario_frame(test))[:, 1]},
+        index=test.index,
+    )
     decision = float(manifest["decision"]["threshold"])
-
-    folder = settings.final_evaluation_dir
-    _write_table(_metrics_table(target, compared, rows, decision), folder / "metrics.csv")
-    _write_table(_segments_table(target, served, rows, decision), folder / "segments.csv")
-    _write_table(_monthly_table(target, served, dates, rows), folder / "monthly.csv")
 
     hotel_date = rows["hotel"].astype("str") + "|" + dates.astype("str")
     week = dates.dt.strftime("%G-W%V")
-    champion_name = manifest["model"]["name"]
     bootstrap = pd.concat(
         [
             evaluator.block_bootstrap_auc(
-                target, compared, blocks, replicates=replicates, seed=seed, against=champion_name
+                target,
+                compared.join(informative),
+                blocks,
+                replicates=replicates,
+                seed=seed,
+                against=manifest["model"]["name"],
             ).assign(blocks=name)
             for name, blocks in (("hotel_date", hotel_date), ("week", week))
         ]
     )
-    _write_table(bootstrap, folder / "bootstrap.csv")
     learned_from = development[development[schema.ARRIVAL_DATE] < config.CHAMPION_CUT.base_end]
-    _write_psi(rows, data_loader.coerce_features(learned_from), folder / "psi.csv")
-
-    saved = compared.assign(
+    tables = {
+        "metrics.csv": _metrics_table(target, compared, rows, decision),
+        "scenario_special_requests.csv": _metrics_table(target, informative, rows, decision).assign(
+            informative_only=True
+        ),
+        "segments.csv": _segments_table(target, served, rows, decision),
+        "monthly.csv": _monthly_table(target, served, dates, rows),
+        "bootstrap.csv": bootstrap,
+        "psi.csv": _psi_table(rows, data_loader.coerce_features(learned_from)),
+    }
+    predictions = compared.join(informative).assign(
         champion=served,
         **{
             schema.ARRIVAL_DATE: dates.dt.strftime("%Y-%m-%d"),
@@ -492,15 +719,55 @@ def evaluate(
             "deposit_type": rows["deposit_type"],
         },
     )
-    saved.to_csv(folder / "predictions.csv.gz", index=False, lineterminator="\n")
+    executions = _previous_executions(settings)
+    forced = bool(executions)
+    previous_count = len(executions)
+    executions.append(
+        {
+            "executed_at": datetime.now(tz=UTC).isoformat(timespec="seconds"),
+            "code": champion.code_state(),
+            "champion_sha256": manifest["model"]["sha256"],
+            "champion_name": manifest["model"]["name"],
+            "scenario_sha256": registry["scenario"]["sha256"],
+            "test_rows": len(test),
+            "forced": forced,
+        }
+    )
+    _publish(tables, predictions, executions, settings, previous_count)
+
+
+def _publish(
+    tables: Mapping[str, pd.DataFrame],
+    predictions: pd.DataFrame,
+    executions: list[dict[str, Any]],
+    settings: config.Settings,
+    previous_count: int,
+) -> None:
+    """Write everything aside and then move the folder, so results and record appear as one."""
+    folder = settings.final_evaluation_dir
+    staging = folder.with_name(f"{folder.name}.staging")
+    shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir(parents=True)
+    try:
+        for name, table in tables.items():
+            _write_table(table, staging / name)
+        predictions.to_csv(staging / "predictions.csv.gz", index=False, lineterminator="\n")
+        champion.write_json(
+            staging / settings.final_evaluation_record.name, {"executions": executions}
+        )
+        if folder.exists():
+            folder.rename(folder.with_name(f"{folder.name}.superseded-{previous_count}"))
+        staging.rename(folder)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
 
 
 def _write_table(table: pd.DataFrame, path: Path) -> None:
     table.round(6).to_csv(path, index=False, lineterminator="\n")
 
 
-def _write_psi(test_rows: pd.DataFrame, reference: pd.DataFrame, path: Path) -> None:
-    table = pd.DataFrame(
+def _psi_table(test_rows: pd.DataFrame, reference: pd.DataFrame) -> pd.DataFrame:
+    return pd.DataFrame(
         {
             "feature": list(schema.INPUT_FEATURES),
             "psi": [
@@ -509,7 +776,6 @@ def _write_psi(test_rows: pd.DataFrame, reference: pd.DataFrame, path: Path) -> 
             ],
         }
     ).sort_values("psi", ascending=False)
-    _write_table(table, path)
 
 
 def run_all(
@@ -519,7 +785,11 @@ def run_all(
     profile: models.ProfileName = "full",
     seed: int = model_trainer.DEFAULT_SEED,
     tracker: Tracker | None = None,
+    force: bool = False,
 ) -> TrainingReport:
     """Search and train in one go. It never reads the test: it only receives development rows."""
+    _assert_champion_can_change(settings, force=force)
     tune(development, settings=settings, profile=profile, seed=seed, tracker=tracker)
-    return train(development, settings=settings, profile=profile, seed=seed, tracker=tracker)
+    return train(
+        development, settings=settings, profile=profile, seed=seed, tracker=tracker, force=force
+    )
