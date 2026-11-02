@@ -159,10 +159,13 @@ def precision_recall_figure(predictions: pd.DataFrame, champion_name: str) -> Fi
 
 
 def intervals_figure(bootstrap: pd.DataFrame, champion_name: str) -> Figure:
-    """Show the ROC-AUC of each model with its two bootstrap intervals."""
-    panels = (("hotel_date", "Bloques hotel y fecha"), ("week", "Bloques por semana"))
-    order = [*_MODELS[::-1], "special_requests_scenario"]
-    figure, axes = _figure(10, 4.2, 1, 2)
+    """Show the ROC-AUC of each model with its two bootstrap intervals.
+
+    The baseline stays out of the scale, because including it would hide the intervals.
+    """
+    panels = (("hotel_date", "Bloques de hotel y fecha"), ("week", "Bloques por semana"))
+    order = [*_COMPARED[::-1], "special_requests_scenario"]
+    figure, axes = _figure(11, 3.8, 1, 2)
     for axis, (blocks, title) in zip(axes[0], panels, strict=True):
         table = bootstrap[bootstrap["blocks"] == blocks].set_index("model")
         names = [name for name in order if name in table.index]
@@ -170,12 +173,16 @@ def intervals_figure(bootstrap: pd.DataFrame, champion_name: str) -> Figure:
             row = table.loc[name]
             color = ACCENT if name == champion_name else MUTED
             axis.plot([row["ci_low"], row["ci_high"]], [position, position], color=color, zorder=2)
-            axis.plot(row["roc_auc"], position, "o", color=color, markersize=8, zorder=3)
+            axis.plot(row["roc_auc"], position, "o", color=color, markersize=7, zorder=3)
         axis.set_yticks(range(len(names)), [_label(name, champion_name) for name in names])
         axis.set_title(title)
-        axis.set_xlabel("ROC-AUC, con intervalo del 95 %")
         axis.grid(visible=False, axis="y")
-        axis.set_xlim(0.45, 0.9)
+    figure.axes[0].sharex(figure.axes[1])
+    figure.supxlabel(
+        "ROC-AUC con intervalo del 95 %. El Dummy, con 0.500, queda fuera de escala",
+        fontsize=10,
+        color=SECONDARY_INK,
+    )
     return figure
 
 
@@ -274,7 +281,7 @@ def importance_figure(table: pd.DataFrame) -> Figure:
     panels = (
         ("forest_importance", "feature_importances_", "Reducción media de impureza"),
         ("permutation_mean", "Permutación", "Caída del ROC-AUC en 2017"),
-        ("shap_mean_abs", "SHAP", "|SHAP| medio, en probabilidad sin calibrar"),
+        ("shap_mean_abs", "SHAP", "|SHAP| medio, sin calibrar"),
     )
     figure, axes = _figure(12, 6.2, 1, 3)
     for axis, (column, title, label) in zip(axes[0], panels, strict=True):
