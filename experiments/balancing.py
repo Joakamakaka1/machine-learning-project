@@ -1,7 +1,7 @@
 """Does balancing the classes help? SMOTE, undersampling and class weights against nothing.
 
-Balancing changes the prevalence that the model learns, so the probabilities stop being honest. The
-Brier score, the calibration slope and the cost show that, even where the ROC-AUC does not move.
+Balancing changes the prevalence that the model learns, which should distort its probabilities. The
+Brier score, the calibration slope and the cost measure that, even where the ROC-AUC does not move.
 """
 
 from collections.abc import Callable

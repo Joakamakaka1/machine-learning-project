@@ -1,0 +1,4 @@
+variant,roc_auc,roc_auc_std,gap,paired_se,roc_auc_unique,roc_auc_no_deposit,roc_auc_non_refund,pr_auc,brier,calibration_slope,f1,cost_1_3
+mlp_one_hot,0.80532,0.01941,0.0,0.0,0.72258,0.70977,0.97298,0.76106,0.15782,0.75956,0.55486,0.46786
+mlp_embeddings,0.80634,0.02072,0.00102,0.00321,0.72752,0.71145,0.93445,0.76042,0.15823,0.69347,0.54638,0.46276
+xgboost_reference,0.81412,0.03011,0.0088,0.00538,0.73592,0.72415,0.9803,0.76843,0.15387,0.78832,0.56523,0.4428
