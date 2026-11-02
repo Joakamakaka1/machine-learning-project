@@ -9,6 +9,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
 from hotel_cancellation import champion, config, data_loader, evaluator, features, schema
+from tests.conftest import BASE_BOOKING
 
 
 @pytest.fixture
@@ -122,6 +123,30 @@ def test_loading_detects_other_library_versions(package: Path) -> None:
     (package / champion.MANIFEST_FILE).write_text(json.dumps(manifest), "utf-8")
     with pytest.raises(champion.ChampionIntegrityError, match="scikit-learn"):
         champion.load_champion(package)
+
+
+@pytest.mark.slow
+def test_the_versioned_champion_loads_and_behaves() -> None:
+    folder = config.get_settings().champion_dir
+    loaded = champion.load_champion(folder)
+    features.assert_no_forbidden_inputs(loaded.model)
+    assert loaded.manifest["profile"] == "full"
+    assert loaded.manifest["code"]["dirty"] is False
+
+    booking = {**BASE_BOOKING, "lead_time": 120}
+    rows = data_loader.coerce_features(
+        pd.DataFrame(
+            [
+                booking,
+                {**booking, "deposit_type": "Non Refund"},
+                {**booking, "lead_time": 1},
+                {**booking, "agent": "never-seen", "meal": None},
+            ]
+        )
+    )
+    probabilities = loaded.model.predict_proba(rows)[:, 1]
+    assert ((probabilities >= 0) & (probabilities <= 1)).all()
+    assert probabilities[1] > probabilities[0] > probabilities[2]
 
 
 def test_saving_refuses_a_model_that_uses_a_forbidden_column(
