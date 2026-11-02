@@ -125,3 +125,82 @@ class _LeadTimeModel(LogisticRegression):  # type: ignore[misc]
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
         positive = X["lead_time"].to_numpy() / 10
         return np.column_stack([1 - positive, positive])
+
+
+class TestUndefinedMetrics:
+    def test_slope_is_undefined_with_a_single_class(self) -> None:
+        assert math.isnan(evaluator.calibration_slope(np.zeros(3), np.array([0.1, 0.2, 0.3])))
+        assert math.isnan(evaluator.calibration_slope(np.ones(3), np.array([0.1, 0.2, 0.3])))
+
+    def test_metrics_of_a_subset_with_a_single_class_are_nan_instead_of_failing(self) -> None:
+        rows = pd.DataFrame({"deposit_type": ["Refundable"] * 3, "lead_time": [1.0, 2.0, 3.0]})
+        scores = evaluator.validation_metrics(pd.Series([0, 0, 0]), np.array([0.1, 0.2, 0.3]), rows)
+        for metric in ("roc_auc", "pr_auc", "calibration_slope", "recall", "precision", "f1"):
+            assert math.isnan(scores[metric]), metric
+        assert scores["brier"] == pytest.approx((0.01 + 0.04 + 0.09) / 3)
+        assert scores["accuracy"] == 1.0
+
+    def test_an_empty_subset_gives_nan_in_every_metric(self) -> None:
+        rows = pd.DataFrame({"deposit_type": pd.Series([], dtype="str")})
+        scores = evaluator.validation_metrics(pd.Series([], dtype=int), np.array([]), rows)
+        assert all(math.isnan(value) for value in scores.values())
+
+    def test_precision_without_positive_predictions_is_undefined(self) -> None:
+        metrics = evaluator.classification_metrics(np.array([0, 1]), np.zeros(2), threshold=0.5)
+        assert math.isnan(metrics["precision"])
+        assert metrics["recall"] == 0.0
+        assert metrics["f1"] == 0.0
+
+
+class TestCalibrationDiagnostics:
+    @pytest.fixture
+    def stepped(self) -> tuple[np.ndarray, np.ndarray]:
+        """Isotonic-like probabilities: some rows reach exactly 0 or 1, and not all come true."""
+        rng = np.random.default_rng(0)
+        values = rng.choice([0.0, 0.2, 0.5, 0.8, 1.0], 5000)
+        outcomes = rng.binomial(1, np.clip(values, 0.1, 0.9))
+        return outcomes, values
+
+    def test_the_definition_clips_at_one_in_a_thousand(
+        self, stepped: tuple[np.ndarray, np.ndarray]
+    ) -> None:
+        y, p = stepped
+        clipped = np.clip(p, 1e-3, 1 - 1e-3)
+        assert evaluator.calibration_slope(y, p) == pytest.approx(
+            evaluator.calibration_slope(y, clipped)
+        )
+
+    def test_it_reports_the_sensitivity_to_the_clip_and_the_extreme_rows(
+        self, stepped: tuple[np.ndarray, np.ndarray]
+    ) -> None:
+        y, p = stepped
+        diagnostics = evaluator.calibration_diagnostics(y, p)
+        assert diagnostics["calibration_slope"] == evaluator.calibration_slope(y, p)
+        assert diagnostics["calibration_slope_clip_1e6"] == pytest.approx(
+            evaluator.calibration_slope(y, p, clip=1e-6)
+        )
+        assert diagnostics["calibration_slope_clip_1e2"] == pytest.approx(
+            evaluator.calibration_slope(y, p, clip=1e-2)
+        )
+        assert diagnostics["calibration_slope_clip_1e6"] < diagnostics["calibration_slope"]
+        assert diagnostics["calibration_slope"] < diagnostics["calibration_slope_clip_1e2"]
+        assert diagnostics["share_probability_zero"] == pytest.approx((p == 0).mean())
+        assert diagnostics["share_probability_one"] == pytest.approx((p == 1).mean())
+
+
+class TestCostsAtTheServedThreshold:
+    Y = np.array([1, 1, 1, 0, 0])
+    P = np.array([0.9, 0.2, 0.1, 0.9, 0.1])
+
+    def test_each_scenario_is_priced_at_the_served_threshold(self) -> None:
+        costs = evaluator.costs_at_threshold(self.Y, self.P, 0.25)
+        # One false positive and two false negatives on five bookings.
+        assert costs["cost_1_2_at_threshold"] == pytest.approx((1 + 2 * 2) / 5)
+        assert costs["cost_1_3_at_threshold"] == pytest.approx((1 + 2 * 3) / 5)
+        assert costs["cost_1_5_at_threshold"] == pytest.approx((1 + 2 * 5) / 5)
+
+    def test_each_scenario_is_priced_at_its_own_threshold(self) -> None:
+        costs = evaluator.costs_at_own_threshold(self.Y, self.P)
+        # At 1/6 the row with 0.2 stops being a false negative, which the served threshold misses.
+        assert costs["cost_1_5"] == pytest.approx((1 + 1 * 5) / 5)
+        assert costs["cost_1_3"] == pytest.approx((1 + 2 * 3) / 5)
