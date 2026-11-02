@@ -8,18 +8,34 @@ import json
 import logging
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import joblib
 import pandas as pd
 
-from hotel_cancellation import champion, config, data_loader, evaluator, model_trainer, models
+from hotel_cancellation import (
+    champion,
+    config,
+    data_loader,
+    evaluator,
+    model_trainer,
+    models,
+    schema,
+)
 from hotel_cancellation.tracking import NullTracker, Tracker
 
 logger = logging.getLogger(__name__)
 
 _COMPRESSION_LEVEL = 3
+_SEGMENTS = ("hotel", "market_segment", "customer_type", "distribution_channel", "deposit_type")
+
+
+class TestAlreadyEvaluatedError(RuntimeError):
+    """The test was already executed, and it is executed only once."""
+
+    __test__ = False
 
 
 @dataclass(frozen=True)
@@ -46,6 +62,23 @@ def load_development(
     raw = data_loader.load_raw(path, expected_sha256=expected_sha256)
     data_loader.validate_raw(raw)
     return data_loader.split_temporal(data_loader.clean(raw)).development
+
+
+def load_test(
+    path: Path | None = None, *, expected_sha256: str = config.RAW_DATASET_SHA256
+) -> pd.DataFrame:
+    """Load the rows of the test period. Only `hotel-ml evaluate` may call this.
+
+    Args:
+        path: Compressed CSV. Defaults to the location in the settings.
+        expected_sha256: Hash of the uncompressed CSV.
+
+    Returns:
+        Clean rows with arrivals in the test period, in arrival order.
+    """
+    raw = data_loader.load_raw(path, expected_sha256=expected_sha256)
+    data_loader.validate_raw(raw)
+    return data_loader.split_temporal(data_loader.clean(raw)).test
 
 
 def _trainer(
@@ -271,6 +304,212 @@ def _log_validation(selection: model_trainer.Selection, manifest: Mapping[str, A
         scenario.false_positive,
         scenario.false_negative,
     )
+
+
+def _subset_rows(rows: pd.DataFrame, target: pd.Series) -> dict[str, pd.Series]:
+    with_target = rows.assign(__target__=target.to_numpy())
+    return {
+        "all": pd.Series(data=True, index=rows.index),
+        "unique": ~with_target.duplicated(),
+        "no_deposit": rows["deposit_type"] == "No Deposit",
+        "non_refund": rows["deposit_type"] == "Non Refund",
+    }
+
+
+def _measure(
+    target: pd.Series, probabilities: pd.Series, rows: pd.DataFrame, threshold: float
+) -> dict[str, float]:
+    """Measure a subset at one threshold: ranking, probabilities, decisions and their costs."""
+    predicted = probabilities >= threshold
+    actual = target == 1
+    measures = evaluator.validation_metrics(target, probabilities, rows)
+    return {
+        "rows": len(target),
+        "prevalence": float(target.mean()),
+        "threshold": threshold,
+        **{
+            metric: measures[metric]
+            for metric in ("roc_auc", "pr_auc", "brier", "calibration_slope")
+        },
+        **evaluator.classification_metrics(target, probabilities, threshold),
+        **{
+            scenario.name: evaluator.cost_per_booking(target, probabilities, threshold, scenario)
+            for scenario in evaluator.COST_SCENARIOS
+        },
+        "tp": int((predicted & actual).sum()),
+        "fp": int((predicted & ~actual).sum()),
+        "fn": int((~predicted & actual).sum()),
+        "tn": int((~predicted & ~actual).sum()),
+    }
+
+
+def _metrics_table(
+    target: pd.Series, predictions: pd.DataFrame, rows: pd.DataFrame, decision: float
+) -> pd.DataFrame:
+    subsets = _subset_rows(rows, target)
+    records = []
+    for model in predictions.columns:
+        for threshold_name, threshold in (("decision", decision), ("fixed_0.5", 0.5)):
+            for subset, mask in subsets.items():
+                measured = _measure(
+                    target[mask], predictions.loc[mask, model], rows[mask], threshold
+                )
+                records.append(
+                    {
+                        "model": model,
+                        "threshold_name": threshold_name,
+                        "subset": subset,
+                        **measured,
+                    }
+                )
+    return pd.DataFrame(records)
+
+
+def _segments_table(
+    target: pd.Series, probabilities: pd.Series, rows: pd.DataFrame, decision: float
+) -> pd.DataFrame:
+    records = []
+    for segment in _SEGMENTS:
+        for value, group in rows.groupby(segment, dropna=False):
+            measured = _measure(target[group.index], probabilities[group.index], group, decision)
+            records.append({"segment": segment, "value": value, **measured})
+    return pd.DataFrame(records)
+
+
+def _monthly_table(
+    target: pd.Series, probabilities: pd.Series, dates: pd.Series, rows: pd.DataFrame
+) -> pd.DataFrame:
+    records = []
+    for month, indices in dates.groupby(dates.dt.strftime("%Y-%m")).groups.items():
+        measures = evaluator.validation_metrics(
+            target[indices], probabilities[indices], rows.loc[indices]
+        )
+        records.append(
+            {
+                "month": month,
+                "rows": len(indices),
+                "prevalence": float(target[indices].mean()),
+                "roc_auc": measures["roc_auc"],
+                "brier": measures["brier"],
+            }
+        )
+    return pd.DataFrame(records)
+
+
+def evaluate(
+    test: pd.DataFrame,
+    development: pd.DataFrame,
+    *,
+    settings: config.Settings,
+    replicates: int = evaluator.BOOTSTRAP_REPLICATES,
+    force: bool = False,
+    seed: int = model_trainer.DEFAULT_SEED,
+) -> None:
+    """Execute the test once, on the models exactly as they were saved, and write every table.
+
+    Nothing gets trained here. The record is written first, so that even a failure halfway counts
+    as having read the test, and the results can be rebuilt from the saved predictions.
+
+    Args:
+        test: Rows of the test period.
+        development: Development rows: what the base model learned from is the reference of the PSI.
+        settings: Where to read the models from and where to write.
+        replicates: Bootstrap replicates.
+        force: Repeat the execution. The record declares it.
+        seed: Seed of the bootstrap.
+
+    Raises:
+        TestAlreadyEvaluatedError: If it already ran and `force` is false.
+        ValueError: If a row is outside the test period.
+    """
+    dates = test[schema.ARRIVAL_DATE]
+    if dates.min() < config.TEST_START or dates.max() >= config.TEST_END:
+        raise ValueError("Only rows of the test period can be evaluated.")
+
+    record_path = settings.final_evaluation_record
+    executions: list[dict[str, Any]] = []
+    if record_path.exists():
+        executions = json.loads(record_path.read_text("utf-8"))["executions"]
+        if not force:
+            raise TestAlreadyEvaluatedError(
+                f"The test already ran on {executions[-1]['executed_at']}. "
+                "Repeat it with --force, and declare it in the report."
+            )
+
+    loaded = champion.load_champion(settings.champion_dir)
+    manifest = loaded.manifest
+    candidates = {
+        path.stem: joblib.load(path) for path in sorted(settings.candidates_dir.glob("*.joblib"))
+    }
+
+    executions.append(
+        {
+            "executed_at": datetime.now(tz=UTC).isoformat(timespec="seconds"),
+            "code": champion.code_state(),
+            "champion_sha256": manifest["model"]["sha256"],
+            "champion_name": manifest["model"]["name"],
+            "test_rows": len(test),
+            "forced": bool(executions),
+        }
+    )
+    champion.write_json(record_path, {"executions": executions})
+
+    rows = data_loader.coerce_features(test)
+    target = test[schema.TARGET]
+    compared = pd.DataFrame(
+        {name: model.predict_proba(rows)[:, 1] for name, model in candidates.items()},
+        index=test.index,
+    )
+    served = pd.Series(loaded.model.predict_proba(rows)[:, 1], index=test.index, name="champion")
+    decision = float(manifest["decision"]["threshold"])
+
+    folder = settings.final_evaluation_dir
+    _write_table(_metrics_table(target, compared, rows, decision), folder / "metrics.csv")
+    _write_table(_segments_table(target, served, rows, decision), folder / "segments.csv")
+    _write_table(_monthly_table(target, served, dates, rows), folder / "monthly.csv")
+
+    hotel_date = rows["hotel"].astype("str") + "|" + dates.astype("str")
+    week = dates.dt.strftime("%G-W%V")
+    champion_name = manifest["model"]["name"]
+    bootstrap = pd.concat(
+        [
+            evaluator.block_bootstrap_auc(
+                target, compared, blocks, replicates=replicates, seed=seed, against=champion_name
+            ).assign(blocks=name)
+            for name, blocks in (("hotel_date", hotel_date), ("week", week))
+        ]
+    )
+    _write_table(bootstrap, folder / "bootstrap.csv")
+    learned_from = development[development[schema.ARRIVAL_DATE] < config.CHAMPION_CUT.base_end]
+    _write_psi(rows, data_loader.coerce_features(learned_from), folder / "psi.csv")
+
+    saved = compared.assign(
+        champion=served,
+        **{
+            schema.ARRIVAL_DATE: dates.dt.strftime("%Y-%m-%d"),
+            schema.TARGET: target,
+            "hotel": rows["hotel"],
+            "deposit_type": rows["deposit_type"],
+        },
+    )
+    saved.to_csv(folder / "predictions.csv.gz", index=False, lineterminator="\n")
+
+
+def _write_table(table: pd.DataFrame, path: Path) -> None:
+    table.round(6).to_csv(path, index=False, lineterminator="\n")
+
+
+def _write_psi(test_rows: pd.DataFrame, reference: pd.DataFrame, path: Path) -> None:
+    table = pd.DataFrame(
+        {
+            "feature": list(schema.INPUT_FEATURES),
+            "psi": [
+                evaluator.population_stability_index(reference[column], test_rows[column])
+                for column in schema.INPUT_FEATURES
+            ],
+        }
+    ).sort_values("psi", ascending=False)
+    _write_table(table, path)
 
 
 def run_all(

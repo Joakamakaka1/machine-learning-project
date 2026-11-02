@@ -1,13 +1,14 @@
-"""Command line: `hotel-ml tune|train|run-all`.
+"""Command line: `hotel-ml tune|train|run-all|evaluate`.
 
-No command here reads the test period: `load_development` drops its rows.
+Only `evaluate` reads the test period, and it refuses to repeat. The others use `load_development`,
+which drops its rows.
 """
 
 import argparse
 import logging
 from collections.abc import Sequence
 
-from hotel_cancellation import config, model_trainer, pipeline, tracking
+from hotel_cancellation import config, evaluator, model_trainer, pipeline, tracking
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -29,7 +30,31 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument(
                 "--only", nargs="+", help="Busca solo estos modelos y conserva los demás."
             )
+    evaluate = commands.add_parser(
+        "evaluate",
+        help="Ejecuta el test de 2017, una sola vez.",
+        description="Ejecuta el test de 2017 con los modelos guardados, sin reentrenar.",
+    )
+    evaluate.add_argument("--force", action="store_true", help="Repite el test y lo declara.")
+    evaluate.add_argument(
+        "--replicates", type=int, default=evaluator.BOOTSTRAP_REPLICATES, help="Réplicas bootstrap."
+    )
     return parser
+
+
+def _evaluate(arguments: argparse.Namespace, settings: config.Settings) -> int:
+    try:
+        pipeline.evaluate(
+            pipeline.load_test(),
+            pipeline.load_development(),
+            settings=settings,
+            replicates=arguments.replicates,
+            force=arguments.force,
+        )
+    except pipeline.TestAlreadyEvaluatedError:
+        logging.getLogger(__name__).exception("The test was not executed again")
+        return 1
+    return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -38,6 +63,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     settings = config.get_settings()
+    if arguments.command == "evaluate":
+        return _evaluate(arguments, settings)
+
     tracker: tracking.Tracker = (
         tracking.NullTracker()
         if arguments.no_tracking

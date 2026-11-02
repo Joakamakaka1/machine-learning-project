@@ -46,6 +46,16 @@ class Settings(BaseSettings):
         return self.outputs_dir / "validation"
 
     @property
+    def final_evaluation_dir(self) -> Path:
+        """Results of the single execution on the test."""
+        return self.outputs_dir / "final_evaluation"
+
+    @property
+    def final_evaluation_record(self) -> Path:
+        """Record of when the test was executed. Its existence stops a second execution."""
+        return self.final_evaluation_dir / "record.json"
+
+    @property
     def best_params_path(self) -> Path:
         """Versioned result of the search, which training reads."""
         return self.models_dir / "best_params.json"

@@ -20,6 +20,11 @@ from sklearn.metrics import (
 _DEFAULT_THRESHOLD = 0.5
 _THRESHOLD_GRID = np.linspace(0.01, 0.99, 99)
 _LOGIT_CLIP = 1e-6
+_PSI_BINS = 10
+_PSI_FLOOR = 1e-4
+_MISSING_LABEL = "missing"
+
+BOOTSTRAP_REPLICATES = 2000
 
 
 @dataclass(frozen=True)
@@ -169,6 +174,106 @@ def validation_metrics(
         threshold = optimal_threshold(scenario)
         metrics[scenario.name] = cost_per_booking(actual, scores, threshold, scenario)
     return {name: metrics[name] for name in VALIDATION_METRICS}
+
+
+def _bin_shares(
+    reference: pd.Series, current: pd.Series, bins: int
+) -> tuple[NDArray[Any], NDArray[Any]]:
+    if pd.api.types.is_numeric_dtype(reference):
+        quantiles = np.nanquantile(reference.to_numpy(dtype=float), np.linspace(0, 1, bins + 1))
+        edges = np.unique(quantiles)
+        edges[0], edges[-1] = -np.inf, np.inf
+        first = pd.cut(reference, edges.tolist(), include_lowest=True).astype("str")
+        second = pd.cut(current, edges.tolist(), include_lowest=True).astype("str")
+    else:
+        first, second = reference, current
+    first, second = first.fillna(_MISSING_LABEL), second.fillna(_MISSING_LABEL)
+    categories = sorted(set(first) | set(second))
+    shares = [
+        values.value_counts(normalize=True).reindex(categories, fill_value=0.0).to_numpy()
+        for values in (first, second)
+    ]
+    return shares[0], shares[1]
+
+
+def population_stability_index(
+    reference: pd.Series, current: pd.Series, *, bins: int = _PSI_BINS
+) -> float:
+    """Measure how far a variable moved: above 0.25 is usually read as a large shift.
+
+    Args:
+        reference: Values the model learned from.
+        current: Values to compare with them.
+        bins: Quantile bins of a numeric variable. Categories are compared as they are.
+
+    Returns:
+        The index, with a small floor so that a new category gives a finite value.
+    """
+    expected, actual = _bin_shares(reference, current, bins)
+    expected = np.clip(expected, _PSI_FLOOR, None)
+    actual = np.clip(actual, _PSI_FLOOR, None)
+    return float(np.sum((actual - expected) * np.log(actual / expected)))
+
+
+def block_bootstrap_auc(
+    y_true: pd.Series,
+    probabilities: pd.DataFrame,
+    blocks: pd.Series,
+    *,
+    replicates: int = BOOTSTRAP_REPLICATES,
+    seed: int = 0,
+    against: str | None = None,
+) -> pd.DataFrame:
+    """Compute a percentile interval for the ROC-AUC, resampling whole blocks.
+
+    Bookings of a block are not independent: identical rows share their date. All the models are
+    measured on the same replicates, so the gaps between them are paired. The interval does not
+    cover temporal drift, which is published apart.
+
+    Args:
+        y_true: Observed outcomes.
+        probabilities: One column of predicted probabilities per model.
+        blocks: Block of each row.
+        replicates: Bootstrap replicates.
+        seed: Seed of the resampling.
+        against: Model to compare every other model with.
+
+    Returns:
+        A row per model. With `against`, it includes the gap and its interval.
+    """
+    actual = y_true.to_numpy()
+    block_codes, block_names = pd.factorize(blocks)
+    block_count = len(block_names)
+    rng = np.random.default_rng(seed)
+    per_model: dict[str, list[float]] = {name: [] for name in probabilities.columns}
+    used = 0
+    for _ in range(replicates):
+        counts = np.bincount(rng.integers(0, block_count, block_count), minlength=block_count)
+        weights = counts[block_codes]
+        if np.unique(actual[weights > 0]).size < 2:
+            continue
+        used += 1
+        for name in probabilities.columns:
+            per_model[name].append(
+                float(roc_auc_score(actual, probabilities[name], sample_weight=weights))
+            )
+
+    rows = []
+    for name in probabilities.columns:
+        samples = np.asarray(per_model[name])
+        row: dict[str, Any] = {
+            "model": name,
+            "roc_auc": _roc_auc(actual, probabilities[name].to_numpy()),
+            "ci_low": float(np.quantile(samples, 0.025)),
+            "ci_high": float(np.quantile(samples, 0.975)),
+            "replicates_used": used,
+        }
+        if against is not None:
+            gaps = samples - np.asarray(per_model[against])
+            row["gap_ci_low"] = float(np.quantile(gaps, 0.025))
+            row["gap_ci_high"] = float(np.quantile(gaps, 0.975))
+        rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def validation_scorer(estimator: Any, X: pd.DataFrame, y: pd.Series) -> dict[str, float]:  # noqa: N803
