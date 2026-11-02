@@ -1,0 +1,43 @@
+{
+  "development_rows": 78054,
+  "first_arrival": "2015-07-01",
+  "last_arrival": "2016-12-31",
+  "canceled_rows": 27599,
+  "excluded_zero_lead_time": 210,
+  "excluded_outside_life": 0,
+  "rows_used": 27389,
+  "one_day_rows": 3648,
+  "control_segment": "Online TA",
+  "control_rows": 11002,
+  "control_variable": "booking_changes",
+  "flagged": [
+    "total_of_special_requests"
+  ],
+  "flagged_by_cohort": {
+    "all": [
+      "lead_time"
+    ],
+    "city": [
+      "total_of_special_requests"
+    ],
+    "no_deposit_unique_rows": [
+      "total_of_special_requests"
+    ],
+    "online_ta": [
+      "total_of_special_requests"
+    ],
+    "online_ta_city": [
+      "total_of_special_requests"
+    ],
+    "online_ta_resort": [
+      "total_of_special_requests"
+    ],
+    "resort": [
+      "lead_time"
+    ],
+    "unique_rows": [
+      "total_of_special_requests"
+    ]
+  },
+  "dataset_sha256": "d10cdeb07de9309007f528d6499a2c0467ae7a6b287b80ffd759e11e61801639"
+}
