@@ -1,62 +1,48 @@
 # Python
 __pycache__/
-.pytest_cache/
-
 *.py[cod]
-*.pyo
-.Python
 *.egg-info/
-dist/
 build/
+dist/
 
 # Virtual environments
 .venv/
 venv/
-env/
 
-# Secrets — NUNCA commitear
+# Secrets and local configuration
 .env
 
-# Dataset & archivos grandes  →  descargar aparte o usar DVC
-data/raw/*.csv
-data/raw/*.parquet
-data/raw/*.feather
-data/processed/*.csv
-data/processed/*.parquet
-data/processed/*.feather
+# Tool caches and reports
+.coverage
+.coverage.*
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.audit-requirements.txt
 
-# Modelos entrenados
-models/*.pkl
-models/*.joblib
-models/*.h5
-models/*.keras
-models/saved_model/
+# Data: only the compressed dataset and its documentation are versioned
+data/raw/*
+!data/raw/*.csv.gz
+!data/raw/README.md
+data/processed/
+
+# Models: only the champion and the best hyperparameters are versioned
+models/*
+!models/champion/
+!models/best_params.json
 
 # MLflow
 mlruns/
 mlartifacts/
-
-# Outputs generados (plots, reportes)
-outputs/*.pdf
-outputs/*.html
-
-# uv lock (opcional: sí commitearlo si quieres reproducibilidad exacta)
-# uv.lock
+mlflow.db
 
 # Jupyter
 .ipynb_checkpoints/
 
-# OS
+# OS and editors
 .DS_Store
 Thumbs.db
-
-# IDE
 .idea/
-.vscode/settings.json
+.vscode/
 *.swp
-
-# Ruff
-.ruff_cache/
-
-# MLFlow DB
-mlflow.db
