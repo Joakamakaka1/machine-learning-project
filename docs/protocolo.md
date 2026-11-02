@@ -132,3 +132,10 @@ Se conservan, y el informe final lo declara junto a la cifra del test.
 ### Ensayo general
 
 `hotel-ml rehearse` ejecuta `evaluate` completo con 2016T4 como pseudotest, en un directorio temporal. Solo comprueba que el código funciona. Sus cifras no valen como evaluación, porque el calibrador del campeón se ajustó en ese mismo trimestre.
+
+## Declaración tras ejecutar el test
+
+**El test de 2017 se ejecutó una sola vez el 2026-11-02**, con el código en `185aa76`, sin `--force`. El registro está en [`outputs/final_evaluation/record.json`](../outputs/final_evaluation/record.json).
+
+- **Modelo congelado:** desde ese momento no se toca el modelo, las variables ni el umbral, aunque la cifra decepcione o el test favorezca a otro modelo.
+- **`precision=0` del `Dummy`:** las tablas de validación conservan `precision=0` para el `Dummy`, porque se generaron antes de definir que una métrica sin predicciones positivas vale `NaN`. No se regeneran. En las tablas del test, esa misma celda vale `NaN`.
