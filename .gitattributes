@@ -1,1 +1,2 @@
 *.csv.gz binary
+*.joblib binary

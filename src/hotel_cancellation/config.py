@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     data_dir: Path = PROJECT_ROOT / "data"
     models_dir: Path = PROJECT_ROOT / "models"
     outputs_dir: Path = PROJECT_ROOT / "outputs"
+    mlflow_tracking_uri: str = f"sqlite:///{(PROJECT_ROOT / 'mlflow.db').as_posix()}"
+    mlflow_artifacts_dir: Path = PROJECT_ROOT / "mlartifacts"
 
     @property
     def raw_dataset_path(self) -> Path:
@@ -37,6 +39,26 @@ class Settings(BaseSettings):
     def experiments_dir(self) -> Path:
         """Folder where the experiments write their results."""
         return self.outputs_dir / "experiments"
+
+    @property
+    def validation_dir(self) -> Path:
+        """Folder with the validation metrics of the search and the final training."""
+        return self.outputs_dir / "validation"
+
+    @property
+    def best_params_path(self) -> Path:
+        """Versioned result of the search, which training reads."""
+        return self.models_dir / "best_params.json"
+
+    @property
+    def champion_dir(self) -> Path:
+        """Versioned package of the served model."""
+        return self.models_dir / "champion"
+
+    @property
+    def candidates_dir(self) -> Path:
+        """Every final model, kept out of git, to compare them on the test."""
+        return self.models_dir / "candidates"
 
 
 def get_settings() -> Settings:
