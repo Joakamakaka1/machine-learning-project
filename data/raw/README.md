@@ -1,16 +1,28 @@
-# Evaluación Final - Dataset
+# Dataset de reservas de hotel
 
-- **Autor:** Sergio Benito Martín
-- **Contacto:** pontia@sergiobenito.com
-- **Última actualización:** 31/05/2025
+Reservas de dos hoteles portugueses con llegadas entre el 1 de julio de 2015 y el 31 de agosto de 2017. El objetivo es predecir si una reserva se cancela (`is_canceled = 1`) o no (`is_canceled = 0`). Es el conjunto de datos que proporciona el enunciado del máster.
 
---
+## Archivo e integridad
 
-Este conjunto de datos contiene información sobre reservas de hoteles hechas a lo largo del tiempo, incluyendo detalles sobre los clientes, el comportamiento de reserva y la probabilidad de cancelación.
+| | |
+|---|---|
+| Archivo | `dataset_practica_final.csv.gz` |
+| Filas y columnas | 119 390 filas y 32 columnas |
+| SHA-256 del CSV sin comprimir | `d10cdeb07de9309007f528d6499a2c0467ae7a6b287b80ffd759e11e61801639` |
+| SHA-256 del `.gz` | `16a2fdad1c50bfde326b54903a519559d18f0e2d0b799389951638089707330a` |
+| Tamaño | 1.15 MB comprimido, 16.97 MB sin comprimir |
 
-Es ideal para aplicar modelos de clasificación binaria, donde el objetivo puede ser predecir si una reserva será cancelada (`is_canceled = 1`) o no (`is_canceled = 0`).
+`load_raw` comprueba el hash del CSV sin comprimir, de modo que volver a comprimir el archivo no invalida la comprobación. El `.gz` se genera con `mtime=0` y nivel 9, y su hash solo sirve para identificar este archivo concreto.
+
+## Cita y licencia
+
+Antonio, N., de Almeida, A. y Nunes, L. (2019). *Hotel booking demand datasets*. Data in Brief, 22, 41-49. <https://doi.org/10.1016/j.dib.2018.11.126>
+
+Licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), que exige citar la fuente.
 
 ## Variables
+
+Qué variables entran al modelo y por qué se indica en [`schema.py`](../../src/hotel_cancellation/schema.py) y en la [data card](../../docs/data_card.md).
 
 | Nombre Variable                  | Descripción                                              |
 | -------------------------------- | -------------------------------------------------------- |
@@ -46,3 +58,7 @@ Es ideal para aplicar modelos de clasificación binaria, donde el objetivo puede
 | `total_of_special_requests`      | Nº de peticiones especiales                              |
 | `reservation_status`             | Estado final de la reserva: Check-Out, Canceled, No-Show |
 | `reservation_status_date`        | Fecha en que se actualizó el estado                      |
+
+## Valores ausentes
+
+En el CSV, `NULL` marca el valor ausente en `agent`, `company` y `country`, y `NA` en `children`. `Undefined` en `meal`, `market_segment` y `distribution_channel` es un valor propio de la fuente, no un nulo.
