@@ -1,0 +1,302 @@
+{
+  "dummy": {
+    "method": "none",
+    "briers_on_2016q4": {
+      "none": 0.23764533207455235,
+      "sigmoid": 0.23781460932038756,
+      "isotonic": 0.23781460996021606
+    },
+    "metrics_on_2016q4": {
+      "roc_auc": 0.5,
+      "pr_auc": 0.38593314763231196,
+      "brier": 0.23764533207455235,
+      "calibration_slope": null,
+      "accuracy": 0.614066852367688,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "cost_1_2": 0.614066852367688,
+      "cost_1_3": 0.614066852367688,
+      "cost_1_5": 0.614066852367688,
+      "roc_auc_unique": 0.5,
+      "roc_auc_no_deposit": 0.5,
+      "roc_auc_non_refund": 0.5
+    },
+    "threshold_contrast_on_2016q4": [
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 2.0,
+        "threshold": 0.3333333333333333,
+        "cost_at_threshold": 0.614066852367688,
+        "empirical_best_threshold": 0.01,
+        "cost_at_empirical_best": 0.614066852367688
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 3.0,
+        "threshold": 0.25,
+        "cost_at_threshold": 0.614066852367688,
+        "empirical_best_threshold": 0.01,
+        "cost_at_empirical_best": 0.614066852367688
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 5.0,
+        "threshold": 0.16666666666666666,
+        "cost_at_threshold": 0.614066852367688,
+        "empirical_best_threshold": 0.01,
+        "cost_at_empirical_best": 0.614066852367688
+      }
+    ]
+  },
+  "logistic_regression": {
+    "method": "isotonic",
+    "briers_on_2016q4": {
+      "none": 0.1673702154622819,
+      "sigmoid": 0.167069155259041,
+      "isotonic": 0.1662687717518729
+    },
+    "metrics_on_2016q4": {
+      "roc_auc": 0.7995064841861227,
+      "pr_auc": 0.7532586751494758,
+      "brier": 0.1662687717518729,
+      "calibration_slope": 1.0664356133631707,
+      "accuracy": 0.7450557103064067,
+      "precision": 0.8213187564058764,
+      "recall": 0.4337784193431974,
+      "f1": 0.5677175581532649,
+      "cost_1_2": 0.3850974930362117,
+      "cost_1_3": 0.4616295264623955,
+      "cost_1_5": 0.5755571030640668,
+      "roc_auc_unique": 0.7473564547398219,
+      "roc_auc_no_deposit": 0.7132316094798844,
+      "roc_auc_non_refund": 0.9559438470728794
+    },
+    "threshold_contrast_on_2016q4": [
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 2.0,
+        "threshold": 0.3333333333333333,
+        "cost_at_threshold": 0.3850974930362117,
+        "empirical_best_threshold": 0.25,
+        "cost_at_empirical_best": 0.38112813370473536
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 3.0,
+        "threshold": 0.25,
+        "cost_at_threshold": 0.4616295264623955,
+        "empirical_best_threshold": 0.18000000000000002,
+        "cost_at_empirical_best": 0.4577994428969359
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 5.0,
+        "threshold": 0.16666666666666666,
+        "cost_at_threshold": 0.5755571030640668,
+        "empirical_best_threshold": 0.11,
+        "cost_at_empirical_best": 0.5746518105849582
+      }
+    ]
+  },
+  "decision_tree": {
+    "method": "isotonic",
+    "briers_on_2016q4": {
+      "none": 0.1645773541387852,
+      "sigmoid": 0.16407845712217795,
+      "isotonic": 0.16311947183486816
+    },
+    "metrics_on_2016q4": {
+      "roc_auc": 0.8098632607313262,
+      "pr_auc": 0.7413979032250736,
+      "brier": 0.16311947183486816,
+      "calibration_slope": 0.8279015431078759,
+      "accuracy": 0.7426183844011142,
+      "precision": 0.755254424778761,
+      "recall": 0.4927823890292313,
+      "f1": 0.5964184319720462,
+      "cost_1_2": 0.3643454038997215,
+      "cost_1_3": 0.45083565459610025,
+      "cost_1_5": 0.5677576601671309,
+      "roc_auc_unique": 0.7437277162834973,
+      "roc_auc_no_deposit": 0.7277691392772264,
+      "roc_auc_non_refund": 0.740442054958184
+    },
+    "threshold_contrast_on_2016q4": [
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 2.0,
+        "threshold": 0.3333333333333333,
+        "cost_at_threshold": 0.3643454038997215,
+        "empirical_best_threshold": 0.26,
+        "cost_at_empirical_best": 0.3578690807799443
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 3.0,
+        "threshold": 0.25,
+        "cost_at_threshold": 0.45083565459610025,
+        "empirical_best_threshold": 0.17,
+        "cost_at_empirical_best": 0.442966573816156
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 5.0,
+        "threshold": 0.16666666666666666,
+        "cost_at_threshold": 0.5677576601671309,
+        "empirical_best_threshold": 0.12,
+        "cost_at_empirical_best": 0.5183844011142061
+      }
+    ]
+  },
+  "random_forest": {
+    "method": "isotonic",
+    "briers_on_2016q4": {
+      "none": 0.1622403609926107,
+      "sigmoid": 0.1602313226524103,
+      "isotonic": 0.15921408532383327
+    },
+    "metrics_on_2016q4": {
+      "roc_auc": 0.8200548826548892,
+      "pr_auc": 0.7585851067933109,
+      "brier": 0.15921408532383327,
+      "calibration_slope": 0.9289304098854715,
+      "accuracy": 0.7436629526462396,
+      "precision": 0.8370155740673669,
+      "recall": 0.4169974738361602,
+      "f1": 0.5566662652053475,
+      "cost_1_2": 0.352924791086351,
+      "cost_1_3": 0.44610027855153206,
+      "cost_1_5": 0.5374651810584958,
+      "roc_auc_unique": 0.7635334237058375,
+      "roc_auc_no_deposit": 0.7424012407236187,
+      "roc_auc_non_refund": 0.9958183990442055
+    },
+    "threshold_contrast_on_2016q4": [
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 2.0,
+        "threshold": 0.3333333333333333,
+        "cost_at_threshold": 0.352924791086351,
+        "empirical_best_threshold": 0.28,
+        "cost_at_empirical_best": 0.351949860724234
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 3.0,
+        "threshold": 0.25,
+        "cost_at_threshold": 0.44610027855153206,
+        "empirical_best_threshold": 0.18000000000000002,
+        "cost_at_empirical_best": 0.4328690807799443
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 5.0,
+        "threshold": 0.16666666666666666,
+        "cost_at_threshold": 0.5374651810584958,
+        "empirical_best_threshold": 0.15000000000000002,
+        "cost_at_empirical_best": 0.4846100278551532
+      }
+    ]
+  },
+  "xgboost": {
+    "method": "isotonic",
+    "briers_on_2016q4": {
+      "none": 0.16388972103595734,
+      "sigmoid": 0.16279192047696048,
+      "isotonic": 0.16213276714032326
+    },
+    "metrics_on_2016q4": {
+      "roc_auc": 0.8146547603369277,
+      "pr_auc": 0.7624065246192154,
+      "brier": 0.16213276714032326,
+      "calibration_slope": 0.9630529888188863,
+      "accuracy": 0.7406685236768802,
+      "precision": 0.9299905392620624,
+      "recall": 0.3547455792132804,
+      "f1": 0.5135841170323929,
+      "cost_1_2": 0.36720055710306404,
+      "cost_1_3": 0.4561281337047354,
+      "cost_1_5": 0.5293871866295264,
+      "roc_auc_unique": 0.753600281085068,
+      "roc_auc_no_deposit": 0.7349812669680226,
+      "roc_auc_non_refund": 0.997610513739546
+    },
+    "threshold_contrast_on_2016q4": [
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 2.0,
+        "threshold": 0.3333333333333333,
+        "cost_at_threshold": 0.36720055710306404,
+        "empirical_best_threshold": 0.36000000000000004,
+        "cost_at_empirical_best": 0.3665738161559889
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 3.0,
+        "threshold": 0.25,
+        "cost_at_threshold": 0.4561281337047354,
+        "empirical_best_threshold": 0.18000000000000002,
+        "cost_at_empirical_best": 0.4353064066852368
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 5.0,
+        "threshold": 0.16666666666666666,
+        "cost_at_threshold": 0.5293871866295264,
+        "empirical_best_threshold": 0.12,
+        "cost_at_empirical_best": 0.5116991643454039
+      }
+    ]
+  },
+  "mlp": {
+    "method": "sigmoid",
+    "briers_on_2016q4": {
+      "none": 0.167283182836804,
+      "sigmoid": 0.16037385011477923,
+      "isotonic": 0.16211291248046852
+    },
+    "metrics_on_2016q4": {
+      "roc_auc": 0.8124326316066044,
+      "pr_auc": 0.7866875972815692,
+      "brier": 0.16037385011477923,
+      "calibration_slope": 1.0726695642063995,
+      "accuracy": 0.766016713091922,
+      "precision": 0.8007166482910695,
+      "recall": 0.524178996752075,
+      "f1": 0.6335877862595419,
+      "cost_1_2": 0.37047353760445684,
+      "cost_1_3": 0.4597493036211699,
+      "cost_1_5": 0.5420612813370473,
+      "roc_auc_unique": 0.7630345724666211,
+      "roc_auc_no_deposit": 0.7318204112446028,
+      "roc_auc_non_refund": 0.989247311827957
+    },
+    "threshold_contrast_on_2016q4": [
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 2.0,
+        "threshold": 0.3333333333333333,
+        "cost_at_threshold": 0.37047353760445684,
+        "empirical_best_threshold": 0.31,
+        "cost_at_empirical_best": 0.36824512534818943
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 3.0,
+        "threshold": 0.25,
+        "cost_at_threshold": 0.4597493036211699,
+        "empirical_best_threshold": 0.21000000000000002,
+        "cost_at_empirical_best": 0.4505571030640669
+      },
+      {
+        "false_positive_cost": 1.0,
+        "false_negative_cost": 5.0,
+        "threshold": 0.16666666666666666,
+        "cost_at_threshold": 0.5420612813370473,
+        "empirical_best_threshold": 0.17,
+        "cost_at_empirical_best": 0.5440111420612813
+      }
+    ]
+  }
+}
