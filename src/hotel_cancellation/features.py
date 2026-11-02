@@ -73,13 +73,34 @@ def build_pipeline(preprocessor: ColumnTransformer, estimator: Any) -> Pipeline:
     return Pipeline([(PREPROCESS_STEP, preprocessor), (MODEL_STEP, estimator)])
 
 
-def _unwrap(model: Any) -> Any:
+def base_pipeline(model: Any) -> Any:
     """Get to the pipeline inside the calibration wrapper."""
     if isinstance(model, CalibratedClassifierCV):
         model = model.estimator
     if isinstance(model, FrozenEstimator):
         model = model.estimator
     return model
+
+
+def original_feature(encoded_name: str) -> str:
+    """Go from a column of the preprocessor output back to its input variable.
+
+    Args:
+        encoded_name: Such as `numeric__lead_time` or `categorical__agent_9`.
+
+    Returns:
+        The name of the input variable.
+
+    Raises:
+        ValueError: If the column does not come from an input variable.
+    """
+    _, _, name = encoded_name.partition("__")
+    if name in schema.NUMERIC_FEATURES:
+        return name
+    for feature in schema.CATEGORICAL_FEATURES:
+        if name.startswith(f"{feature}_"):
+            return feature
+    raise ValueError(f"{encoded_name} does not come from an input feature.")
 
 
 def assert_no_forbidden_inputs(model: Any) -> None:
@@ -94,7 +115,7 @@ def assert_no_forbidden_inputs(model: Any) -> None:
     Raises:
         LeakageError: Naming each offending column and why it is out.
     """
-    pipeline = _unwrap(model)
+    pipeline = base_pipeline(model)
     if not isinstance(pipeline, Pipeline) or PREPROCESS_STEP not in pipeline.named_steps:
         raise LeakageError(f"Cannot inspect the inputs: there is no {PREPROCESS_STEP} step.")
     preprocessor = pipeline.named_steps[PREPROCESS_STEP]

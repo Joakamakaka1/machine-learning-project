@@ -1,7 +1,8 @@
-"""Command line: `hotel-ml tune|train|train-scenario|run-all|rehearse|evaluate`.
+"""Command line of the project: run `hotel-ml --help` to see every command.
 
-Only `evaluate` reads the test period, after checking everything it needs, and it refuses to repeat.
-The others use `load_development`, which drops its rows.
+Only `evaluate` measures the test period, after checking everything it needs, and it refuses to
+repeat. `explain` and `audit` read its rows once it has run, only for interpreting. The others use
+`load_development`, which drops its rows.
 """
 
 import argparse
@@ -60,7 +61,38 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.add_argument(
         "--replicates", type=int, default=evaluator.BOOTSTRAP_REPLICATES, help="Réplicas bootstrap."
     )
+
+    description = "Calcula la importancia de las variables sobre 2017, tras el test."
+    commands.add_parser("explain", help=description, description=description)
+    description = "Reproduce la auditoría de la inflación en cuatro escalones, tras el test."
+    commands.add_parser("audit", help=description, description=description)
+    description = "Genera las figuras y el valor de negocio desde los resultados guardados."
+    commands.add_parser("figures", help=description, description=description)
     return parser
+
+
+def _explain(settings: config.Settings) -> None:
+    # The check comes first, because the rows of the test must not be read if it fails.
+    champion.assert_test_executed(settings)
+    from hotel_cancellation import explain
+
+    explain.explain(pipeline.load_test(), settings=settings)
+    logger.info("Importance in %s", settings.interpretation_dir)
+
+
+def _audit(settings: config.Settings) -> None:
+    champion.assert_test_executed(settings)
+    from hotel_cancellation import audit
+
+    audit.audit_inflation(pipeline.load_cleaned(), settings=settings)
+    logger.info("Audit in %s", settings.audit_dir)
+
+
+def _figures(settings: config.Settings) -> None:
+    champion.assert_test_executed(settings)
+    from hotel_cancellation import plots
+
+    logger.info("Figures: %s", [path.name for path in plots.save_all(settings)])
 
 
 def _evaluate(arguments: argparse.Namespace, settings: config.Settings) -> None:
@@ -123,12 +155,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             pipeline.train_scenario(
                 pipeline.load_development(), settings=settings, force=arguments.force
             )
+        elif arguments.command == "explain":
+            _explain(settings)
+        elif arguments.command == "audit":
+            _audit(settings)
+        elif arguments.command == "figures":
+            _figures(settings)
         else:
             _train(arguments, settings)
     except (
         pipeline.TestAlreadyEvaluatedError,
         pipeline.EvaluationNotReadyError,
         champion.ChampionIntegrityError,
+        champion.TestNotExecutedError,
     ) as error:
         logger.error("%s", error)
         return 1

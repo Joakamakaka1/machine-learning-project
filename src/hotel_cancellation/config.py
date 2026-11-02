@@ -59,6 +59,26 @@ class Settings(BaseSettings):
         return self.final_evaluation_dir / "record.json"
 
     @property
+    def figures_dir(self) -> Path:
+        """Figures of the report."""
+        return self.outputs_dir / "figures"
+
+    @property
+    def interpretation_dir(self) -> Path:
+        """Importance of the variables."""
+        return self.outputs_dir / "interpretation"
+
+    @property
+    def audit_dir(self) -> Path:
+        """Audit of the inflated figures."""
+        return self.outputs_dir / "audit"
+
+    @property
+    def business_dir(self) -> Path:
+        """Value of the champion under the assumed costs."""
+        return self.outputs_dir / "business"
+
+    @property
     def best_params_path(self) -> Path:
         """Versioned result of the search, which training reads."""
         return self.models_dir / "best_params.json"

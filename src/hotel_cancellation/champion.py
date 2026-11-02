@@ -30,6 +30,24 @@ class ChampionIntegrityError(ValueError):
     """The saved package is not what its manifest describes."""
 
 
+class TestNotExecutedError(RuntimeError):
+    """Rows of the test period can only be read for interpreting after the single execution."""
+
+    __test__ = False
+
+
+def assert_test_executed(settings: config.Settings) -> None:
+    """Refuse anything that reads the test for interpreting before the single execution.
+
+    Raises:
+        TestNotExecutedError: If there is no record of the execution.
+    """
+    if not settings.final_evaluation_record.exists():
+        raise TestNotExecutedError(
+            f"{settings.final_evaluation_record} does not exist: run `hotel-ml evaluate` first."
+        )
+
+
 @dataclass(frozen=True)
 class LoadedChampion:
     """The model together with the manifest that describes it."""
@@ -49,6 +67,12 @@ def to_jsonable(value: Any) -> Any:
     if isinstance(value, float) and not math.isfinite(value):
         return None
     return value
+
+
+def read_json(path: Path) -> dict[str, Any]:
+    """Read a JSON object."""
+    content: dict[str, Any] = json.loads(path.read_text("utf-8"))
+    return content
 
 
 def write_json(path: Path, content: Any) -> None:

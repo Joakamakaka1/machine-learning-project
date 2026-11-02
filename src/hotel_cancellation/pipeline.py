@@ -2,7 +2,8 @@
 
 Training never reads the test rows: `load_development` drops them as soon as the contract has
 checked the file, and `ModelTrainer` refuses them if they arrive some other way. Only `load_test`
-returns them, and only `hotel-ml evaluate` calls it, after `prepare_evaluation`.
+and `load_cleaned` return them: `hotel-ml evaluate` after `prepare_evaluation`, and
+`hotel-ml explain` and `hotel-ml audit` after the single execution.
 """
 
 import json
@@ -76,7 +77,9 @@ def load_development(
 def load_test(
     path: Path | None = None, *, expected_sha256: str = config.RAW_DATASET_SHA256
 ) -> pd.DataFrame:
-    """Load the rows of the test period. Only `hotel-ml evaluate` may call this.
+    """Load the rows of the test period.
+
+    Only `hotel-ml evaluate` may call this, or `hotel-ml explain` once the test has been executed.
 
     Args:
         path: Compressed CSV. Defaults to the location in the settings.
@@ -88,6 +91,23 @@ def load_test(
     raw = data_loader.load_raw(path, expected_sha256=expected_sha256)
     data_loader.validate_raw(raw)
     return data_loader.split_temporal(data_loader.clean(raw)).test
+
+
+def load_cleaned(
+    path: Path | None = None, *, expected_sha256: str = config.RAW_DATASET_SHA256
+) -> pd.DataFrame:
+    """Load every clean row. Only `hotel-ml audit` may call this, after the single execution.
+
+    Args:
+        path: Compressed CSV. Defaults to the location in the settings.
+        expected_sha256: Hash of the uncompressed CSV.
+
+    Returns:
+        Clean rows of the whole period.
+    """
+    raw = data_loader.load_raw(path, expected_sha256=expected_sha256)
+    data_loader.validate_raw(raw)
+    return data_loader.clean(raw)
 
 
 def _trainer(

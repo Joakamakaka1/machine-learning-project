@@ -266,6 +266,56 @@ def _numeric_labels(
     return label(reference), label(current)
 
 
+def business_value_table(y_true: ArrayLike, probabilities: ArrayLike) -> pd.DataFrame:
+    """Translate each cost scenario into decisions: who gets flagged and what it costs.
+
+    The costs are assumptions, declared as such. `cost_without_model` is the cheaper of two trivial
+    policies: flag nobody or flag everybody. A positive `saving_per_booking` means that the model
+    beats them under that scenario.
+
+    Args:
+        y_true: Observed outcomes.
+        probabilities: Predicted probability of cancellation.
+
+    Returns:
+        A row per scenario in `COST_SCENARIOS`.
+    """
+    actual = np.asarray(y_true)
+    scores = np.asarray(probabilities, dtype=float)
+    positives = np.count_nonzero(actual == 1)
+    negatives = actual.size - positives
+    rows = []
+    for scenario in COST_SCENARIOS:
+        threshold = optimal_threshold(scenario)
+        flagged = scores >= threshold
+        true_alarms = np.count_nonzero(flagged & (actual == 1))
+        false_alarms = np.count_nonzero(flagged & (actual == 0))
+        cost = cost_per_booking(actual, scores, threshold, scenario)
+        flag_nobody = scenario.false_negative * positives / actual.size
+        flag_everybody = scenario.false_positive * negatives / actual.size
+        cost_without_model = min(flag_nobody, flag_everybody)
+        decisions = classification_metrics(actual, scores, threshold)
+        rows.append(
+            {
+                "false_positive_cost": scenario.false_positive,
+                "false_negative_cost": scenario.false_negative,
+                "costs_are_assumptions": True,
+                "threshold": threshold,
+                "recall": decisions["recall"],
+                "precision": decisions["precision"],
+                "true_alarms": true_alarms,
+                "false_alarms": false_alarms,
+                "missed_cancellations": positives - true_alarms,
+                "false_alarm_rate": false_alarms / negatives if negatives else float("nan"),
+                "flagged_share": float(flagged.mean()),
+                "cost_per_booking": cost,
+                "cost_without_model": cost_without_model,
+                "saving_per_booking": cost_without_model - cost,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def _bin_shares(
     reference: pd.Series, current: pd.Series, bins: int
 ) -> tuple[NDArray[Any], NDArray[Any]]:
