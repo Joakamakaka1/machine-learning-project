@@ -42,13 +42,15 @@ def test_rehearsal_runs_on_real_rows_and_never_reads_the_test(
 
     monkeypatch.setattr(pipeline, "load_test", fail)
     champion_before = (real_settings.champion_dir / champion.MODEL_FILE).read_bytes()
+    record = real_settings.final_evaluation_record
+    record_before = record.read_bytes() if record.exists() else None
 
     folder = pipeline.rehearse(
         settings=real_settings, window=window, output_dir=tmp_path, replicates=20
     )
 
     assert all((folder / table).exists() for table in TABLES)
-    assert not real_settings.final_evaluation_record.exists()
+    assert (record.read_bytes() if record.exists() else None) == record_before
     assert (real_settings.champion_dir / champion.MODEL_FILE).read_bytes() == champion_before
     predictions = pd.read_csv(folder / "predictions.csv.gz")
     assert predictions[schema.ARRIVAL_DATE].max() < str(config.TEST_START.date())
