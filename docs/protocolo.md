@@ -88,3 +88,47 @@ El umbral es `t* = C_FP / (C_FP + C_FN)` sobre la probabilidad calibrada. Los co
 - `evaluate` deja constancia en `outputs/final_evaluation/`, con fecha y commit, y se niega a repetir sin `--force`.
 - Después no se toca el modelo. Si algo obligara a hacerlo, se declara en el informe.
 - La cifra se publica aunque decepcione. **Antes de ejecutarlo se espera un ROC-AUC en torno a 0.81**, el valor de la validación temporal en 2016, y puede salir menor por la deriva. Si el campeón no supera al baseline, se dirá.
+
+## Enmienda 1 (2026-11-02), antes de ejecutar el test
+
+**Motivo:** una revisión independiente del código encontró fallos en `evaluate` antes de que se ejecutara el test. Nadie ha visto todavía resultados de estos modelos en 2017. La enmienda no cambia el campeón, ni sus ventanas, ni su umbral.
+
+### Escenario con `total_of_special_requests`
+
+Random Forest con los hiperparámetros del campeón, las mismas ventanas y calibración isotónica, medido en 2017 dentro de la misma ejecución.
+
+- Es **solo informativo** y no puede cambiar el campeón.
+- Su modelo se entrena y se registra con hash antes del test.
+
+### Interpretabilidad
+
+La permutación y SHAP se calculan sobre 2017 una vez congelado el modelo, solo para interpretar. Ninguna decisión sale de ahí.
+
+### Decisiones que salen de la auditoría previa
+
+La auditoría había visto 2017, y de ella salen tres elecciones que afectan al modelo:
+
+- `ADR_UPPER_LIMIT`, el corte de limpieza de `adr`.
+- `min_frequency=50`, en la codificación de categorías.
+- Las rejillas de búsqueda de hiperparámetros.
+
+Se conservan, y el informe final lo declara junto a la cifra del test.
+
+### Definiciones de las métricas
+
+- **Pendiente de calibración:** se recortan las probabilidades a `[1e-3, 1 - 1e-3]` antes de calcular el logit. Con isotónica, la pendiente depende mucho de ese recorte, así que se informa también de la sensibilidad con `1e-6` y `1e-2`, y del porcentaje de filas con probabilidad exactamente 0 o 1.
+- **Tablas ya generadas:** las de validación y experimentos anteriores a esta enmienda usaron un recorte de `1e-6`, y no se regeneran para no reentrenar. `outputs/experiments/calibration_sensitivity.csv` da la pendiente de cada modelo con los tres recortes.
+- **Coste:** cada escenario se mide en su propio `t*`, igual que en validación. Además, se da el coste de los tres escenarios al umbral servido.
+- **Métricas no definidas:** en un subconjunto con una sola clase, o sin predicciones positivas, valen `NaN`, y siempre van con el recuento de filas.
+- **PSI:** las variables discretas o con empates masivos usan un bin por valor; las demás, cuantiles.
+
+### Salvaguardas de la ejecución única
+
+- **Hash de los modelos:** los SHA-256 de todos los candidatos y del escenario están en `models/candidates.json`, versionado. Antes de leer ninguna fila de 2017, `evaluate` falla si falta alguno, si un hash no coincide o si el del candidato ganador no es el del campeón.
+- **Condiciones de la ejecución real:** exige el perfil `full`, el árbol de git limpio y los directorios por defecto.
+- **Registro:** todo se calcula en memoria y el registro aparece a la vez que los resultados, de forma atómica. Un fallo no deja cifras visibles ni cuenta como ejecución.
+- **Campeón protegido:** si existe el registro, `train` y `run-all` se niegan a sustituir al campeón sin `--force`.
+
+### Ensayo general
+
+`hotel-ml rehearse` ejecuta `evaluate` completo con 2016T4 como pseudotest, en un directorio temporal. Solo comprueba que el código funciona. Sus cifras no valen como evaluación, porque el calibrador del campeón se ajustó en ese mismo trimestre.
