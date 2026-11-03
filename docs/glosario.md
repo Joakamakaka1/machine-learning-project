@@ -11,7 +11,7 @@ Una fila del dataset: una estancia reservada en uno de los dos hoteles, con los 
 Lo que se predice. Vale 1 si la reserva acabó como `Canceled` o `No-Show`, y 0 si el cliente llegó. Es el 36.4 % de las filas de desarrollo.
 
 **Momento de predicción**:
-Cuándo se supone que el modelo decide. Aquí, **al confirmar la reserva**. Marca qué variables valen: solo las que ya se conocen entonces.
+Cuándo se supone que el modelo decide. Aquí, **al confirmar la reserva**. Marca qué variables valen: solo las que deberían conocerse entonces. Es un supuesto, porque el dataset referencia sus valores al día anterior a la llegada.
 
 **Antelación (`lead_time`)**:
 Días entre la reserva y la llegada. Es una de las variables más útiles: se cancela el 10.1 % con menos de una semana y el 77.8 % con más de un año.

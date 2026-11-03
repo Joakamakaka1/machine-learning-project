@@ -52,6 +52,7 @@ layout.image_card(
     description=(
         "Una partición aleatoria da 0.952: casi un tercio de las filas de test ya estaba en train, "
         "por los duplicados. Evaluar en el futuro baja a 0.868, y quitar `country` y "
-        "`booking_changes`, que se conocen tarde, a 0.818. Esa es la dificultad real del problema."
+        "`booking_changes`, que se conocen tarde, a 0.818. Tampoco es el rendimiento al confirmar: "
+        "con las reservas confirmadas desde 2017-01-01, el campeón da 0.7917."
     ),
 )

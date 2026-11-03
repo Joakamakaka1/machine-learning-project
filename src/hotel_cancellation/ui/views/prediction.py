@@ -131,7 +131,7 @@ def _show_result(result: Mapping[str, Any], payload: Mapping[str, Any]) -> None:
 
 st.title("Predicción")
 st.markdown(
-    f"Rellena las {len(schema.INPUT_FEATURES)} variables que se conocen **al confirmar la "
+    f"Rellena las {len(schema.INPUT_FEATURES)} variables con los valores **al confirmar la "
     "reserva**. La API estima la probabilidad de que se cancele."
 )
 layout.api_status(st, verbose=True)

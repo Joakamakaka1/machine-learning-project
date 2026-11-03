@@ -6,9 +6,13 @@ Sistema local que entrena, evalúa y compara modelos para predecir, **al confirm
 
 **Resultado:** un Random Forest calibrado obtiene en el test de 2017 un ROC-AUC de 0.8175, con un intervalo del 95 % de [0.8058, 0.8297]. Con filas únicas baja a 0.7608, y con `No Deposit`, a 0.7529. Un primer XGBoost con partición aleatoria daba 0.9524, y este proyecto explica por qué esa cifra no era creíble.
 
+**Cómo leerlo:** 0.8175 tampoco es el rendimiento al confirmar. No consta que las variables sean las de ese momento, y con las reservas confirmadas desde 2017-01-01 baja a 0.7917. Lo detalla la [segunda revisión](docs/revision_datos_y_validacion.md).
+
 ## Problema y datos
 
-Una cancelación tardía deja una habitación vacía que ya no se puede vender. Se trata como clasificación binaria de `is_canceled`, en el único momento defendible con este archivo: al confirmar la reserva, porque el CSV guarda el valor final de cada reserva, no su historial.
+Una cancelación tardía deja una habitación vacía que ya no se puede vender. Se trata como clasificación binaria de `is_canceled`, con la intención de predecir al confirmar la reserva.
+
+**Esa intención es un supuesto.** El CSV no guarda el historial de cada reserva, y el artículo que lo describe referencia los valores al día anterior a la llegada. Por eso no consta que las variables sean las que se conocían al confirmar. Además, el modelo apenas ve la cancelación tardía: frente a las estancias, da 0.5541 con las canceladas hasta 7 días antes de llegar, en un análisis posterior.
 
 Los datos son los del enunciado: 119 390 reservas de dos hoteles portugueses, con llegadas entre julio de 2015 y agosto de 2017.
 
@@ -57,7 +61,8 @@ Con el umbral servido de 0.25, que sale de costes 1:3 supuestos, y con un umbral
 
 ### Conclusiones
 
-- **La cifra creíble es 0.82, no 0.95.** Coincide con la validación en 2016, de 0.8172 ± 0.0231, y con lo que el [protocolo](docs/protocolo.md) anticipaba antes de ejecutar el test.
+- **0.95 no era creíble, y 0.82 es correcto como cálculo, pero optimista como afirmación.** Coincide con la validación en 2016, de 0.8172 ± 0.0231, y con lo que el [protocolo](docs/protocolo.md) anticipaba, aunque es una sola muestra. La cifra mezcla reservas confirmadas antes del corte de entrenamiento: con las confirmadas desde 2017-01-01 da 0.7917, y con `No Deposit`, 0.7540, en un análisis posterior que no puntúa ninguna fila.
+- **El techo de estas variables ronda 0.84, y 0.76 con `No Deposit`.** En una [segunda revisión](docs/revision_datos_y_validacion.md), ninguno de los 50 cambios probados en datos, variables y modelos mejoró de forma demostrable.
 - **2017 no era virgen:** una auditoría previa lo había visto, y de ella salen `ADR_UPPER_LIMIT`, `min_frequency=50` y las rejillas de búsqueda. Ninguna otra decisión sale de ahí.
 - **Random Forest gana por la regla de 1 error estándar**, no por ser claramente mejor: empata con XGBoost, con una diferencia pareada de [-0.0033, +0.0008].
 - **Lo que el test señala no se corrige, porque el modelo está congelado.** Con el umbral 0.25 se avisa del 77.3 % de las reservas; con costes 1:3 el campeón es el más caro de los cinco modelos, con 0.4761 por reserva; y la mejor PR-AUC es la de la MLP, con 0.7654.
@@ -274,6 +279,7 @@ pyproject.toml  uv.lock  requirements.txt  Dependencias
 
 - [Informe final](docs/informe_final.md) y su [PDF](docs/informe_final.pdf).
 - [Protocolo de evaluación](docs/protocolo.md), fijado antes de comparar modelos.
+- [Segunda revisión de datos y validación](docs/revision_datos_y_validacion.md), con su [protocolo](docs/revision_protocolo.md).
 - [Model card](docs/model_card.md) y [data card](docs/data_card.md).
 - [ADR](docs/adr/): las decisiones difíciles de revertir.
 - [Glosario](docs/glosario.md), pensado para aprender.

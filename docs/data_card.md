@@ -44,7 +44,15 @@ El CSV guarda **el valor final de cada reserva, no su historial**. Por eso impor
 
 ## Momento de la predicción
 
-Se predice **al confirmar la reserva**. Es el único momento defendible con este archivo: cualquier otro necesitaría el historial de cambios, que no existe. Una variable solo entra al modelo si se conoce en ese momento.
+La intención es predecir **al confirmar la reserva**, y una variable solo entra al modelo si hay motivos para creer que se conoce en ese momento. **Es un supuesto, no un hecho comprobado:** Antonio et al. (2019, *Data in Brief*) referencian los valores al día anterior a la llegada, y los leen de la reserva y de su registro de cambios. Este archivo no guarda el valor al confirmar.
+
+| Grupo, según la tabla 1 del artículo | Variables | ROC-AUC en 2016 |
+|---|---|---|
+| Definidas al crear o confirmar | `hotel`, `lead_time`, `is_repeated_guest`, `previous_cancellations`, `previous_bookings_not_canceled`, `days_in_waiting_list` | 0.6866, solo con este grupo |
+| Se pueden modificar | El resto, salvo la siguiente | 0.8072, sumando este grupo |
+| Se calcula después | `deposit_type`, con los pagos anteriores a la llegada o a la cancelación | 0.8207, con las 19 |
+
+El rendimiento real al confirmar está entre esas cifras, medidas con un XGBoost de referencia y 12 ventanas mensuales. Este archivo no permite saber dónde. Lo detalla la [segunda revisión](revision_datos_y_validacion.md).
 
 ## Registro de disponibilidad
 
@@ -52,7 +60,7 @@ Se predice **al confirmar la reserva**. Es el único momento defendible con este
 
 ### Variables de entrada (19)
 
-Todas se conocen al confirmar la reserva, aunque el CSV guarda su último valor.
+Se usan como si se conocieran al confirmar la reserva, pero no consta que sean los valores de ese momento.
 
 | Variable | Evidencia en el diagnóstico |
 |---|---|
@@ -72,7 +80,7 @@ Todas se conocen al confirmar la reserva, aunque el CSV guarda su último valor.
 | `market_segment` | V no calculable en Online TA, por ser constante; V 0.139 en el total |
 | `distribution_channel` | V 0.027 |
 | `reserved_room_type` | V 0.046 |
-| `deposit_type` | V 0.049; se conoce al reservar, pero se conserva sin leerla como causa |
+| `deposit_type` | V 0.049; se calcula con pagos hasta la llegada o la cancelación, así que **no consta que se conozca al reservar**. Se conserva sin leerla como causa |
 | `customer_type` | V 0.043 |
 | `agent` | V 0.070 |
 
@@ -142,3 +150,13 @@ Las canceladas en un día también tienen menos peticiones: en Online TA, la dif
 - Solo mide las canceladas. Las reservas que llegan al hotel no tienen un momento de congelación comparable.
 - Detecta acumulación, no sobrescritura: una variable que se reemplaza sin crecer, como una tarifa, no deja esta huella.
 - Dos hoteles y dos años de datos: nada de esto se puede generalizar a otros hoteles.
+
+## Otros problemas de los datos
+
+Salen de la [segunda revisión](revision_datos_y_validacion.md), con llegadas anteriores a 2017.
+
+- **Tandas de reservas:** el 53 % de las filas está en tandas de 10 o más, con la misma fecha de reserva, agente, segmento, depósito, tipo de cliente y habitación. Su correlación intraclase es de 0.47, de modo que hay mucha menos información independiente que filas. Hay días de hasta 1 112 cancelaciones de un solo agente.
+- **Cobertura desigual de City Hotel:** en julio de 2015 hay 33 habitaciones ocupadas de media según los datos, frente a 212 en julio de 2016, y cancela el 67 %. Parece que faltan estancias, no cancelaciones, y no se sabe por qué. Quitar esas filas no mejora, y se conservan.
+- **`previous_cancellations` no es estable:** fuera de `Non Refund` y de las tandas, su tasa de cancelación cae del 97.5 % en 2015T3 al 27.1 % en 2016T4.
+- **Fechas:** `stays_in_weekend_nights` solo cuadra si el fin de semana son las noches de domingo y lunes de las fechas del CSV, que parecen desplazadas. No afecta al modelo, porque no usa el calendario, pero sí a cualquier variable de día de la semana.
+- **`No-Show`:** cuenta como cancelación, y son el 3.0 % de los positivos. El artículo no lo dice de forma expresa, y se ve en los datos.

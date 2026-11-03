@@ -270,25 +270,26 @@ Las cifras de análisis posterior **no son una evaluación nueva:** no se puntu�
 
 Por orden de valor:
 
-1. **Corregir lo que se afirma.** Es lo único imprescindible antes de la defensa. Lista abajo.
-2. **Conseguir el registro de cambios** de la reserva, o cualquier dato con el valor al confirmar. Es lo único que resolvería los problemas 1 y 3.
-3. **Reentrenar con frecuencia,** midiendo con cohortes por fecha de reserva. Es la mejora real más probable.
-4. **Reformular el objetivo,** si importa el coste de verdad: predecir la cancelación tardía cerca de la llegada, con lo que se sepa entonces.
-5. **Fijar el umbral según la capacidad de revisión,** no solo con la fórmula, y vigilar la proporción de avisos.
+1. **Conseguir el registro de cambios** de la reserva, o cualquier dato con el valor al confirmar. Es lo único que resolvería los problemas 1 y 3.
+2. **Reentrenar con frecuencia,** midiendo con cohortes por fecha de reserva. Es la mejora real más probable.
+3. **Reformular el objetivo,** si importa el coste de verdad: predecir la cancelación tardía cerca de la llegada, con lo que se sepa entonces.
+4. **Fijar el umbral según la capacidad de revisión,** no solo con la fórmula, y vigilar la proporción de avisos.
 
 **No merece la pena seguir ajustando el modelo:** las diferencias ya están por debajo de la variabilidad.
 
-### Frases que habría que corregir
+### Afirmaciones corregidas
 
-| Dónde | Qué dice | Problema |
+Corregidas en la misma rama, a petición del autor, sin cambiar el modelo ni las cifras del test. El protocolo original y el ADR 0002 se conservan como se escribieron, con una nota de corrección al final.
+
+| Dónde | Qué decía | Problema |
 |---|---|---|
-| [`data_card.md:47`](data_card.md) y [`defensa.md:162`](defensa.md) | Confirmar es el único momento defendible | La fuente referencia los valores al día anterior a la llegada |
-| [`data_card.md:55`](data_card.md), [`model_card.md:33`](model_card.md), [`informe_final.md:103`](informe_final.md) | Las 19 se conocen al confirmar | No demostrado |
-| [`data_card.md:75`](data_card.md), [`informe_final.md:49`](informe_final.md), [ADR 0002](adr/0002-momento-de-prediccion-y-variables-excluidas.md), [`defensa.md:168`](defensa.md) | `deposit_type` se conoce al reservar y no es una fuga | Se calcula con pagos hasta la llegada o la cancelación |
-| [`README.md:60`](../README.md), [`informe_final.md:11`](informe_final.md) | La cifra creíble es 0.82, y coincide con lo esperado | Mezcla reservas anteriores al corte, y coincidir en una sola muestra no lo valida |
-| [`informe_final.md:399`](informe_final.md) | Avisar del 77.3 % es consecuencia de los costes | Incompleto: en 2016, con esos costes, era del 46 % al 63 % |
-| [`informe_final.md:424`](informe_final.md) | Propone usar la tasa histórica del agente | Medido aquí: no mejora |
-| [`informe_final.md:344`](informe_final.md), [`data_loader.py:310`](../src/hotel_cancellation/data_loader.py) | 0.0 % ya en train, y las filas idénticas no cruzan ventanas | Solo es cierto porque la clave incluye la llegada |
+| [`data_card.md`](data_card.md), [`README.md`](../README.md), [`informe_final.md`](informe_final.md), [`defensa.md`](defensa.md), [ADR 0002](adr/0002-momento-de-prediccion-y-variables-excluidas.md) | Confirmar es el único momento defendible | La fuente referencia los valores al día anterior a la llegada |
+| [`data_card.md`](data_card.md), [`model_card.md`](model_card.md), [`informe_final.md`](informe_final.md), la interfaz | Las 19 se conocen al confirmar | No demostrado |
+| [`data_card.md`](data_card.md), [`informe_final.md`](informe_final.md), [ADR 0002](adr/0002-momento-de-prediccion-y-variables-excluidas.md), [`defensa.md`](defensa.md), [`01_eda`](../notebooks/01_eda.ipynb) | `deposit_type` se conoce al reservar y no es una fuga | Se calcula con pagos hasta la llegada o la cancelación |
+| [`README.md`](../README.md), [`informe_final.md`](informe_final.md), [`defensa.md`](defensa.md) | La cifra creíble es 0.82, y coincide con lo esperado | Mezcla reservas anteriores al corte, y coincidir en una sola muestra no lo valida |
+| [`informe_final.md`](informe_final.md) | Avisar del 77.3 % es consecuencia de los costes | Incompleto: en 2016, con esos costes, era del 46 % al 63 % |
+| [`informe_final.md`](informe_final.md) | Propone usar la tasa histórica del agente | Medido aquí: no mejora |
+| [`informe_final.md`](informe_final.md), [`data_loader.py`](../src/hotel_cancellation/data_loader.py) | 0.0 % ya en train, y las filas idénticas no cruzan ventanas | Solo es cierto porque la clave incluye la llegada |
 
 ## Fuentes
 

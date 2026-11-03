@@ -10,3 +10,12 @@ El CSV guarda el valor final de cada reserva, no su historial, de modo que confi
 **La decisión discutible es `total_of_special_requests`.** Supera al control de acumulación en seis de ocho cohortes, no en todas, y el diagnóstico es observacional. Excluirla baja la cifra de validación, y por eso se fijó antes del test un escenario informativo con ella, que da 0.8369 frente a 0.8175 y no puede cambiar el campeón.
 
 `deposit_type` se conserva aunque `Non Refund` casi siempre se cancele, porque se conoce al reservar. Por eso el rendimiento se publica también sin esas filas.
+
+## Corrección (2026-11-03)
+
+La decisión se mantiene, pero dos de sus razones eran erróneas, y las detecta la [segunda revisión](../revision_datos_y_validacion.md).
+
+- **Confirmar no es el único momento defendible, sino una intención.** Antonio et al. (2019, *Data in Brief*) referencian los valores al día anterior a la llegada, de modo que no consta que las 19 variables sean las conocidas al confirmar.
+- **No consta que `deposit_type` se conozca al reservar.** El artículo la calcula con los pagos anteriores a la llegada o a la cancelación. Se conserva porque quitarla no resuelve el problema: sin ella, el ROC-AUC en 2016 solo baja de 0.8207 a 0.8072, porque otras variables recogen parte de su señal.
+
+Esto refuerza las exclusiones que se tomaron por cautela, como `total_of_special_requests`.

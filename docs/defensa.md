@@ -2,7 +2,7 @@
 
 Treinta minutos como máximo: se ejecuta el código en directo y se responde a preguntas sobre las decisiones. El guion deja unos 10 minutos para las preguntas.
 
-**El mensaje:** el modelo no es lo más interesante. Lo es que la cifra se puede creer: 0.82, no 0.95, medida una sola vez sobre 2017, con todo lo que señala declarado aunque deje mal al modelo elegido.
+**El mensaje:** el modelo no es lo más interesante. Lo es saber qué mide cada cifra: no 0.95, sino 0.82 medida una sola vez sobre 2017, y 0.79 con las reservas confirmadas tras el despliegue, con todo lo que señala declarado aunque deje mal al modelo elegido. Y queda un supuesto sin comprobar: que las variables sean las de ese momento.
 
 Comandos probados en PowerShell, en Windows, con la duración que tuvieron allí.
 
@@ -79,6 +79,7 @@ En el PDF o en el notebook `03_resultados`:
 2. La tabla de segmentos: 0.8175 con todas las filas, 0.7608 con únicas y 0.7529 con `No Deposit`.
 3. La curva ROC y las matrices de confusión.
 4. **Lo que el test señala y no se corrige.** Díselo tú antes de que te lo pregunten.
+5. **La [segunda revisión](revision_datos_y_validacion.md).** 0.7917 con las reservas confirmadas desde 2017-01-01, 0.5541 con las cancelaciones tardías, y el supuesto de que las variables se conocen al confirmar.
 
 ### 6. La API (2 min)
 
@@ -129,11 +130,20 @@ uv run poe down
 **¿Por qué 0.82 y no 0.95, como otros trabajos con estos datos?**
 Porque 0.95 sale de evaluar mal. Con partición aleatoria, el 32.0 % del test ya está en train y se ve el futuro: da 0.9524. El mismo modelo con partición temporal baja a 0.8683, y sin `country` ni `booking_changes`, a 0.8184. La cifra coincide con la validación en 2016, de 0.8172 ± 0.0231.
 
+**Entonces, ¿0.82 es lo que rinde al confirmar una reserva?**
+No, y es lo que corrigió la segunda revisión. Corto por llegada, de modo que hay reservas confirmadas antes del corte. Con las confirmadas desde 2017-01-01 da 0.7917, y con `No Deposit`, 0.7540. Y hay un límite mayor: el artículo del dataset referencia los valores al día anterior a la llegada, así que no consta que sean los de ese momento. Con las variables definidas al crear o confirmar, en 2016 da 0.6866. El rendimiento real está en ese rango, y este archivo no permite saber dónde.
+
+**Justificas el proyecto por la cancelación tardía. ¿La detecta?**
+Casi no. Frente a las estancias, da 0.5541 con las canceladas hasta 7 días antes de llegar y 0.5170 con los `No-Show`, frente a 0.8739 con las de 31 días o más. Parte de esa diferencia es estructural, porque con poca antelación no se puede cancelar con un mes de margen. Para detectarla haría falta predecir cerca de la llegada, con el historial de la reserva.
+
+**¿Has probado a mejorarlo?**
+Sí. En la segunda revisión probé 50 cambios en datos, variables y modelos, de uno en uno, con una regla fijada antes de medir, y ninguno la cumple. Dando al modelo filas del mismo trimestre, algo imposible en producción, llega a 0.8357. Lo que más valor tendría es el registro de cambios de la reserva, y reentrenar con frecuencia.
+
 **¿Por qué Random Forest, si empata con XGBoost?**
 Porque empata. La regla de 1 error estándar los deja dentro a los dos, con 0.8172 y 0.8162, y a igualdad gana el más simple, en un orden fijado antes de comparar. En el test la diferencia va de [-0.0033, +0.0008]. No digo que sea mejor, digo que no hay razón para el más complejo.
 
 **¿Por qué se mantiene un umbral malo, que avisa del 77.3 % de las reservas?**
-Porque cambiarlo tras ver el test invalidaría la cifra. El umbral sale de una fórmula y de unos costes 1:3 supuestos, fijados antes, y da 16 498 falsas alarmas. Con umbrales entre 0.27 y 0.30, el coste bajaría a unos 0.43, y lo publico. En una versión real, lo decidiría con los costes del hotel y con datos nuevos.
+Porque cambiarlo tras ver el test invalidaría la cifra. El umbral sale de una fórmula y de unos costes 1:3 supuestos, fijados antes, y da 16 498 falsas alarmas. Con umbrales entre 0.27 y 0.30, el coste bajaría a unos 0.43, y lo publico. Además, no lo vi venir: con esos mismos costes, en 2016 avisaba del 46 % al 63 %. En una versión real, lo decidiría con los costes del hotel y con datos nuevos.
 
 **¿Qué pasa con `total_of_special_requests`? Con ella darías 0.8369.**
 Queda fuera por cautela. El diagnóstico indica que crece con la vida de la reserva: en Online TA va del 24.0 % al 58.5 %, más que el control. Supera al control en seis de ocho cohortes, no en todas, y es observacional, así que no está demostrado. Por eso se fijó antes del test un escenario informativo, y publico los dos. Si no fuera fuga, estaría renunciando a esa mejora.
@@ -148,7 +158,7 @@ La tiene: 0.7654 frente a 0.7608. La métrica principal se fijó antes, y en ROC
 Porque ese umbral no busca acertar más, sino perder menos cancelaciones, bajo el supuesto de que cuestan tres veces más. Con 0.5 la accuracy sube a 0.7484. Por eso la accuracy no es la métrica principal.
 
 **¿El test es de verdad ciego?**
-No del todo, y lo declaro. Una auditoría previa vio 2017, y de ella salen `ADR_UPPER_LIMIT`, `min_frequency=50` y las rejillas de búsqueda. Ninguna otra decisión sale de ahí, y el modelo no cambió tras la ejecución. Un test estricto necesitaría datos nuevos.
+No del todo, y lo declaro. Una auditoría previa vio 2017, y de ella salen `ADR_UPPER_LIMIT`, `min_frequency=50` y las rejillas de búsqueda. Ninguna otra decisión sale de ahí, y el modelo no cambió tras la ejecución. Después volví a leer sus predicciones guardadas en un análisis posterior, fijado de antemano, que no puntúa ninguna fila ni cambia nada. Un test estricto necesitaría datos nuevos.
 
 **El rendimiento cae en verano. ¿Sirve el modelo?**
 Baja de 0.8742 en enero a 0.7568 en julio, y `agent` tiene un PSI de 0.7591. El intervalo del bootstrap no lo cubre, y por eso publico el mes a mes. No se reentrena durante 2017 para que lo evaluado sea lo servido. En producción haría falta vigilarlo y reentrenar.
@@ -159,19 +169,19 @@ Autor único, con todos los roles, como recoge el informe. **Confírmalo con el 
 ### Sobre datos y variables
 
 **¿Por qué se predice al confirmar?**
-Porque el CSV guarda el valor final de cada reserva, no su historial. Es el único momento que este archivo permite defender.
+Porque es cuando el hotel puede actuar, pero es una intención. Primero lo presenté como el único momento defendible, y era un error: el artículo del dataset referencia los valores al día anterior a la llegada, y no hay historial para reconstruir el valor al confirmar.
 
 **¿Por qué fuera `country`, si predice tanto?**
 Justo por eso. Antonio, de Almeida y Nunes (2019) documentan que el sistema rellena Portugal por defecto y el país real se corrige en el check-in, de modo que las canceladas conservan el valor por defecto.
 
 **¿Por qué conservas `deposit_type`, si `Non Refund` casi siempre se cancela?**
-Porque se conoce al reservar, y no es una fuga. Pero no la leo como causa, y publico el rendimiento sin esas filas: `No Deposit` da 0.7529. El 0.9998 de `Non Refund` no dice nada útil, porque el 99.8 % se cancela.
+Es discutible. El artículo la calcula con los pagos anteriores a la llegada o a la cancelación, así que no consta que se conozca al reservar, y no puedo descartar que sea en parte una fuga. Quitarla no lo resuelve: el ROC-AUC en 2016 solo baja de 0.8207 a 0.8072, porque otras variables recogen parte de su señal. Por eso no la leo como causa, y publico el rendimiento sin esas filas: `No Deposit` da 0.7529. El 0.9998 de `Non Refund` no dice nada útil, porque el 99.8 % se cancela.
 
 **¿Por qué cortas por fecha de llegada?**
-Porque el resultado de una reserva solo se conoce del todo al llegar. Con un corte por llegada, todo lo que hay en train ya está resuelto.
+Porque el resultado de una reserva solo se conoce del todo al llegar. Con un corte por llegada, todo lo que hay en train ya está resuelto. Tiene un coste: en cada ventana hay reservas confirmadas antes del corte, y por eso publico aparte las confirmadas después.
 
 **¿`adr` es seguro?**
-No se puede demostrar. El diagnóstico detecta acumulación, no sobrescritura, y `adr` no crece con la vida de la reserva, pero podría reemplazarse. Es una limitación declarada.
+No se puede demostrar. El diagnóstico detecta acumulación, no sobrescritura, y `adr` no crece con la vida de la reserva, pero podría reemplazarse: el artículo la calcula con las transacciones de alojamiento. Sus decimales no delatan el resultado, y quitarla apenas cambia nada (-0.0016 en 2016). Es una limitación declarada.
 
 **¿Por qué no deduplicas?**
 Lo medí: entrenar con filas únicas da 0.8116, frente a 0.8141. Pero las métricas se publican también con filas únicas.

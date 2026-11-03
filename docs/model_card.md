@@ -16,7 +16,7 @@ Está **congelado**: desde que se ejecutó el test no se toca el modelo, las var
 
 ## Uso previsto
 
-- Estimar, **al confirmar una reserva**, la probabilidad de que se cancele, en hoteles como los dos del dataset.
+- Estimar, **al confirmar una reserva**, la probabilidad de que se cancele, en hoteles como los dos del dataset. Es la intención: no consta que las variables de entrenamiento sean las de ese momento.
 - Ordenar reservas para que una persona decida qué revisar, y explorar qué pasaría con otros costes en la interfaz.
 - Aprender y enseñar: es un proyecto de máster y portfolio.
 
@@ -30,7 +30,7 @@ Está **congelado**: desde que se ejecutó el test no se toca el modelo, las var
 
 ## Datos
 
-Antonio, de Almeida y Nunes (2019), *Hotel booking demand datasets*, CC BY 4.0. 19 variables de entrada, todas conocidas al confirmar. El detalle y el registro de disponibilidad están en la [data card](data_card.md).
+Antonio, de Almeida y Nunes (2019), *Hotel booking demand datasets*, CC BY 4.0. 19 variables de entrada, usadas como si se conocieran al confirmar. El detalle y el registro de disponibilidad están en la [data card](data_card.md).
 
 | Parte | Llegadas | Filas |
 |---|---|---:|
@@ -54,6 +54,17 @@ Test de 2017, ejecutado una sola vez, sin reentrenar. ROC-AUC de 0.8175, con un 
 
 El ROC-AUC de `Non Refund` no dice nada útil: el 99.8 % de esas filas se cancela. Las cifras completas, por modelo y por segmento, están en el [informe](informe_final.md) y en [`segments.csv`](../outputs/final_evaluation/segments.csv).
 
+**Análisis posterior.** Leyendo las predicciones guardadas, sin puntuar ninguna fila ni cambiar nada, la [segunda revisión](revision_datos_y_validacion.md) da esto:
+
+| Medida en 2017 | ROC-AUC |
+|---|---:|
+| Reservas confirmadas desde 2017-01-01 | 0.7917 |
+| Las mismas, con `No Deposit` | 0.7540 |
+| Canceladas hasta 7 días antes de llegar, frente a las estancias | 0.5541 |
+| `No-Show`, frente a las estancias | 0.5170 |
+
+Con bloques de hotel, día de estado y agente, el intervalo de la cifra global es [0.8010, 0.8336].
+
 ## Limitaciones
 
 - **Umbral con muchas falsas alarmas.** Avisa del 77.3 % de las reservas, con 16 498 falsas alarmas. Es la consecuencia de los costes supuestos.
@@ -62,8 +73,10 @@ El ROC-AUC de `Non Refund` no dice nada útil: el 99.8 % de esas filas se cancel
 - **PR-AUC.** La mejor es la de la MLP, con 0.7654 frente a 0.7608.
 - **Deriva.** El ROC-AUC baja de 0.8742 en enero a 0.7568 en julio de 2017, y el intervalo no lo cubre. `agent` tiene un PSI de 0.7591.
 - **Probabilidades en escalones.** La isotónica concentra filas en pocos valores: el 10.05 % tiene probabilidad exactamente 1.
-- **Foto final de cada reserva.** El CSV guarda el último valor. `adr` y otras variables no se pueden demostrar del todo como conocidas al confirmar.
-- **El test no es estrictamente ciego.** Una auditoría previa había visto 2017, y de ella salen `ADR_UPPER_LIMIT`, `min_frequency=50` y las rejillas de búsqueda.
+- **Variables no comprobadas al confirmar.** El artículo del dataset referencia los valores al día anterior a la llegada, y `deposit_type` sale de los pagos hasta la llegada o la cancelación. Con solo las variables definidas al crear o confirmar, el ROC-AUC en 2016 es de 0.6866. El rendimiento real está entre esa cifra y la publicada.
+- **No ve la cancelación tardía.** Detecta sobre todo tandas y reservas con mucha antelación, no las cancelaciones que dejan la habitación vacía a última hora.
+- **El umbral avisó más de lo previsto.** En 2016 avisaba del 46 % al 63 % de las reservas, y en 2017 del 77.3 %.
+- **El test no es estrictamente ciego.** Una auditoría previa había visto 2017, y de ella salen `ADR_UPPER_LIMIT`, `min_frequency=50` y las rejillas de búsqueda. Sus predicciones guardadas se han vuelto a leer después, sin que salga ninguna decisión.
 - **`total_of_special_requests` queda fuera por cautela.** Con ella, el ROC-AUC sería de 0.8369. El [informe](informe_final.md) publica ese escenario.
 
 ## Sesgos a vigilar

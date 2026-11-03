@@ -139,3 +139,7 @@ Se conservan, y el informe final lo declara junto a la cifra del test.
 
 - **Modelo congelado:** desde ese momento no se toca el modelo, las variables ni el umbral, aunque la cifra decepcione o el test favorezca a otro modelo.
 - **`precision=0` del `Dummy`:** las tablas de validación conservan `precision=0` para el `Dummy`, porque se generaron antes de definir que una métrica sin predicciones positivas vale `NaN`. No se regeneran. En las tablas del test, esa misma celda vale `NaN`.
+
+## Corrección posterior (2026-11-03)
+
+Este protocolo se conserva como se fijó, y no cambia cómo se ejecutó el test. La [segunda revisión](revision_datos_y_validacion.md) corrige una premisa: **que las 19 variables sean las conocidas al confirmar es un supuesto**, porque el artículo del dataset referencia los valores al día anterior a la llegada. Además, las predicciones guardadas de 2017 se han vuelto a leer en un análisis posterior, según su [protocolo](revision_protocolo.md), sin puntuar ninguna fila y sin que salga ninguna decisión.
