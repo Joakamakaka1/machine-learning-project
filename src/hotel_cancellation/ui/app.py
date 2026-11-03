@@ -27,6 +27,7 @@ navigation = st.navigation(
     ]
 )
 
+layout.check_api()
 layout.api_status(st.sidebar, verbose=False)
 st.sidebar.caption("Solo la página de predicción necesita la API.")
 

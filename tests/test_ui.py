@@ -110,6 +110,22 @@ def test_every_page_opens_without_exceptions() -> None:
         assert _open(page).title, page
 
 
+def test_the_health_of_the_api_is_asked_once_per_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    asked = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        asked.append(request.url.path)
+        return httpx.Response(200, json=HEALTH_RESPONSE)
+
+    _install(monkeypatch, handler)
+    app = AppTest.from_file(APP, default_timeout=120).run()
+    app.switch_page("views/prediction.py")
+    asked.clear()
+    app.run()
+    assert not app.exception
+    assert asked == ["/api/v1/health"]
+
+
 def test_every_page_but_the_prediction_works_without_the_api(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

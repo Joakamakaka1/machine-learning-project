@@ -32,6 +32,7 @@ SUBSET_LABELS: Mapping[str, str] = {
     "non_refund": "Non Refund",
 }
 _NOT_DEFINED = "n/d"
+_HEALTH_KEY = "api_health"
 
 
 def image_card(name: str, *, title: str, description: str) -> None:
@@ -131,20 +132,24 @@ def steps_explanation(steps: results.ProbabilitySteps) -> str:
     )
 
 
-def api_status(container: Any, *, verbose: bool) -> bool:
-    """Draw the state of the API and tell whether it can be used.
+def check_api() -> None:
+    """Ask for the state of the API, once per run: a name that does not resolve takes seconds."""
+    try:
+        st.session_state[_HEALTH_KEY] = client.default_client().health()
+    except client.ApiUnavailableError:
+        st.session_state[_HEALTH_KEY] = None
+
+
+def api_status(container: Any, *, verbose: bool) -> None:
+    """Draw the state that `check_api` found.
 
     Args:
         container: Where to draw it.
         verbose: With instructions to start it, for the prediction page.
-
-    Returns:
-        Whether the API answered.
     """
     address = config.get_settings().api_url
-    try:
-        health = client.default_client().health()
-    except client.ApiUnavailableError:
+    health = st.session_state[_HEALTH_KEY]
+    if health is None:
         if verbose:
             container.error(
                 f"**La API no está disponible** en `{address}`. Puedes consultar el resto de "
@@ -153,9 +158,8 @@ def api_status(container: Any, *, verbose: bool) -> bool:
             )
         else:
             container.error("API no disponible", icon="🚫")
-        return False
+        return
     if verbose:
         container.success(f"API conectada. Modelo: `{health['model_version']}`.", icon="✅")
     else:
         container.success("API conectada", icon="✅")
-    return True
