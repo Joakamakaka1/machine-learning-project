@@ -1,5 +1,6 @@
 """Experiment tracking. MLflow is optional: the API image and the fast tests run without it."""
 
+import os
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Protocol
@@ -84,6 +85,8 @@ class MlflowTracker:
         self.experiment = experiment
 
     def _start(self) -> Any:
+        # Everything stays on this machine. MLflow reads this variable when it starts tracking.
+        os.environ.setdefault("MLFLOW_DISABLE_TELEMETRY", "true")
         import mlflow
 
         mlflow.set_tracking_uri(self.tracking_uri)

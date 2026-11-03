@@ -69,10 +69,17 @@ services:
       - sqlite:////mlflow/mlflow.db
       - --artifacts-destination
       - /mlflow/artifacts
+    environment:
+      # Everything stays on this machine.
+      MLFLOW_DISABLE_TELEMETRY: "true"
     volumes:
       - mlflow-data:/mlflow
     ports:
       - "127.0.0.1:5000:5000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test:
         - CMD
