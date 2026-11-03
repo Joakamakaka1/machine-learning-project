@@ -645,6 +645,14 @@ class TestChampionIsFrozenAfterTheTest:
             pipeline.run_all(synthetic_development, settings=after_test, profile="fast", seed=0)
         assert after_test.best_params_path.read_bytes() == before
 
+    def test_tune_refuses_without_force(
+        self, after_test: config.Settings, synthetic_development: pd.DataFrame
+    ) -> None:
+        before = after_test.best_params_path.read_bytes()
+        with pytest.raises(pipeline.TestAlreadyEvaluatedError, match="--force"):
+            pipeline.tune(synthetic_development, settings=after_test, profile="fast", seed=0)
+        assert after_test.best_params_path.read_bytes() == before
+
     def test_the_scenario_cannot_be_trained_after_the_test(
         self, after_test: config.Settings, synthetic_development: pd.DataFrame
     ) -> None:
@@ -673,6 +681,7 @@ class TestChampionIsFrozenAfterTheTest:
         monkeypatch.setattr(config, "get_settings", lambda: after_test)
         monkeypatch.setattr(pipeline, "load_development", lambda: synthetic_development)
         base = ["--profile", "fast", "--no-tracking", "--seed", "0"]
+        assert cli.main(["tune", *base]) == 1
         assert cli.main(["train", *base]) == 1
         assert cli.main(["run-all", *base]) == 1
         assert cli.main(["train", *base, "--force"]) == 0

@@ -151,6 +151,7 @@ def tune(
     seed: int = model_trainer.DEFAULT_SEED,
     tracker: Tracker | None = None,
     only: Sequence[str] | None = None,
+    force: bool = False,
 ) -> dict[str, model_trainer.SearchOutcome]:
     """Search each model and record the results after each one, so a failure loses little.
 
@@ -161,10 +162,15 @@ def tune(
         seed: Seed of the search and the models.
         tracker: Where to track the runs.
         only: Models to search. Previous results of the others are kept.
+        force: Search although the test already ran, overwriting the versioned results.
 
     Returns:
         The result of each searched model.
+
+    Raises:
+        TestAlreadyEvaluatedError: If the test already ran and `force` is false.
     """
+    _assert_champion_can_change(settings, force=force)
     tracker = tracker or NullTracker()
     trainer = _trainer(development, profile, seed)
     specs = _specs(profile)
@@ -808,8 +814,7 @@ def run_all(
     force: bool = False,
 ) -> TrainingReport:
     """Search and train in one go. It never reads the test: it only receives development rows."""
-    _assert_champion_can_change(settings, force=force)
-    tune(development, settings=settings, profile=profile, seed=seed, tracker=tracker)
+    tune(development, settings=settings, profile=profile, seed=seed, tracker=tracker, force=force)
     return train(
         development, settings=settings, profile=profile, seed=seed, tracker=tracker, force=force
     )

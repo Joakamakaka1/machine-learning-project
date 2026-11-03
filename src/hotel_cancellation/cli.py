@@ -15,7 +15,7 @@ from hotel_cancellation import champion, config, evaluator, model_trainer, pipel
 
 logger = logging.getLogger(__name__)
 
-_FORCE_HELP = "Sustituye al campeón aunque el test ya se haya ejecutado, y hay que declararlo."
+_FORCE_HELP = "Cambia lo congelado aunque el test ya se haya ejecutado, y hay que declararlo."
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -33,12 +33,11 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument(
             "--no-tracking", action="store_true", help="No registra nada en MLflow."
         )
+        command.add_argument("--force", action="store_true", help=_FORCE_HELP)
         if name == "tune":
             command.add_argument(
                 "--only", nargs="+", help="Busca solo estos modelos y conserva los demás."
             )
-        else:
-            command.add_argument("--force", action="store_true", help=_FORCE_HELP)
 
     description = "Entrena el escenario informativo del campeón y registra su hash."
     scenario = commands.add_parser("train-scenario", help=description, description=description)
@@ -131,13 +130,14 @@ def _train(arguments: argparse.Namespace, settings: config.Settings) -> None:
         "profile": arguments.profile,
         "seed": arguments.seed,
         "tracker": tracker,
+        "force": arguments.force,
     }
     if arguments.command == "tune":
         pipeline.tune(development, only=arguments.only, **common)
     elif arguments.command == "train":
-        pipeline.train(development, force=arguments.force, **common)
+        pipeline.train(development, **common)
     else:
-        pipeline.run_all(development, force=arguments.force, **common)
+        pipeline.run_all(development, **common)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
