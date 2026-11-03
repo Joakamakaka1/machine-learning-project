@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from hotel_cancellation.evaluation import evaluator
-from hotel_cancellation.ui import layout, results
+from hotel_cancellation.serving.ui import layout, results
 
 # The same tokens as the figures of the report: one accent, and grey for the reference.
 _ACCENT = "#2a78d6"

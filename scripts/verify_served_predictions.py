@@ -19,8 +19,8 @@ import httpx
 import pandas as pd
 
 from hotel_cancellation import config
-from hotel_cancellation.api.schemas import MAX_BATCH_SIZE
 from hotel_cancellation.data import data_loader, schema
+from hotel_cancellation.serving.api.schemas import MAX_BATCH_SIZE
 
 _STORED_COLUMN = "champion"
 _TOLERANCE = 1e-12

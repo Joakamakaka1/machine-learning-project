@@ -10,7 +10,7 @@ import pytest
 
 from hotel_cancellation import champion, config
 from hotel_cancellation.data import data_loader, schema
-from hotel_cancellation.predictor import BookingPredictor, RiskBand, risk_band
+from hotel_cancellation.serving.predictor import BookingPredictor, RiskBand, risk_band
 
 CHAMPION_DIR = config.DEFAULT_MODELS_DIR / "champion"
 CHAMPION_SHA256 = "41d3a28592ae93367b8a88ca80ed60bb1e5ac2356ec2344d4984c0770f13d7f1"

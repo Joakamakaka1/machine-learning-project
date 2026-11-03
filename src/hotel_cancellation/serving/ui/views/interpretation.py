@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from hotel_cancellation.ui import layout, results
+from hotel_cancellation.serving.ui import layout, results
 
 _IMPORTANCE = {
     "variable": "Variable",

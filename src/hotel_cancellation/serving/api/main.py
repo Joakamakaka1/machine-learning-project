@@ -10,10 +10,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from hotel_cancellation import config
-from hotel_cancellation.api.errors import install_error_handlers
-from hotel_cancellation.api.routes import router
 from hotel_cancellation.evaluation.stored_evaluation import StoredEvaluation, load_stored_evaluation
-from hotel_cancellation.predictor import BookingPredictor
+from hotel_cancellation.serving.api.errors import install_error_handlers
+from hotel_cancellation.serving.api.routes import router
+from hotel_cancellation.serving.predictor import BookingPredictor
 
 logger = logging.getLogger(__name__)
 

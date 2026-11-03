@@ -4,8 +4,8 @@ from dataclasses import asdict
 
 from fastapi import APIRouter, HTTPException, status
 
-from hotel_cancellation.api.deps import EvaluationDep, PredictorDep
-from hotel_cancellation.api.schemas import (
+from hotel_cancellation.serving.api.deps import EvaluationDep, PredictorDep
+from hotel_cancellation.serving.api.schemas import (
     BatchRequest,
     BatchResponse,
     Booking,

@@ -11,7 +11,7 @@ import pandas as pd
 import streamlit as st
 
 from hotel_cancellation import config
-from hotel_cancellation.ui import client, results
+from hotel_cancellation.serving.ui import client, results
 
 # Chart and text columns: with (3, 2) the chart takes about 60 % of the width.
 IMAGE_COLUMN_RATIO: tuple[int, int] = (3, 2)

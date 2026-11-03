@@ -34,7 +34,7 @@ COPY --from=build-api /app/.venv .venv
 COPY models/champion/ models/champion/
 COPY outputs/final_evaluation/ outputs/final_evaluation/
 EXPOSE 8000
-CMD ["uvicorn", "hotel_cancellation.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "hotel_cancellation.serving.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 FROM runtime AS ui
 COPY --from=build-ui /app/.venv .venv
@@ -42,5 +42,5 @@ COPY models/champion/manifest.json models/champion/manifest.json
 COPY outputs/ outputs/
 COPY .streamlit/ .streamlit/
 EXPOSE 8501
-CMD ["streamlit", "run", ".venv/lib/python3.12/site-packages/hotel_cancellation/ui/app.py", \
+CMD ["streamlit", "run", ".venv/lib/python3.12/site-packages/hotel_cancellation/serving/ui/app.py", \
      "--server.address", "0.0.0.0", "--server.port", "8501", "--server.headless", "true", "--server.fileWatcherType", "none"]

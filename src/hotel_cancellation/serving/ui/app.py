@@ -1,4 +1,4 @@
-"""Entry point of the interface: `streamlit run src/hotel_cancellation/ui/app.py`.
+"""Entry point of the interface: `streamlit run src/hotel_cancellation/serving/ui/app.py`.
 
 It only sets up the page, the navigation and the state of the API. Each page lives in `views/`,
 not in `pages/`: Streamlit would read that folder as its older kind of navigation and warn about
@@ -7,7 +7,7 @@ a page it cannot find when a page is opened from its address.
 
 import streamlit as st
 
-from hotel_cancellation.ui import layout, results
+from hotel_cancellation.serving.ui import layout, results
 
 st.set_page_config(
     page_title="Cancelación de reservas de hotel",
