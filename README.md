@@ -253,7 +253,7 @@ pyproject.toml  uv.lock  requirements.txt  Dependencias
 | 5 modelos: logística, árbol, Random Forest, boosting y red de Keras | [`models.py`](src/hotel_cancellation/models.py) |
 | Métrica principal justificada | [Protocolo](docs/protocolo.md); [informe](docs/informe_final.md), Diseño |
 | Matriz de confusión y curva ROC | [`matrices_confusion_modelos.png`](outputs/figures/matrices_confusion_modelos.png), [`roc.png`](outputs/figures/roc.png) |
-| Pipeline: carga, preprocesado, entrenamiento, evaluación y selección | [`pipeline.py`](src/hotel_cancellation/pipeline.py), `hotel-ml run-all` y `evaluate` |
+| Pipeline: carga, preprocesado, entrenamiento, evaluación y selección | [`pipeline.py`](src/hotel_cancellation/training/pipeline.py), `hotel-ml run-all` y `evaluate` |
 | Tabla comparativa de modelos | Este README; [informe](docs/informe_final.md), Resultados |
 | Curvas comparativas e importancia de variables | [`outputs/figures/`](outputs/figures/) |
 | EDA que motiva las decisiones | [`01_eda.ipynb`](notebooks/01_eda.ipynb); [informe](docs/informe_final.md), Análisis exploratorio |
@@ -268,8 +268,8 @@ pyproject.toml  uv.lock  requirements.txt  Dependencias
 |---|---|---|
 | API con FastAPI | [`api/`](src/hotel_cancellation/serving/api/) | `/predict`, `/predict/batch` y `/evaluate`, sin `/train` ([ADR 0006](docs/adr/0006-sin-endpoint-train.md)) |
 | Embeddings personalizados | [`experiments/embeddings.py`](experiments/embeddings.py) | MLP con embeddings categóricos: solo como experimento, porque aporta +0.0010 |
-| Optimización de hiperparámetros | [`model_trainer.py`](src/hotel_cancellation/model_trainer.py) | `RandomizedSearchCV` con ventanas temporales; `hotel-ml tune` |
-| Registro de experimentos | [`tracking.py`](src/hotel_cancellation/tracking.py) | MLflow con runs anidados, firma y alias `@champion` sobre el modelo evaluado |
+| Optimización de hiperparámetros | [`model_trainer.py`](src/hotel_cancellation/training/model_trainer.py) | `RandomizedSearchCV` con ventanas temporales; `hotel-ml tune` |
+| Registro de experimentos | [`tracking.py`](src/hotel_cancellation/training/tracking.py) | MLflow con runs anidados, firma y alias `@champion` sobre el modelo evaluado |
 | Balanceo de clases | [`experiments/balancing.py`](experiments/balancing.py) | SMOTE, undersampling y pesos de clase: medidos, y sin mejora; el campeón no los usa |
 | Interpretabilidad | [`explain.py`](src/hotel_cancellation/evaluation/explain.py) | `feature_importances_`, permutación y SHAP; `hotel-ml explain` |
 | Interfaz visual | [`ui/`](src/hotel_cancellation/serving/ui/) | Streamlit, que consume la API |

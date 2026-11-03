@@ -7,9 +7,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from hotel_cancellation import champion, cli, config, models, pipeline
+from hotel_cancellation import champion, cli, config, models
 from hotel_cancellation.data import data_loader
 from hotel_cancellation.evaluation import evaluator
+from hotel_cancellation.training import pipeline
 from tests.conftest import synthetic_raw
 
 
@@ -201,7 +202,7 @@ def test_mlflow_tracks_the_run_and_points_the_alias_at_the_evaluated_artifact(
     settings: config.Settings, synthetic_development: pd.DataFrame
 ) -> None:
     mlflow = pytest.importorskip("mlflow")
-    tracking = pytest.importorskip("hotel_cancellation.tracking")
+    tracking = pytest.importorskip("hotel_cancellation.training.tracking")
     tracker = tracking.MlflowTracker(
         settings.mlflow_tracking_uri, settings.mlflow_artifacts_dir, experiment="tests"
     )

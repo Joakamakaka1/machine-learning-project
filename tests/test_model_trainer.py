@@ -7,8 +7,9 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.frozen import FrozenEstimator
 from sklearn.metrics import brier_score_loss, roc_auc_score
 
-from hotel_cancellation import config, model_trainer, models
+from hotel_cancellation import config, models
 from hotel_cancellation.data import data_loader, features, schema
+from hotel_cancellation.training import model_trainer
 from tests.conftest import synthetic_raw
 
 

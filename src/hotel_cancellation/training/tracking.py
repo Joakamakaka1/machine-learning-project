@@ -7,7 +7,7 @@ from typing import Any, Protocol
 
 import pandas as pd
 
-from hotel_cancellation import model_trainer
+from hotel_cancellation.training import model_trainer
 
 REGISTERED_MODEL = "hotel-cancellation"
 CHAMPION_ALIAS = "champion"

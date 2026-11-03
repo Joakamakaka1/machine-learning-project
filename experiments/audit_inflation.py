@@ -3,8 +3,9 @@
 It is the same as `hotel-ml audit`, and it refuses to run before the single execution of the test.
 """
 
-from hotel_cancellation import config, pipeline
+from hotel_cancellation import config
 from hotel_cancellation.evaluation import audit
+from hotel_cancellation.training import pipeline
 
 
 def main() -> None:

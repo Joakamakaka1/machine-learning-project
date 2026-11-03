@@ -11,8 +11,9 @@ import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 
-from hotel_cancellation import champion, config, model_trainer, pipeline, tracking
+from hotel_cancellation import champion, config
 from hotel_cancellation.evaluation import evaluator
+from hotel_cancellation.training import model_trainer, pipeline, tracking
 
 logger = logging.getLogger(__name__)
 
