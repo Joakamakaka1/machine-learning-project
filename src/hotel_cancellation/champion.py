@@ -227,6 +227,9 @@ def save_champion(
 def load_champion(folder: Path) -> LoadedChampion:
     """Load the model after checking its hash and the versions of the libraries.
 
+    The hash detects a corrupted or replaced file, not a deliberate change of both files: loading
+    a `joblib` file runs code, so only a model from this repository may be loaded.
+
     Args:
         folder: Package folder.
 
@@ -237,7 +240,7 @@ def load_champion(folder: Path) -> LoadedChampion:
         ChampionIntegrityError: If the file changed or a library is on another version.
     """
     manifest = json.loads((folder / MANIFEST_FILE).read_text("utf-8"))
-    model_path = folder / manifest["model"]["file"]
+    model_path = folder / MODEL_FILE
     actual = hashlib.sha256(model_path.read_bytes()).hexdigest()
     if actual != manifest["model"]["sha256"]:
         raise ChampionIntegrityError(

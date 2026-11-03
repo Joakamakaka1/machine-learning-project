@@ -283,6 +283,70 @@ def test_without_a_saved_evaluation_the_service_says_so(
         assert no_evaluation_client.post(f"{PREFIX}/predict", json=_booking()).status_code == 200
 
 
+@pytest.mark.parametrize("number", ["NaN", "Infinity", "1e400"])
+def test_a_number_that_json_cannot_hold_is_rejected_as_invalid(
+    client: TestClient, number: str
+) -> None:
+    body = json.dumps(_booking(adr=0.0)).replace('"adr": 0.0', f'"adr": {number}')
+    response = client.post(
+        f"{PREFIX}/predict", content=body, headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 422
+
+
+def test_a_rejection_does_not_repeat_what_it_received(client: TestClient) -> None:
+    response = client.post(f"{PREFIX}/predict", json=_booking(hotel="secret-value"))
+    assert response.status_code == 422
+    assert "secret-value" not in response.text
+    assert response.json()["detail"][0]["loc"] == ["body", "hotel"]
+
+
+def test_the_manifest_cannot_point_to_another_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    models_dir = _copy_champion(tmp_path)
+    folder = models_dir / "champion"
+    shutil.copy(folder / champion.MODEL_FILE, folder / "other.joblib")
+    (folder / champion.MODEL_FILE).unlink()
+    manifest_path = folder / champion.MANIFEST_FILE
+    manifest = json.loads(manifest_path.read_text("utf-8"))
+    manifest["model"]["file"] = "other.joblib"
+    manifest_path.write_text(json.dumps(manifest), "utf-8")
+    _settings_on(models_dir, config.DEFAULT_OUTPUTS_DIR, monkeypatch)
+    with pytest.raises(FileNotFoundError), TestClient(create_app()):
+        pass
+
+
+def test_an_evaluation_of_another_model_is_not_published(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    outputs_dir = tmp_path / "outputs"
+    folder = outputs_dir / "final_evaluation"
+    shutil.copytree(config.DEFAULT_OUTPUTS_DIR / "final_evaluation", folder)
+    record = json.loads((folder / "record.json").read_text("utf-8"))
+    record["executions"][-1]["champion_sha256"] = "another-model"
+    (folder / "record.json").write_text(json.dumps(record), "utf-8")
+    _settings_on(config.DEFAULT_MODELS_DIR, outputs_dir, monkeypatch)
+    with TestClient(create_app()) as other_model_client:
+        assert other_model_client.get(f"{PREFIX}/evaluate").status_code == 404
+        assert other_model_client.get(f"{PREFIX}/model-info").json()["test"] is None
+
+
+def test_an_undefined_validation_metric_does_not_break_the_model_info(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    models_dir = _copy_champion(tmp_path)
+    manifest_path = models_dir / "champion" / champion.MANIFEST_FILE
+    manifest = json.loads(manifest_path.read_text("utf-8"))
+    manifest["validation"]["mean"]["roc_auc_non_refund"] = None
+    manifest_path.write_text(json.dumps(manifest), "utf-8")
+    _settings_on(models_dir, config.DEFAULT_OUTPUTS_DIR, monkeypatch)
+    with TestClient(create_app()) as undefined_metric_client:
+        response = undefined_metric_client.get(f"{PREFIX}/model-info")
+    assert response.status_code == 200
+    assert response.json()["validation"]["mean"]["roc_auc_non_refund"] is None
+
+
 def test_the_runtime_imports_nothing_from_the_training_stack() -> None:
     script = textwrap.dedent(
         """

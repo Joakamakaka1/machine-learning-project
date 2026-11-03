@@ -4,6 +4,7 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib import metadata
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +13,7 @@ from hotel_cancellation import config
 from hotel_cancellation.api.errors import install_error_handlers
 from hotel_cancellation.api.routes import router
 from hotel_cancellation.predictor import BookingPredictor
-from hotel_cancellation.stored_evaluation import load_stored_evaluation
+from hotel_cancellation.stored_evaluation import StoredEvaluation, load_stored_evaluation
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +21,23 @@ logger = logging.getLogger(__name__)
 _LOCAL_ORIGINS = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
 
 
+def _evaluation_of(predictor: BookingPredictor, folder: Path) -> StoredEvaluation | None:
+    """Read the saved evaluation, unless it measured another model: it says nothing of this one."""
+    evaluation = load_stored_evaluation(folder)
+    if evaluation is not None and evaluation.execution["champion_sha256"] != predictor.sha256:
+        logger.warning("The saved evaluation measured another model, so it is not published.")
+        return None
+    return evaluation
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Load the model once. A model that fails its checks stops the service from starting."""
     settings = config.get_settings()
-    app.state.predictor = BookingPredictor.from_folder(settings.champion_dir)
-    app.state.evaluation = load_stored_evaluation(settings.final_evaluation_dir)
-    logger.info("Serving %s", app.state.predictor.model_version)
+    predictor = BookingPredictor.from_folder(settings.champion_dir)
+    app.state.predictor = predictor
+    app.state.evaluation = _evaluation_of(predictor, settings.final_evaluation_dir)
+    logger.info("Serving %s", predictor.model_version)
     yield
 
 

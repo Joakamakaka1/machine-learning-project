@@ -166,10 +166,10 @@ class CostAssumptions(BaseModel):
 
 
 class ValidationSummary(BaseModel):
-    """Mean and deviation across the validation windows of 2016."""
+    """Mean and deviation across the validation windows of 2016. An undefined metric is null."""
 
-    mean: dict[str, float]
-    std: dict[str, float]
+    mean: dict[str, float | None]
+    std: dict[str, float | None]
 
 
 class TestSummary(BaseModel):
