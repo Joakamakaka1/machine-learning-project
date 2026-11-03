@@ -71,6 +71,24 @@ Si nada lo cumple, la conclusión es que no hay mejora demostrable, y así se di
 9. Análisis de errores, robustez y curva de aprendizaje.
 10. Decisión sobre 2017.
 
+## Enmienda (2026-11-03): análisis posterior sobre 2017
+
+**Motivo:** ningún cambio cumple la regla de aceptación, de modo que no hay modelo nuevo que evaluar. El autor autoriza leer de nuevo 2017 para contrastar lo medido en 2016.
+
+**Límites:**
+
+- No se puntúa ninguna fila: se leen las probabilidades del campeón en `outputs/final_evaluation/predictions.csv.gz` y las columnas de esas mismas filas.
+- Lo único que se entrena es un clasificador de deriva, que no usa etiquetas.
+- No cambia el modelo, ni el umbral, ni ninguna cifra publicada. Ninguna decisión sale de aquí, y se etiqueta como **análisis posterior, no evaluación nueva**.
+
+**Se mide esto, y nada más:**
+
+1. Intervalo del ROC-AUC con bootstrap de 2000 réplicas por bloques: hotel y día de llegada (para reproducir el publicado), semana de llegada, tanda de reserva, hotel con día de estado y agente, y agente con mes de reserva.
+2. ROC-AUC total, con `No Deposit` y de filas distintas, en reservas confirmadas desde 2017-01-01, desde 2016-10-01 y antes de 2016-10-01.
+3. ROC-AUC de cada tipo de cancelación frente a las estancias: `No-Show`, canceladas hasta 7 días antes de llegar, de 8 a 30 días, 31 días o más, y con `No Deposit` solas o en sucesos de 10 filas o más.
+4. Proporción de reservas avisadas con el umbral 0.25, en total y por mes.
+5. Clasificador de deriva, sin etiquetas: entrenamiento del modelo base frente a 2017 y, como control, entrenamiento hasta 2016-06 frente a 2016T3 y 2016T4.
+
 ## Reproducibilidad
 
 Semilla 42, salvo en las pruebas de semillas, con las versiones de `uv.lock`. Cada paso se ejecuta con `uv run python -m experiments.review.<módulo>` y escribe en `outputs/review/`.
