@@ -1,8 +1,10 @@
-# Informe final
+# Informe final: predicción de cancelaciones de reservas de hotel
 
-> Esta versión recoge el resultado del test, es decir, la fase 6. La documentación completa llegará con la fase 10.
+**Autor:** Joaquín Castro Salas. **Repositorio:** <https://github.com/Joakamakaka1/machine-learning-project>
 
-## Resultado
+Máster en Inteligencia Artificial, Cloud Computing y DevOps. Módulo de Machine Learning y Deep Learning.
+
+## Resumen
 
 **El campeón, un Random Forest con calibración isotónica, obtiene un ROC-AUC de 0.8175 en el test de 2017, con un intervalo del 95 % de [0.8058, 0.8297].** El baseline da 0.5000. El test se ejecutó una sola vez, con 40 509 reservas y una prevalencia de 0.3883.
 
@@ -10,7 +12,175 @@
 - **La cifra global no va sola:** con filas únicas baja a 0.7608, y con `No Deposit` a 0.7529. Esa es la dificultad real cuando se dejan fuera los duplicados y los `Non Refund`, que casi siempre se cancelan.
 - **El 0.952 de partida estaba inflado:** la auditoría lo reproduce y explica de dónde sale.
 
-## Qué se ha ejecutado
+**2017 no era virgen, y se declara.** Una auditoría previa había medido con esos datos la inflación de las métricas, y de ella salen `ADR_UPPER_LIMIT`, `min_frequency=50` y las rejillas de búsqueda. Ninguna otra decisión sale de ahí, y el modelo no se tocó tras ver el test. La cifra es honesta en ese sentido, pero el test no es estrictamente ciego. El [protocolo](protocolo.md) lo detalla.
+
+## Roles
+
+| Rol | Responsable |
+|---|---|
+| Datos, EDA y diagnóstico de fugas | Joaquín Castro Salas |
+| Modelos, selección y calibración | Joaquín Castro Salas |
+| Evaluación e interpretación | Joaquín Castro Salas |
+| Pipeline, MLflow, API, interfaz y Docker | Joaquín Castro Salas |
+| Documentación y defensa | Joaquín Castro Salas |
+
+Autor único, con todos los roles.
+
+## Justificación del problema
+
+Una cancelación tardía deja una habitación vacía que ya no se puede vender. Si el hotel sabe qué reservas tienen más riesgo, puede actuar antes: confirmarlas, pedir un depósito u ofrecer esa disponibilidad a otro cliente. Es un problema real, con un coste asimétrico, y por eso no basta con acertar: hay que decidir a quién avisar.
+
+**Es una clasificación binaria:** `is_canceled` vale 1 si la reserva se cancela. Se predice **al confirmar la reserva**, porque el CSV guarda el valor final de cada reserva y no su historial, y ese es el único momento defendible con este archivo.
+
+**Los datos** son los que propone el enunciado: 119 390 reservas de dos hoteles portugueses, con llegadas entre el 1 de julio de 2015 y el 31 de agosto de 2017, publicadas por Antonio, de Almeida y Nunes (2019) en *Data in Brief* con licencia CC BY 4.0. Son reservas reales y anonimizadas. Los propios autores documentan que alguna columna solo se confirma más tarde, y eso obliga a revisar cada variable. El detalle está en la [data card](data_card.md).
+
+**La pregunta que guía el proyecto no es qué modelo da la cifra más alta, sino qué cifra se puede creer.** Un primer XGBoost con partición aleatoria daba un ROC-AUC de 0.9524. El resto del informe explica por qué esa cifra no vale y cuál sí.
+
+## Análisis exploratorio
+
+**Solo se miran las llegadas anteriores a 2017:** 78 054 reservas, con una cancelación del 36.4 %. Cada hallazgo motivó una decisión. El notebook [`01_eda`](../notebooks/01_eda.ipynb) lo reproduce, y las cifras están en [`hallazgos.csv`](../outputs/eda/hallazgos.csv).
+
+**La cancelación cambia con el tiempo.** Por meses va del 21.0 % al 45.7 %. Por eso la evaluación es temporal, y quedan fuera las variables de calendario.
+
+![Cancelación por mes de llegada](../outputs/figures/eda_cancelacion_mes.png)
+
+**Muchas filas están repetidas.** El 35.9 % repite exactamente otra, si se comparan las 19 variables de entrada y el objetivo. Con una partición aleatoria caerían a los dos lados, y por eso las métricas también se dan con filas únicas.
+
+**`deposit_type` casi decide por sí sola.** `Non Refund`, con 10 460 reservas, se cancela en el 99.2 % de los casos, frente al 26.8 % de `No Deposit`, y el 93.7 % de sus filas está repetido. Es difícil creer que pagar sin devolución haga cancelar más: apunta a tandas de reservas casi idénticas que se cancelan juntas. Se conserva porque se conoce al reservar, sin leerla como causa, y el rendimiento se publica por separado.
+
+![Cancelación por tipo de depósito](../outputs/figures/eda_deposito.png)
+
+**Algunas variables no se conocen al confirmar.** Ninguna reserva con plaza de parking se cancela, porque la plaza se pide al llegar. `reservation_status` repite el objetivo. Antonio, de Almeida y Nunes (2019), en su artículo de *Data Science Journal*, documentan la fuga de `country`: el sistema rellena Portugal por defecto, y el país real solo se confirma en el check-in. Las 12 variables prohibidas están en [`schema.py`](../src/hotel_cancellation/schema.py) con su motivo, y un test falla si alguna llega al modelo.
+
+**`total_of_special_requests` se acumula.** Una reserva cancelada deja de cambiar al cancelarse, de modo que una variable que se acumula debe crecer con la parte de vida transcurrida. En Online TA, las canceladas tienen alguna petición en el 24.0 % de los casos en el primer tramo de vida y en el 58.5 % en el último, mucho más que `booking_changes`, el control positivo. Supera al control en seis de las ocho cohortes, no en todas, y por eso se excluye por cautela y se publica también un escenario con ella.
+
+![Variables que se acumulan](../outputs/figures/eda_acumulacion.png)
+
+**La antelación importa, pero no en línea recta.** La cancelación va del 10.1 % con menos de una semana al 77.8 % con más de un año. Justifica comparar árboles con un modelo lineal.
+
+![Cancelación según la antelación](../outputs/figures/eda_antelacion.png)
+
+**Nulos, categorías y valores extremos.** `company` está vacía en el 94.4 % de las filas y no aporta, así que queda fuera. `agent` tiene un 13.4 % de nulos y 284 valores, de los que 185 no llegan a 50 filas: se lee como texto y se codifica con `OneHotEncoder(min_frequency=50)`. `adr` tiene una mediana de 89.2 y un máximo de 508.0 tras limpiar.
+
+**Los hoteles y segmentos se comportan distinto.** City Hotel cancela el 41.5 % y Resort Hotel, el 26.6 %. Se usa un solo modelo, porque separarlo por hotel empeora, y las métricas se publican por grupo.
+
+![Cancelación por segmento de mercado](../outputs/figures/eda_segmento.png)
+
+## Diseño del sistema
+
+### Arquitectura
+
+```text
+data/raw/*.csv.gz ─ hash y contrato ─ limpieza ─ partición temporal
+                                                     │
+        ┌─── desarrollo: llegadas anteriores a 2017 ─┴─ test: 2017 ───┐
+        ▼                                                             │
+experiments/ ─ decisiones de diseño                                   │
+hotel-ml tune ─ RandomizedSearchCV con 4 ventanas ─ MLflow            │
+hotel-ml train ─ regla 1-SE, calibración y umbral ─ models/champion   │
+                                                     │                ▼
+                                                     └─ hotel-ml evaluate, una vez
+                                                                      │
+models/champion + manifest ─ BookingPredictor ─ FastAPI ─ Streamlit   │
+outputs/ ─ figuras, informe y notebooks ◄─────────────────────────────┘
+```
+
+| Módulo | Responsabilidad |
+|---|---|
+| `config.py`, `schema.py` | Rutas, fechas y ventanas; fuente única de columnas y valores permitidos |
+| `data_loader.py` | Hash, contrato, limpieza, tipos y particiones |
+| `features.py`, `models.py` | Preprocesado por familia, catálogo de modelos y adaptador de Keras |
+| `model_trainer.py` | Búsqueda, regla 1-SE, calibración y entrenamiento final |
+| `evaluator.py` | Métricas, costes, bootstrap por bloques y PSI |
+| `pipeline.py`, `cli.py` | Orquestación y comandos `hotel-ml` |
+| `champion.py`, `tracking.py` | Paquete del campeón con manifest, y registro en MLflow |
+| `explain.py`, `audit.py`, `plots.py` | Importancia, auditoría de inflación y figuras |
+| `predictor.py`, `stored_evaluation.py` | Inferencia y lectura de los resultados guardados |
+| `api/`, `ui/` | FastAPI y Streamlit |
+
+### Datos y variables
+
+`clean` elimina las reservas imposibles y deja 118 563 filas de 119 390. Entran 19 variables, todas conocidas al confirmar. `coerce_features` es la única entrada al modelo, y la usan el entrenamiento y la API, de modo que no pueden divergir.
+
+El pipeline es un `ColumnTransformer` con imputación por mediana, escalado solo para regresión logística y MLP, y `OneHotEncoder(handle_unknown="infrequent_if_exist", min_frequency=50)`. Usa solo clases de scikit-learn y XGBoost, así que el artefacto no depende del paquete del proyecto.
+
+### Protocolo
+
+El [protocolo](protocolo.md) se fijó **antes de comparar modelos**:
+
+- **Desarrollo y test:** llegadas anteriores a 2017, y de enero a agosto de 2017 en una sola ejecución.
+- **Búsqueda:** `RandomizedSearchCV` con un máximo de 20 iteraciones (6 en la MLP) y cuatro ventanas expansivas, una por trimestre de 2016.
+- **Métrica principal: ROC-AUC.** Está en la lista del enunciado, no depende del umbral y no se deja engañar por la proporción de clases. Las secundarias son PR-AUC, Brier, pendiente de calibración, coste, accuracy, precisión, recall y F1 de la clase positiva.
+- **Selección:** regla de 1 error estándar sobre las diferencias pareadas por ventana. Entre los empatados gana el más simple: regresión logística, árbol, Random Forest, XGBoost y MLP.
+- **Calibración:** sigmoide, isotónica o ninguna, ajustando en 2016T3 y midiendo en 2016T4. Si el Brier mejora menos de 0.001, no se calibra.
+- **Umbral:** `t* = C_FP / (C_FP + C_FN)` sobre la probabilidad calibrada, con costes supuestos y declarados.
+- **Incertidumbre:** bootstrap por bloques `hotel × fecha de llegada`, con 2000 réplicas y pareado entre modelos, y sensibilidad por semana. Como no cubre la deriva, también se publica la dispersión entre ventanas y el mes a mes.
+
+### Servicio
+
+- **Modelo versionado:** `models/champion/` guarda el modelo y un `manifest.json` con hash, versiones, umbral y métricas. La API comprueba el hash y las versiones al arrancar.
+- **API:** `/health`, `/model-info`, `/predict`, `/predict/batch` y `/evaluate`. Valida de forma estricta con Pydantic. `/evaluate` devuelve lo guardado y nunca calcula sobre el test. **No hay `/train`:** entrenar es pesado e inseguro en un servicio, y el enunciado solo lo pone como ejemplo.
+- **Interfaz:** Streamlit, con resumen, predicción, evaluación, umbral y coste, interpretabilidad y datos. Consume la API, y avisa si no está disponible.
+- **Docker:** `docker compose up` levanta la API, la interfaz y MLflow, publicados solo en `127.0.0.1` y con un usuario sin privilegios. Todo es local, sin hosting remoto.
+- **MLflow:** los runs reales están en `mlflow.db`, en local y sin versionar. El servicio de Docker empieza vacío.
+
+Las decisiones difíciles de revertir se justifican en [`docs/adr/`](adr/), y el vocabulario, en el [glosario](glosario.md).
+
+## Resultados y elección final
+
+### Validación en 2016
+
+Media y desviación de las cuatro ventanas expansivas. La pendiente no aparece, porque estas tablas usaron otro recorte, como explica el protocolo.
+
+| Modelo | ROC-AUC | Desviación | Únicas | `No Deposit` | `Non Refund` | PR-AUC | Brier |
+|---|---|---|---|---|---|---|---|
+| Random Forest | 0.8172 | 0.0231 | 0.7405 | 0.7294 | 0.9945 | 0.7700 | 0.1531 |
+| XGBoost | 0.8162 | 0.0282 | 0.7382 | 0.7265 | 0.9857 | 0.7684 | 0.1533 |
+| MLP | 0.8053 | 0.0194 | 0.7226 | 0.7098 | 0.9730 | 0.7611 | 0.1578 |
+| Árbol de decisión | 0.8007 | 0.0130 | 0.7194 | 0.7024 | 0.7595 | 0.7337 | 0.1590 |
+| Regresión logística | 0.7927 | 0.0187 | 0.7137 | 0.6910 | 0.8678 | 0.7465 | 0.1594 |
+| Dummy (baseline) | 0.5000 | 0.0000 | 0.5000 | 0.5000 | 0.5000 | 0.3575 | 0.2302 |
+
+### Experimentos de diseño
+
+Cada uno compara una decisión con las mismas ventanas, sobre un XGBoost común de profundidad 6. `Diferencia` es la media pareada de ROC-AUC frente a la primera variante. Se reproducen con `uv run python -m experiments.run_all`.
+
+| Decisión | Variante | ROC-AUC | Diferencia |
+|---|---|---:|---:|
+| Sin calendario | 19 variables | 0.8141 | |
+| | Con año, mes, semana y día | 0.8080 | -0.0061 |
+| Sin `company` | Con `company` | 0.8142 | +0.0001 |
+| Entrenar con todas las filas | Solo filas únicas | 0.8116 | -0.0025 |
+| Un modelo global | Uno por hotel | 0.8061 | -0.0081 |
+| Árboles regularizados | Profundidad 16 | 0.7961 | -0.0180 |
+| One-hot con `min_frequency` | Ordinal | 0.8096 | -0.0045 |
+| | Target encoding de `agent`, pliegues barajados | 0.8115 | -0.0026 |
+| Sin balancear | `scale_pos_weight` | 0.8133 | -0.0008 |
+| | SMOTE | 0.8128 | -0.0013 |
+| | Undersampling | 0.8125 | -0.0016 |
+| Sin `total_of_special_requests` | Con ella (XGBoost) | 0.8481 | +0.0340 |
+
+**Embeddings categóricos.** Una MLP con embeddings da 0.8063, frente a 0.8053 con one-hot, una diferencia de +0.0010. No justifica cambiar el diseño: queda como experimento, en [`embeddings.py`](../experiments/embeddings.py).
+
+**Por qué los modelos se ordenan así.** Los árboles combinados recogen interacciones y relaciones no lineales, como la de la antelación, que la regresión logística no ve sin transformar las variables. El árbol único tiene mucha varianza, y Random Forest y XGBoost la reducen de formas distintas y llegan al mismo punto. La MLP no los iguala en estos datos tabulares, con las 6 configuraciones que probó. Sin `Non Refund` y sin filas repetidas, todos bajan: lo que queda es difícil.
+
+### Elección final
+
+| Modelo | ROC-AUC medio | Desviación | Pérdida media frente al mejor | Error estándar pareado | Dentro de la regla |
+|---|---:|---:|---:|---:|---|
+| Regresión logística | 0.7927 | 0.0187 | 0.0246 | 0.0037 | No |
+| Árbol de decisión | 0.8007 | 0.0130 | 0.0165 | 0.0054 | No |
+| **Random Forest** | 0.8172 | 0.0231 | 0.0000 | 0.0000 | Sí |
+| XGBoost | 0.8162 | 0.0282 | 0.0011 | 0.0035 | Sí |
+| MLP | 0.8053 | 0.0194 | 0.0119 | 0.0032 | No |
+
+**Gana Random Forest**, porque está dentro de la regla y es el más simple de los dos empatados. Sus hiperparámetros: 400 árboles, profundidad máxima 14, `min_samples_leaf` 10 y `max_features` 0.2. Se probaron 20 configuraciones.
+
+**Calibración isotónica.** En 2016T4, el Brier es 0.1622 sin calibrar, 0.1602 con sigmoide y 0.1592 con isotónica. La mejora supera el 0.001 que fijaba el protocolo.
+
+**Umbral 0.25**, que corresponde a costes 1:3, supuestos. Con ese umbral, 2016T4 da un coste de 0.4461, y el mejor umbral empírico de ese trimestre, 0.18, da 0.4329. El contraste no se usó para moverlo: el protocolo fija la fórmula.
+
+### Qué se ha ejecutado
 
 - **Registro:** [`outputs/final_evaluation/record.json`](../outputs/final_evaluation/record.json), el 2026-11-02, con el código en `185aa76` y sin `--force`.
 - **Modelo:** SHA-256 `41d3a28592ae93367b8a88ca80ed60bb1e5ac2356ec2344d4984c0770f13d7f1`, entrenado con llegadas anteriores a 2016-10-01 y calibrado en 2016T4. Se evalúa sin reentrenar.
@@ -20,7 +190,7 @@
 
 Toda probabilidad es la calibrada, salvo en SHAP. Los costes son supuestos.
 
-## Modelos y baseline
+### Modelos y baseline
 
 Umbral de decisión de 0.25, costes 1:3.
 
@@ -35,7 +205,7 @@ Umbral de decisión de 0.25, costes 1:3.
 
 La pendiente recorta las probabilidades a `[1e-3, 1 - 1e-3]`. Con el campeón vale 0.944 con `1e-6` y 1.000 con `1e-2`. El 0.46% de sus filas tiene probabilidad exactamente 0, y el 10.05%, exactamente 1.
 
-### Con un umbral fijo de 0.5
+#### Con un umbral fijo de 0.5
 
 Sirve para comparar con otros trabajos. No es el umbral servido.
 
@@ -48,7 +218,7 @@ Sirve para comparar con otros trabajos. No es el umbral servido.
 | Regresión logística | 0.7363 | 0.7473 | 0.4850 | 0.5882 | 7 629 | 2 580 | 8 101 | 22 199 |
 | Dummy (baseline) | 0.6117 | n/d | 0.0000 | 0.0000 | 0 | 0 | 15 730 | 24 779 |
 
-### Costes
+#### Costes
 
 | Modelo | 1:2 en su t* | 1:3 en su t* | 1:5 en su t* | 1:2 con umbral 0.25 | 1:5 con umbral 0.25 | VP | FP | FN | VN |
 |---|---|---|---|---|---|---|---|---|---|
@@ -59,7 +229,7 @@ Sirve para comparar con otros trabajos. No es el umbral servido.
 | Regresión logística | 0.3851 | 0.4650 | 0.5812 | 0.4113 | 0.5723 | 13 556 | 12 314 | 2 174 | 12 465 |
 | Dummy (baseline) | 0.6117 | 0.6117 | 0.6117 | 0.6117 | 0.6117 | 15 730 | 24 779 | 0 | 0 |
 
-### ROC-AUC por subconjunto
+#### ROC-AUC por subconjunto
 
 | Modelo | Todas | Únicas | `No Deposit` | `Non Refund` | Diferencia con el campeón, IC 95 % |
 |---|---|---|---|---|---|
@@ -80,7 +250,7 @@ Sirve para comparar con otros trabajos. No es el umbral servido.
 
 ![Calibración](../outputs/figures/calibracion.png)
 
-## Segmentos del campeón
+### Segmentos del campeón
 
 Umbral de decisión de 0.25. El resto de segmentos está en [`segments.csv`](../outputs/final_evaluation/segments.csv).
 
@@ -95,7 +265,7 @@ Umbral de decisión de 0.25. El resto de segmentos está en [`segments.csv`](../
 
 La pendiente de `Non Refund` no se debe leer: el 99.8% de esas filas se cancela.
 
-## Mes a mes
+### Mes a mes
 
 | Mes | Filas | Prevalencia | ROC-AUC | Brier |
 |---|---|---|---|---|
@@ -112,7 +282,7 @@ La pendiente de `Non Refund` no se debe leer: el 99.8% de esas filas se cancela.
 
 ![Prevalencia por mes](../outputs/figures/prevalencia_por_mes.png)
 
-## Deriva
+### Deriva
 
 PSI de cada variable frente a las llegadas anteriores a 2016-10-01, con las que aprendió el modelo base.
 
@@ -140,7 +310,7 @@ PSI de cada variable frente a las llegadas anteriores a 2016-10-01, con las que 
 
 ![Deriva por variable](../outputs/figures/deriva_psi.png)
 
-## Escenario con `total_of_special_requests`
+### Escenario con `total_of_special_requests`
 
 **Es solo informativo y no puede cambiar el campeón.** Es un Random Forest con los mismos hiperparámetros, ventanas y calibración, y con esa variable añadida. El diagnóstico de la [data card](data_card.md) indica que se acumula durante la vida de la reserva, aunque es observacional, y por eso se publican los dos escenarios.
 
@@ -153,7 +323,7 @@ ROC-AUC de 0.8369, con un intervalo de [0.8260, 0.8484]. Frente al campeón, la 
 | `No Deposit` | 0.7529 | 0.7792 | 0.5456 | 0.5856 | 0.1810 | 0.1754 | 0.757 | 0.8609 | 0.5977 | 0.4580 |
 | `Non Refund` | 0.9998 | 0.9997 | 1.0000 | 1.0000 | 0.0010 | 0.0011 | 3.764 | 1.0000 | 0.9990 | 0.0019 |
 
-## Valor de negocio
+### Valor de negocio
 
 **Los costes son supuestos, no datos del hotel.** Cada fila indica qué haría el campeón si un falso positivo costara lo que dice el escenario. El coste sin modelo es el de la mejor política trivial: avisar de todas las reservas o de ninguna.
 
@@ -167,7 +337,7 @@ ROC-AUC de 0.8369, con un intervalo de [0.8260, 0.8484]. Frente al campeón, la 
 
 ![Coste según el umbral](../outputs/figures/coste_umbral.png)
 
-## Auditoría de la inflación
+### Auditoría de la inflación
 
 Se reproduce con `hotel-ml audit`, y los tres primeros escalones se entrenan de nuevo. La cuarta fila copia la cifra publicada.
 
@@ -184,7 +354,7 @@ Se reproduce con `hotel-ml audit`, y los tres primeros escalones se entrenan de 
 - **De 0.868 a 0.818:** es lo que aportaban `country` y `booking_changes`.
 - **El tercer escalón y el oficial casi coinciden, y es casualidad.** El tercero conserva `total_of_special_requests`, el calendario y árboles de profundidad 16, y esos efectos se compensan.
 
-## Interpretación
+### Interpretación
 
 **Sirve para interpretar, no decide nada y no indica causas.** Los valores se agregan por variable original.
 
@@ -192,7 +362,7 @@ Se reproduce con `hotel-ml audit`, y los tres primeros escalones se entrenan de 
 - Permutación: caída del ROC-AUC del campeón al barajar cada variable en 2017, con 10 repeticiones.
 - SHAP: 2000 filas de 2017, en la probabilidad sin calibrar del modelo base.
 
-| Variable | `feature_importances_` | Permutación (caída de ROC-AUC) | ± desviación | |SHAP| medio |
+| Variable | `feature_importances_` | Permutación (caída de ROC-AUC) | ± desviación | \|SHAP\| medio |
 |---|---|---|---|---|
 | `deposit_type` | 0.4352 | 0.1502 | 0.0018 | 0.1281 |
 | `lead_time` | 0.0908 | 0.0583 | 0.0015 | 0.0475 |
@@ -218,7 +388,9 @@ Se reproduce con `hotel-ml audit`, y los tres primeros escalones se entrenan de 
 
 `deposit_type` domina en los tres métodos. Se conoce al reservar, pero no debe leerse como causa: `Non Refund` concentra grupos de reservas casi idénticas que se cancelan juntas.
 
-## Lo que el test señala y no se corrige
+## Reflexión crítica
+
+### Lo que el test señala y no se corrige
 
 Se declara tal cual. El modelo sigue congelado.
 
@@ -228,10 +400,37 @@ Se declara tal cual. El modelo sigue congelado.
 4. **XGBoost no se distingue del campeón.** La diferencia pareada va de [-0.0033, +0.0008], y la regla de selección ya los había dejado empatados en validación.
 5. **El rendimiento cae al final del periodo.** El ROC-AUC baja de 0.8742 en enero a 0.7568 en julio. El intervalo del bootstrap no cubre esta deriva.
 6. **`agent` deriva mucho** (PSI 0.7591) y `previous_cancellations` algo menos (0.2379). Es una limitación de usar identificadores de agente en un modelo que no se reentrena.
+7. **La mejor PR-AUC es de la MLP:** 0.7654, frente a 0.7608 del campeón, aunque su ROC-AUC queda por debajo. Elegir otra métrica principal habría cambiado el orden.
 
-## Limitaciones
+### Por qué no se corrige
+
+Mover el umbral o cambiar de modelo tras ver estas cifras convertiría el test en validación, y dejaría el proyecto sin una estimación honesta. El protocolo existe para eso. Son propuestas para una versión posterior, que tendría que medirse con datos nuevos.
+
+### Limitaciones
 
 - Dos hoteles y dos años de datos: no se puede generalizar a otros hoteles.
 - `adr` y otras variables son la foto final de la reserva, y su disponibilidad al confirmarla no se puede demostrar del todo.
 - Los costes son supuestos.
 - El test no es estrictamente ciego, como se declara arriba.
+- Una sola calibración, ajustada en 2016T4: si la cancelación se mueve, la probabilidad deja de estar bien calibrada, y la isotónica concentra filas en escalones.
+- La selección usa el ROC-AUC, que ordena bien pero no mide el coste de decidir. Ese es el origen de que el campeón no sea el más barato.
+
+### Propuestas de mejora
+
+- **Historial de la reserva:** con los valores en el momento de confirmar se podría resolver lo que aquí queda en duda, como `total_of_special_requests` o `adr`.
+- **Costes reales:** con los costes del hotel, el umbral sería una decisión de negocio, y no un supuesto.
+- **Selección por coste:** añadir el coste en validación como criterio, y elegir el umbral con datos en lugar de solo con la fórmula.
+- **Reentrenamiento:** el rendimiento cae en verano de 2017 y `agent` deriva mucho. Un reentrenamiento periódico, con su vigilancia del PSI, debería medirse antes de adoptarlo.
+- **Identificadores de agente:** sustituirlos por variables más estables, como su tasa histórica calculada solo con el pasado.
+- **Más hoteles:** con dos, nada de esto se puede generalizar.
+
+### Qué aprendí
+
+- **Una cifra alta es una pregunta, no una respuesta.** El 0.9524 inicial parecía un buen resultado, y era sobre todo fuga y filas repetidas.
+- **La parte difícil del aprendizaje automático suele estar antes del modelo.** Las mayores diferencias salen de cómo se evalúa y de qué variables se conocen en el momento de predecir, no de elegir entre Random Forest y XGBoost.
+- **Fijar el protocolo antes de mirar cuesta, pero compensa.** Obliga a publicar lo que el test señala, también cuando deja mal al modelo elegido.
+
+## Bibliografía
+
+- Antonio, N., de Almeida, A. y Nunes, L. (2019). Hotel booking demand datasets. *Data in Brief*, 22, 41-49. <https://doi.org/10.1016/j.dib.2018.11.126>. Licencia CC BY 4.0.
+- Antonio, N., de Almeida, A. y Nunes, L. (2019). An Automated Machine Learning Based Decision Support System to Predict Hotel Booking Cancellations. *Data Science Journal*, 18, 32. <https://doi.org/10.5334/dsj-2019-032>.
