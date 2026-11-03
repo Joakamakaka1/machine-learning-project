@@ -24,7 +24,7 @@ uv run mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5001
 
 **Deja abiertos:** la interfaz en <http://127.0.0.1:8501>, la API en <http://127.0.0.1:8000/docs>, MLflow en <http://127.0.0.1:5001>, el [PDF del informe](informe_final.pdf) y el notebook [`03_resultados`](../notebooks/03_resultados.ipynb).
 
-**No ejecutes** `hotel-ml evaluate`, que no se repite. Tampoco `hotel-ml tune` ni `run-all` sin las carpetas temporales del paso 2: `tune` reescribe `models/best_params.json`.
+**No ejecutes** `hotel-ml evaluate`, que no se repite. Sin `--force`, `tune`, `train` y `run-all` se niegan a tocar lo congelado; para enseñarlos, usa las carpetas temporales del paso 2.
 
 ## En directo
 

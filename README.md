@@ -161,7 +161,11 @@ uv run poe ui
 
 Se ejecutan con `uv run hotel-ml <comando>`, y `--help` da sus opciones.
 
-**El modelo está congelado.** `train`, `run-all` y `evaluate` se niegan a sustituirlo o a repetir el test sin `--force`. `tune` no tiene esa protección y reescribe `models/best_params.json` y `outputs/validation/`. Para probar el pipeline sin tocar nada, usa otras carpetas:
+**El modelo está congelado.** `tune`, `train`, `run-all`, `train-scenario` y `evaluate` se niegan a cambiar lo evaluado o a repetir el test sin `--force`.
+
+**En un clon nuevo faltan los modelos intermedios.** `models/candidates/` y `models/scenario/` no están en git, y solo los necesitan `evaluate`, `rehearse` y `explain`. La API, la interfaz y Docker usan `models/champion/`, que sí está versionado. Se regeneran con `hotel-ml train --force`, que reescribe `models/champion/` y `outputs/validation/`. En un clon limpio, en Windows, y con la misma semilla, volvió a dar un `model.joblib` idéntico byte a byte, aunque cambia su `manifest.json`: hazlo en una copia del repositorio.
+
+Para probar el pipeline sin tocar nada, usa otras carpetas:
 
 ```powershell
 $env:HOTEL_ML_MODELS_DIR = "$env:TEMP\hotel-demo\models"

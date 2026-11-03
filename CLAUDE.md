@@ -11,7 +11,7 @@ Predicción de cancelaciones de reservas al confirmarlas. Lee el `README.md` par
 
 - `models/champion/` y `outputs/final_evaluation/` no cambian. El SHA-256 de `model.joblib` es `41d3a28592ae93367b8a88ca80ed60bb1e5ac2356ec2344d4984c0770f13d7f1`.
 - El test de 2017 ya se ejecutó, una sola vez: `hotel-ml evaluate` nunca se repite. Lo que señala se declara, no se corrige.
-- Comprueba el flujo de entrenamiento en otra carpeta, con `HOTEL_ML_MODELS_DIR` y `HOTEL_ML_OUTPUTS_DIR`: `tune` reescribe `models/best_params.json` sin avisar.
+- Comprueba el flujo de entrenamiento en otra carpeta, con `HOTEL_ML_MODELS_DIR` y `HOTEL_ML_OUTPUTS_DIR`. `--force` cambia lo congelado: úsalo solo si el autor lo pide, y decláralo.
 - Toda decisión nueva sale de las llegadas anteriores a 2017. Los notebooks y `outputs/eda/` también.
 
 ## Cifras

@@ -7,3 +7,5 @@ La API comprueba el hash y las versiones al arrancar, y el artefacto solo usa cl
 **Considerado:** un registro de modelos como única fuente. Exigiría un servidor, y el proyecto es local. MLflow registra los experimentos, con el alias `@champion` apuntando a este mismo artefacto, pero no es de donde se sirve.
 
 **Coste aceptado:** un binario en git, de unos 8.7 MB. Es asumible porque el modelo está congelado y no cambiará.
+
+**Límite aceptado:** el hash vive junto al modelo, así que detecta un fichero corrupto o sustituido, pero no a quien cambie a la vez el modelo y el manifest. Cargar un `joblib` ejecuta código, de modo que solo debe cargarse un modelo de este repositorio. Para un proyecto local es suficiente; publicarlo exigiría firmar el artefacto o usar un formato sin ejecución de código.
