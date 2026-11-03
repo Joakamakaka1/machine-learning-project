@@ -13,6 +13,7 @@ once both its arrival and its last status are before the booking date of the row
 Run it with `uv run python -m experiments.review.feature_tiers`.
 """
 
+import sys
 from collections.abc import Callable, Sequence
 
 import numpy as np
@@ -31,13 +32,9 @@ BY_DEFINITION: tuple[str, ...] = (
     "previous_bookings_not_canceled",
     "days_in_waiting_list",
 )
-SETTLED_LATER: tuple[str, ...] = ("deposit_type",)
-AMENDABLE: tuple[str, ...] = tuple(
-    column
-    for column in schema.INPUT_FEATURES
-    if column not in BY_DEFINITION and column not in SETTLED_LATER
-)
 _SMOOTHING = 20.0
+# Rate of the rows booked before any booking had settled: it must not come from the target.
+_RATE_WITHOUT_HISTORY = 0.5
 _RECENT_DAYS = 180
 
 
@@ -75,7 +72,7 @@ def settled_history(
     everything = np.arange(len(rows))
     total_count, total_sum = cumulative(everything, everything)
     prior = np.where(
-        total_count > 0, total_sum / np.maximum(total_count, 1.0), float(target.mean())
+        total_count > 0, total_sum / np.maximum(total_count, 1.0), _RATE_WITHOUT_HISTORY
     )
     rate = np.zeros(len(rows))
     count = np.zeros(len(rows))
@@ -256,7 +253,7 @@ def _report(table: pd.DataFrame) -> None:
 
 
 def main() -> None:
-    """Run the three families on both schemes."""
+    """Run the families named on the command line, or all of them, on both schemes."""
     rows = harness.load_rows()
     pd.set_option("display.width", 260, "display.max_columns", 40)
     families = {
@@ -264,7 +261,10 @@ def main() -> None:
         "ablation": ablation_variants(),
         "engineered": engineered_variants(rows),
     }
+    chosen = set(sys.argv[1:])
     for family, variants in families.items():
+        if chosen and family not in chosen:
+            continue
         for scheme, windows in (("m12", harness.M12), ("q4", harness.Q4)):
             by_window = harness.run_variants(f"{family} {scheme}", rows, variants, windows)
             table = harness.add_holm(harness.compare_to_reference(by_window, "all_19"))

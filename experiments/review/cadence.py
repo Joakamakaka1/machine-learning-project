@@ -16,12 +16,7 @@ from experiments import common
 from experiments.review import harness
 from hotel_cancellation import data_loader, schema
 
-_CADENCES: dict[str, str] = {
-    "monthly": "MS",
-    "quarterly": "QS",
-    "half_yearly": "2QS",
-    "frozen_at_2016_start": "YS",
-}
+_CADENCES: tuple[str, ...] = ("monthly", "quarterly", "half_yearly", "frozen_at_2016_start")
 
 
 def _last_origin(month: pd.Timestamp, cadence: str) -> pd.Timestamp:
@@ -65,7 +60,7 @@ def main() -> None:
                 }
             )
     by_window = pd.DataFrame(results).rename(columns={"cadence": "variant"})
-    table = harness.compare_to_reference(by_window, "quarterly")
+    table = harness.add_holm(harness.compare_to_reference(by_window, "quarterly"))
     harness.save("cadence_by_window", by_window)
     harness.save("cadence", table)
     pd.set_option("display.width", 220, "display.max_columns", 30)

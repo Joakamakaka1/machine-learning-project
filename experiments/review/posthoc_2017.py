@@ -109,8 +109,7 @@ def positive_kinds(rows: pd.DataFrame) -> pd.DataFrame:
     canceled = rows["reservation_status"] == "Canceled"
     days_before = (rows[schema.ARRIVAL_DATE] - rows["status_date"]).dt.days
     no_deposit = rows["deposit_type"] == "No Deposit"
-    keys = [rows["hotel"], rows["status_date"], rows["agent_key"], rows["market_segment"]]
-    event_size = rows.groupby(keys)["batch_id"].transform("size").where(canceled, 0)
+    event_size = harness.cancellation_event_size(rows)
     kinds = {
         "no_show": rows["reservation_status"] == "No-Show",
         "canceled_no_deposit": canceled & no_deposit,

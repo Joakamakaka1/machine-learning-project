@@ -3,6 +3,7 @@
 It trains no complex model. Run it with `uv run python -m experiments.review.data_audit`.
 """
 
+import json
 from typing import Any
 
 import numpy as np
@@ -48,9 +49,6 @@ def date_coherence(rows: pd.DataFrame) -> pd.DataFrame:
     table = []
     for first in range(7):
         pair = {first, (first + 1) % 7}
-        counts = np.zeros(7, dtype=int)
-        for offset in range(7):
-            counts[offset] = sum((offset + day) % 7 in pair for day in range(7))
         full_weeks, rest = np.divmod(nights, 7)
         expected = full_weeks * 2
         expected = expected + np.array(
@@ -62,9 +60,7 @@ def date_coherence(rows: pd.DataFrame) -> pd.DataFrame:
         table.append(
             {
                 "first_weekend_day_in_dataset_dates": first,
-                "weekday_name": pd.Timestamp("2024-01-01").day_name()
-                if first == 0
-                else (pd.Timestamp("2024-01-01") + pd.Timedelta(days=first)).day_name(),
+                "weekday_name": (pd.Timestamp("2024-01-01") + pd.Timedelta(days=first)).day_name(),
                 "rows_coherent": float((expected == observed).mean()),
             }
         )
@@ -109,8 +105,7 @@ def batch_structure(rows: pd.DataFrame) -> dict[str, Any]:
         size=(schema.TARGET, "size"), rate=(schema.TARGET, "mean")
     )
     canceled = rows[rows["reservation_status"] == "Canceled"]
-    keys = ["hotel", "status_date", "agent_key", "market_segment", "deposit_type"]
-    events = canceled.groupby(keys, sort=False).size().rename("rows")
+    events = canceled.groupby(list(harness.EVENT_KEYS), sort=False).size().rename("rows")
     big_events = events[events >= _MIN_EVENT]
     by_deposit = (
         big_events.groupby(level="deposit_type").sum() / canceled.groupby("deposit_type").size()
@@ -311,8 +306,6 @@ def main() -> None:
     harness.save("audit_univariate_power", power)
     harness.save("audit_fold_overlap", overlap)
     harness.save("audit_snapshot_fingerprints", fingerprints)
-
-    import json
 
     summary = {
         "labels": label_coherence(rows),

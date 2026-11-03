@@ -8,13 +8,7 @@ import pandas as pd
 
 from experiments.review import harness
 
-_FAMILIES: tuple[tuple[str, str], ...] = (
-    ("treatments", "as_is"),
-    ("tiers", "all_19"),
-    ("ablation", "all_19"),
-    ("engineered", "all_19"),
-    ("parsimony", "forest_19"),
-)
+_FAMILIES: tuple[str, ...] = ("treatments", "tiers", "ablation", "engineered", "parsimony")
 _COLUMNS = ("roc_auc", "roc_auc_no_deposit")
 
 
@@ -39,7 +33,7 @@ def _accepted(row: pd.Series, gaps_q4: pd.Series) -> tuple[bool, str]:
 def main() -> None:
     """Write one row per comparison, with the verdict of the rule."""
     log = []
-    for family, _reference in _FAMILIES:
+    for family in _FAMILIES:
         monthly = pd.read_csv(harness.OUTPUT_DIR / f"{family}_m12.csv")
         quarterly = pd.read_csv(harness.OUTPUT_DIR / f"{family}_q4.csv").set_index("variant")
         for _, row in monthly[monthly["roc_auc_gap"].notna()].iterrows():

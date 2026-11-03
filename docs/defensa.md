@@ -137,7 +137,7 @@ No, y es lo que corrigió la segunda revisión. Corto por llegada, de modo que h
 Casi no. Frente a las estancias, da 0.5541 con las canceladas hasta 7 días antes de llegar y 0.5170 con los `No-Show`, frente a 0.8739 con las de 31 días o más. Parte de esa diferencia es estructural, porque con poca antelación no se puede cancelar con un mes de margen. Para detectarla haría falta predecir cerca de la llegada, con el historial de la reserva.
 
 **¿Has probado a mejorarlo?**
-Sí. En la segunda revisión probé 50 cambios en datos, variables y modelos, de uno en uno, con una regla fijada antes de medir, y ninguno la cumple. Dando al modelo filas del mismo trimestre, algo imposible en producción, llega a 0.8357. Lo que más valor tendría es el registro de cambios de la reserva, y reentrenar con frecuencia.
+Sí. En la segunda revisión probé 50 cambios en datos, variables y modelos, de uno en uno, con una regla fijada antes de medir, y ninguno la cumple. Dando al modelo filas del mismo trimestre, algo imposible en producción, llega a 0.8325. Lo que más valor tendría es el registro de cambios de la reserva, y reentrenar con frecuencia.
 
 **¿Por qué Random Forest, si empata con XGBoost?**
 Porque empata. La regla de 1 error estándar los deja dentro a los dos, con 0.8172 y 0.8162, y a igualdad gana el más simple, en un orden fijado antes de comparar. En el test la diferencia va de [-0.0033, +0.0008]. No digo que sea mejor, digo que no hay razón para el más complejo.

@@ -424,13 +424,13 @@ Mover el umbral o cambiar de modelo tras ver estas cifras convertiría el test e
 - **Reentrenamiento:** el rendimiento cae en verano de 2017 y `agent` deriva mucho. En 2016, reentrenar cada mes en lugar de cada trimestre da +0.0083 [+0.0011, +0.0155], y no reentrenar en todo el año pierde 0.0249. Es la mejora real más probable, y debería medirse con datos nuevos antes de adoptarla.
 - **Más hoteles:** con dos, nada de esto se puede generalizar.
 
-Una propuesta inicial se descartó al medirla: sustituir los identificadores de agente por su tasa histórica, calculada solo con el pasado, da -0.0036 [-0.0108, +0.0037].
+Una propuesta inicial se descartó al medirla: sustituir los identificadores de agente por su tasa histórica, calculada solo con el pasado, da -0.0045 [-0.0121, +0.0031].
 
 ### Segunda revisión
 
 Tras la entrega se hizo una [revisión independiente](revision_datos_y_validacion.md) de los datos y de la validación, con su [protocolo](revision_protocolo.md) fijado antes de experimentar. **El modelo, el umbral y las cifras publicadas no cambian.** La línea base se reprodujo exactamente.
 
-**Lo que aguanta:** no hay fuga en el preprocesado, la fuga neta por tandas entre ventanas es de 0.0036, y la búsqueda anidada apenas baja las cifras. Ninguno de los 50 cambios probados en datos, variables y modelos cumple la regla de aceptación. El techo con estas variables ronda 0.84, y 0.76 con `No Deposit`.
+**Lo que aguanta:** no hay fuga en el preprocesado, la fuga neta por tandas entre ventanas es de 0.0036, y la búsqueda anidada apenas baja las cifras. Ninguno de los 50 cambios probados en datos, variables y modelos cumple la regla de aceptación. El techo con estas variables ronda 0.83, y 0.75 con `No Deposit`.
 
 **Lo que corrige:**
 
@@ -443,6 +443,7 @@ Tras la entrega se hizo una [revisión independiente](revision_datos_y_validacio
 | Medida en 2017 | ROC-AUC |
 |---|---:|
 | Publicada, con IC por hotel y fecha | 0.8175 [0.8058, 0.8297] |
+| Publicada, por subconjunto | Únicas 0.7608, `No Deposit` 0.7529, `Non Refund` 0.9998 |
 | Con IC por hotel, día de estado y agente | 0.8175 [0.8010, 0.8336] |
 | Confirmadas desde 2017-01-01 | 0.7917 |
 | Las mismas, con `No Deposit` | 0.7540 |

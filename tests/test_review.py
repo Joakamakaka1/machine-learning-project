@@ -74,3 +74,27 @@ def test_history_waits_for_arrival_even_if_the_booking_was_canceled_earlier() ->
     # The first booking was canceled in January, but it only counts after its arrival in March.
     assert counts[1] == pytest.approx(0)
     assert counts[3] == pytest.approx(3)
+
+
+def test_rows_without_any_history_do_not_read_the_future() -> None:
+    rows = _history_rows()
+    changed = rows.assign(**{schema.TARGET: [1, 1, 1, 1]})
+    first = feature_tiers.settled_history(rows, ("agent_key",)).iloc[:, 0].to_numpy()[0]
+    second = feature_tiers.settled_history(changed, ("agent_key",)).iloc[:, 0].to_numpy()[0]
+    assert first == second
+
+
+def test_a_cancellation_event_only_counts_canceled_bookings() -> None:
+    day = pd.Timestamp("2016-01-05")
+    rows = pd.DataFrame(
+        {
+            "hotel": ["City Hotel"] * 3,
+            "status_date": [day] * 3,
+            "agent_key": ["9"] * 3,
+            "market_segment": ["Online TA"] * 3,
+            "deposit_type": ["No Deposit"] * 3,
+            "reservation_status": ["Canceled", "Canceled", "Check-Out"],
+            "batch_id": [1, 2, 3],
+        }
+    )
+    assert harness.cancellation_event_size(rows).tolist() == [2, 2, 0]

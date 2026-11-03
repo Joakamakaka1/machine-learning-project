@@ -109,8 +109,9 @@ def compare_methods(rows: pd.DataFrame) -> pd.DataFrame:
 def threshold_stability(rows: pd.DataFrame) -> pd.DataFrame:
     """Resample the calibration rows and see how the share of flagged bookings moves.
 
-    It repeats the champion's recipe on 2016T3 and 2016T4: the base before October is not refitted,
-    so it isolates the instability of the calibrator. Batches are resampled whole.
+    The base model is trained before July, calibrated on 2016T3 and measured on 2016T4, one quarter
+    earlier than the champion. It is not refitted, so this isolates the instability of the
+    calibrator. Batches are resampled whole.
     """
     base_rows = rows[rows[schema.ARRIVAL_DATE] < "2016-07-01"]
     fit_rows = _windows(rows, "2016-07-01", "2016-10-01")

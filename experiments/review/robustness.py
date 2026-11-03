@@ -139,10 +139,9 @@ def ceiling(rows: pd.DataFrame) -> pd.DataFrame:
             valid, valid[schema.TARGET], valid["batch_id"]
         ):
             extended = pd.concat([train, valid.iloc[fit_index]])
-            pipeline = features.build_pipeline(
-                features.build_preprocessor(features.Family.UNSCALED), common.reference_xgboost()
+            within[score_index] = _fit_predict(
+                _xgboost(common.SEED), extended, valid.iloc[score_index]
             )
-            within[score_index] = _fit_predict(pipeline, extended, valid.iloc[score_index])
         actual = valid[schema.TARGET].to_numpy()
         no_deposit = (valid["deposit_type"] == "No Deposit").to_numpy()
         for name, scores in (

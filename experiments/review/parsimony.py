@@ -14,7 +14,7 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from experiments import common
-from experiments.review import feature_tiers, harness
+from experiments.review import data_treatments, feature_tiers, harness
 from hotel_cancellation import data_loader, features, schema
 
 CORE_5: tuple[str, ...] = (
@@ -35,11 +35,11 @@ def _forest() -> Any:
 def _weighted_forest(half_life_days: float) -> harness.FitPredict:
     def fit_predict(train: pd.DataFrame, valid: pd.DataFrame) -> NDArray[np.float64]:
         pipeline = common.tuned_pipeline("random_forest").set_params(model__n_jobs=-1)
-        age = (train[schema.ARRIVAL_DATE].max() - train[schema.ARRIVAL_DATE]).dt.days
+        _, weights = data_treatments.recency_weights(half_life_days)(train)
         pipeline.fit(
             data_loader.coerce_features(train),
             train[schema.TARGET],
-            **{f"{features.MODEL_STEP}__sample_weight": np.asarray(0.5 ** (age / half_life_days))},
+            **{f"{features.MODEL_STEP}__sample_weight": weights},
         )
         return np.asarray(pipeline.predict_proba(data_loader.coerce_features(valid))[:, 1])
 

@@ -38,21 +38,13 @@ def pooled_predictions(rows: pd.DataFrame) -> pd.DataFrame:
 
 
 def _segment_columns(pooled: pd.DataFrame) -> pd.DataFrame:
-    canceled = pooled["reservation_status"] == "Canceled"
-    event_keys = [
-        pooled["hotel"],
-        pooled["status_date"],
-        pooled["agent_key"],
-        pooled["market_segment"],
-    ]
-    event_size = pooled.groupby(event_keys)["batch_id"].transform("size").where(canceled, 0)
     return pooled.assign(
         lead_band=pd.cut(pooled["lead_time"], [-1, 7, 30, 90, 180, 365, 10_000]).astype("str"),
         nights_band=pd.cut(pooled["nights"], [0, 1, 3, 7, 14, 100]).astype("str"),
         batch_band=pd.cut(pooled["batch_size"], [0, 1, 4, 9, 29, 10_000]).astype("str"),
         agent_band=pd.cut(pooled["agent_rows_in_train"], [-1, 0, 49, 499, 10**7]).astype("str"),
         any_previous_cancellation=pooled["previous_cancellations"] > 0,
-        event_size=event_size,
+        event_size=harness.cancellation_event_size(pooled),
     )
 
 

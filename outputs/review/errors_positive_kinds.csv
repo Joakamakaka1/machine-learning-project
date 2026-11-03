@@ -2,8 +2,8 @@ kind,positives,auc_against_stays,mean_score
 no_show,656,0.52738,0.21155
 canceled_non_refund,6716,0.99979,0.98837
 canceled_no_deposit,12924,0.74088,0.32734
-canceled_no_deposit_alone,3250,0.55186,0.22495
-canceled_no_deposit_in_event_10_or_more,9674,0.80439,0.36173
+canceled_no_deposit_alone,4819,0.63294,0.26758
+canceled_no_deposit_in_event_10_or_more,8105,0.80506,0.36287
 canceled_within_7_days_of_arrival,2651,0.59107,0.2488
 canceled_8_to_30_days_before,4039,0.76211,0.37246
 canceled_31_or_more_days_before,12959,0.89919,0.67197

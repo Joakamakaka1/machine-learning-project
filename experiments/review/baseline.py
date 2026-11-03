@@ -18,10 +18,10 @@ import pandas as pd
 from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_score
 
 from experiments import common
+from experiments.review import harness
 from hotel_cancellation import config, data_loader, evaluator, model_trainer, models, schema
 
-OUTPUT_DIR = config.PROJECT_ROOT / "outputs" / "review"
-TOLERANCE = 1e-6
+_TOLERANCE = 1e-5
 
 
 def stored_test_figures(folder: Path) -> pd.DataFrame:
@@ -49,7 +49,7 @@ def stored_test_figures(folder: Path) -> pd.DataFrame:
                     "metric": metric,
                     "published": float(reference[metric]),
                     "recomputed": float(value),
-                    "matches": abs(float(reference[metric]) - float(value)) < 1e-5,
+                    "matches": abs(float(reference[metric]) - float(value)) < _TOLERANCE,
                 }
             )
     return pd.DataFrame(rows)
@@ -110,16 +110,20 @@ def served_model(development: pd.DataFrame, manifest: dict[str, Any]) -> dict[st
 def main() -> None:
     """Write the reproduction of the baseline to `outputs/review/`."""
     settings = config.get_settings()
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    harness.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     manifest = json.loads((settings.champion_dir / "manifest.json").read_text("utf-8"))
     model_path = settings.champion_dir / manifest["model"]["file"]
     actual_hash = hashlib.sha256(model_path.read_bytes()).hexdigest()
     development = common.load_development()
 
     test_figures = stored_test_figures(settings.final_evaluation_dir)
-    test_figures.to_csv(OUTPUT_DIR / "baseline_test_figures.csv", index=False, lineterminator="\n")
+    test_figures.to_csv(
+        harness.OUTPUT_DIR / "baseline_test_figures.csv", index=False, lineterminator="\n"
+    )
     windows = validation_windows(development, manifest["model"]["params"])
-    windows.round(6).to_csv(OUTPUT_DIR / "baseline_windows.csv", index=False, lineterminator="\n")
+    windows.round(6).to_csv(
+        harness.OUTPUT_DIR / "baseline_windows.csv", index=False, lineterminator="\n"
+    )
     served = served_model(development, manifest)
 
     report = {
@@ -131,7 +135,7 @@ def main() -> None:
         ),
         "served_model": served,
     }
-    (OUTPUT_DIR / "baseline.json").write_text(
+    (harness.OUTPUT_DIR / "baseline.json").write_text(
         json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n"
     )
     print(test_figures.round(6).to_string(index=False))

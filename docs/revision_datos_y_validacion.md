@@ -14,7 +14,7 @@ Revisión independiente del dataset y del proceso de validación, hecha en la ra
 | ¿Mide 0.82 el rendimiento al confirmar? | **No del todo.** Con las reservas confirmadas tras el despliegue da 0.79 en 2017 y 0.75 en 2016 |
 | ¿Sirve para las cancelaciones que más cuestan? | **Casi no.** Frente a las estancias: 0.55 en las canceladas a 7 días o menos de llegar y 0.52 en los `No-Show` |
 | ¿Hay un modelo mejor? | No. **0 de 50 comparaciones** cumplen la regla de aceptación |
-| ¿Hay techo? | Sí: unos 0.84 en total y 0.76 con `No Deposit`, con estas 19 variables |
+| ¿Hay techo? | Sí: unos 0.83 en total y 0.75 con `No Deposit`, con estas 19 variables |
 
 Tu sospecha se confirma a medias. El trabajo fue riguroso en la mecánica (partición, pipeline, ejecución única) y flojo en un punto concreto: **no se contrastó el momento de captura de las variables con el artículo que describe el dataset.**
 
@@ -56,6 +56,7 @@ Con `experiments/review/baseline.py`, sin tocar nada congelado.
 
 - **Evidencia:** la partición corta por llegada, de modo que entre el 31 % y el 69 % de las filas de cada ventana de 2016 se confirmaron **antes** del corte. El entrenamiento incluye reservas posteriores a ellas. Un modelo desplegado en una fecha solo predice las confirmadas después.
 - **Impacto en 2016:** XGBoost de referencia, 0.8141 con todas las filas y 0.7591 con las confirmadas tras el corte. Random Forest sobre cohortes de reservas confirmadas tras cada origen: **0.7499** de media (de 0.7136 a 0.7773), y 0.7176 con `No Deposit`.
+- **Entrenando solo con lo conocido en la fecha de cada reserva:** en las mismas filas de 2016, el XGBoost de referencia baja de 0.7963 a 0.7645. Esta cifra mezcla dos efectos que no se pueden separar: la fuga hacia atrás y tener un modelo más antiguo y con menos filas.
 - **Impacto en 2017, análisis posterior:** **0.7917** en las confirmadas desde 2017-01-01, frente a 0.8175 con todas. Con `No Deposit`, 0.7540.
 - **Matiz que modera mi alarma inicial:** la caída real en 2017 es de 0.026, menor que la de 2016. Con `No Deposit` no hay caída, porque la diferencia viene sobre todo de la composición: las `Non Refund` son el 4.9 % de esas filas y el 10.2 % del total. Además, los plazos largos quedan recortados por el final de los datos.
 - **Estado:** se puede corregir en la comunicación. **La cifra más defendible es 0.79, y 0.75 con `No Deposit`.**
@@ -70,10 +71,10 @@ Con `experiments/review/baseline.py`, sin tocar nada congelado.
 | Hasta 7 días antes de llegar | 0.591 | 0.554 |
 | De 8 a 30 días antes | 0.762 | 0.762 |
 | 31 días o más antes | 0.899 | 0.874 |
-| `No Deposit`, solas | 0.552 | 0.622 |
-| `No Deposit`, en sucesos de 10 filas o más | 0.804 | 0.825 |
+| `No Deposit`, solas | 0.633 | 0.662 |
+| `No Deposit`, en sucesos de 10 cancelaciones o más | 0.805 | 0.834 |
 
-- **Lectura:** el modelo detecta sobre todo tandas y reservas con mucha antelación. Parte del gradiente es estructural, porque con poca antelación no se puede cancelar 31 días antes. Los grupos usan el resultado para definirse, así que solo sirven para diagnosticar.
+- **Lectura:** el modelo detecta mejor las tandas y las reservas con mucha antelación. Parte del gradiente es estructural, porque con poca antelación no se puede cancelar 31 días antes. Los grupos usan el resultado para definirse, así que solo sirven para diagnosticar.
 - **Estado:** no se resuelve con estas variables. Haría falta predecir más cerca de la llegada, con el historial de la reserva.
 
 ### Impacto medio
@@ -105,7 +106,7 @@ Con `experiments/review/baseline.py`, sin tocar nada congelado.
 | Semestral | 0.8062 | 0.7125 | -0.0098 [-0.0190, -0.0006] |
 | Congelado desde enero | 0.7911 | 0.6918 | -0.0249 [-0.0377, -0.0120] |
 
-- **Salvedad:** el congelado solo tiene 21 820 filas de entrenamiento, de modo que esta comparación también mezcla el tamaño. Con Holm sobre las tres comparaciones, la mensual da p = 0.056, así que no cumple la regla por poco.
+- **Salvedad:** el congelado solo tiene 21 820 filas de entrenamiento, de modo que esta comparación también mezcla el tamaño. Con Holm sobre las tres comparaciones, la mensual da p = 0.0559, así que no cumple la regla por poco.
 - **Dato nuevo a favor del campeón:** Random Forest envejece mejor que XGBoost. En 2016T4 con 9 meses sin datos da 0.7833, frente a 0.7324.
 - **Estado:** es la mejora real más probable, pero es operativa y no se ha podido medir en 2017.
 
@@ -220,11 +221,11 @@ Solo con el pasado: una reserva cuenta como historia cuando su llegada y su últ
 
 | Cambio y motivo | ROC-AUC [IC 95 %] | `No Deposit` [IC 95 %] | `Q4` |
 |---|---|---|---:|
-| Tasa histórica del agente: `agent` deriva mucho | +0.0006 [-0.0041, +0.0053] | +0.0007 [-0.0061, +0.0075] | -0.0088 |
-| Tasa del agente en los últimos 180 días | +0.0022 [-0.0027, +0.0071] | +0.0030 [-0.0042, +0.0102] | -0.0089 |
-| Tasa histórica en lugar de `agent` | -0.0036 [-0.0108, +0.0037] | -0.0057 [-0.0167, +0.0053] | -0.0168 |
-| Tasa del hotel y el segmento | +0.0034 [-0.0037, +0.0104] | +0.0051 [-0.0056, +0.0158] | +0.0025 |
-| Las dos tasas | +0.0018 [-0.0036, +0.0072] | +0.0020 [-0.0059, +0.0099] | -0.0033 |
+| Tasa histórica del agente: `agent` deriva mucho | +0.0020 [-0.0023, +0.0063] | +0.0030 [-0.0030, +0.0090] | -0.0066 |
+| Tasa del agente en los últimos 180 días | +0.0028 [-0.0020, +0.0076] | +0.0042 [-0.0028, +0.0111] | -0.0075 |
+| Tasa histórica en lugar de `agent` | -0.0045 [-0.0121, +0.0031] | -0.0072 [-0.0186, +0.0042] | -0.0155 |
+| Tasa del hotel y el segmento | +0.0029 [-0.0027, +0.0084] | +0.0041 [-0.0044, +0.0127] | +0.0005 |
+| Las dos tasas | +0.0009 [-0.0052, +0.0069] | +0.0010 [-0.0081, +0.0101] | -0.0059 |
 | Noches, huéspedes, tarifa por huésped, tiene agente | -0.0005 [-0.0027, +0.0016] | -0.0007 [-0.0042, +0.0028] | -0.0013 |
 | Mes de llegada, una categoría por mes | -0.0062 [-0.0107, -0.0017] | -0.0084 [-0.0149, -0.0019] | -0.0068 |
 | Estación, seno y coseno | -0.0008 [-0.0068, +0.0052] | -0.0010 [-0.0105, +0.0084] | -0.0060 |
@@ -237,7 +238,7 @@ Esto **descarta una mejora que proponía el informe original:** sustituir los id
 ### Robustez y techo
 
 - **Curva de aprendizaje:** de 40 % a 100 % de las filas, el ROC-AUC sube de 0.8192 a 0.8314 en 2016T2, de 0.7656 a 0.7690 en T3 y de 0.8226 a 0.8275 en T4. Más filas de este tipo ayudarían poco.
-- **Techo temporal:** dando al modelo filas del mismo trimestre, en grupos por tanda, se llega a 0.8357 y 0.7559 con `No Deposit`. Es una cota imposible en producción, y está a solo +0.0195 de lo temporal. En 2016T4 la distancia es 0.
+- **Techo temporal:** dando al XGBoost ajustado filas del mismo trimestre, en grupos por tanda, se llega a 0.8325 y 0.7507 con `No Deposit`. Es una cifra inalcanzable en producción, y está a solo +0.0163 de lo temporal. En 2016T4 la distancia es casi nula, y en 2016T1 es de +0.0349.
 - **Ensamble:** Random Forest y XGBoost juntos dan 0.8183 frente a 0.8172. Los modelos han convergido.
 - **Perturbaciones:** ruido del 10 % en `adr`, -0.0011; ±7 días en `lead_time`, -0.0025; todos los agentes desconocidos, -0.0203.
 - **Hiperparámetros:** las 20 configuraciones de Random Forest van de 0.8081 a 0.8172 (desviación de 0.0029), mucho menos que entre ventanas (0.0231).
@@ -249,6 +250,7 @@ Esto **descarta una mejora que proponía el informe original:** sustituir los id
 | Medida del campeón en 2017 | Filas | ROC-AUC | Lectura |
 |---|---:|---:|---|
 | **Publicada** | 40 509 | **0.8175**, IC [0.8058, 0.8297] | Correcta como cálculo, optimista como afirmación |
+| Publicada, por subconjunto | | Únicas 0.7608, `No Deposit` 0.7529, `Non Refund` 0.9998 | Sin cambios |
 | Con IC por suceso de cancelación | 40 509 | 0.8175, IC [0.8010, 0.8336] | Análisis posterior |
 | Confirmadas desde 2017-01-01 | 26 409 | **0.7917** | Análisis posterior. Plazo máximo de 241 días |
 | Lo mismo, con `No Deposit` | | **0.7540** | Análisis posterior |
@@ -264,6 +266,8 @@ Las cifras de análisis posterior **no son una evaluación nueva:** no se puntu�
 - Las ventanas mensuales se solapan en su entrenamiento, y sus intervalos pueden quedar estrechos. Por eso se exige también el signo en `Q4`.
 - Los experimentos usan el XGBoost de referencia, y solo los más prometedores se repitieron con Random Forest. No repetí encodings ni balanceo más allá de `min_frequency`: se apoyan en los experimentos originales, que no he vuelto a ejecutar.
 - Hice 50 comparaciones. El umbral de +0.002 y la regla son criterio propio, fijado antes de medir. No busqué una fuente que los respalde.
+- **Las diferencias pequeñas son ruido, y hay una prueba directa.** Cambiar un valor constante en las filas sin historia, sin relación con ninguna etiqueta, movió la diferencia de `plus_agent_history` de +0.0006 a +0.0020.
+- **La revisión de código encontró errores míos, corregidos antes de cerrar.** El tamaño de los sucesos contaba también las estancias de ese día: las filas "solas" y "en sucesos" daban 0.552 y 0.804 en 2016, frente a 0.633 y 0.805. El techo comparaba dos configuraciones de XGBoost. Y la tasa histórica usaba en esas filas sin historia un valor calculado con el futuro. Ninguno cambia el veredicto.
 - Dos hoteles y dos años: nada se puede generalizar.
 
 ## Próximos pasos
@@ -309,7 +313,7 @@ Corregidas en la misma rama, a petición del autor, sin cambiar el modelo ni las
 
 ## Cómo se reproduce
 
-Cada módulo escribe en `outputs/review/`, y solo `posthoc_2017` lee filas de 2017.
+Cada módulo escribe en `outputs/review/`. Solo dos leen 2017: `baseline`, que recalcula las cifras publicadas desde las predicciones guardadas, y `posthoc_2017`. `feature_tiers` admite el nombre de una familia para ejecutar solo esa, y `validation_schemes`, el de una tabla.
 
 ```bash
 uv run python -m experiments.review.baseline

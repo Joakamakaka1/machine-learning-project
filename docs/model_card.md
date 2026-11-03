@@ -74,7 +74,7 @@ Con bloques de hotel, día de estado y agente, el intervalo de la cifra global e
 - **Deriva.** El ROC-AUC baja de 0.8742 en enero a 0.7568 en julio de 2017, y el intervalo no lo cubre. `agent` tiene un PSI de 0.7591.
 - **Probabilidades en escalones.** La isotónica concentra filas en pocos valores: el 10.05 % tiene probabilidad exactamente 1.
 - **Variables no comprobadas al confirmar.** El artículo del dataset referencia los valores al día anterior a la llegada, y `deposit_type` sale de los pagos hasta la llegada o la cancelación. Con solo las variables definidas al crear o confirmar, el ROC-AUC en 2016 es de 0.6866. El rendimiento real está entre esa cifra y la publicada.
-- **No ve la cancelación tardía.** Detecta sobre todo tandas y reservas con mucha antelación, no las cancelaciones que dejan la habitación vacía a última hora.
+- **No ve la cancelación tardía.** Detecta mejor las tandas y las reservas con mucha antelación que las cancelaciones que dejan la habitación vacía a última hora.
 - **El umbral avisó más de lo previsto.** En 2016 avisaba del 46 % al 63 % de las reservas, y en 2017 del 77.3 %.
 - **El test no es estrictamente ciego.** Una auditoría previa había visto 2017, y de ella salen `ADR_UPPER_LIMIT`, `min_frequency=50` y las rejillas de búsqueda. Sus predicciones guardadas se han vuelto a leer después, sin que salga ninguna decisión.
 - **`total_of_special_requests` queda fuera por cautela.** Con ella, el ROC-AUC sería de 0.8369. El [informe](informe_final.md) publica ese escenario.

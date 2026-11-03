@@ -35,6 +35,14 @@ BATCH_KEYS: tuple[str, ...] = (
     "reserved_room_type",
 )
 
+EVENT_KEYS: tuple[str, ...] = (
+    "hotel",
+    "status_date",
+    "agent_key",
+    "market_segment",
+    "deposit_type",
+)
+
 FitPredict = Callable[[pd.DataFrame, pd.DataFrame], ArrayLike]
 
 
@@ -86,6 +94,13 @@ def add_derived(rows: pd.DataFrame) -> pd.DataFrame:
     )
     batch = frame.groupby(list(BATCH_KEYS), sort=False).ngroup()
     return frame.assign(batch_id=batch, batch_size=batch.map(batch.value_counts()))
+
+
+def cancellation_event_size(rows: pd.DataFrame) -> pd.Series:
+    """Count the bookings canceled together with each row, and give 0 to the rest."""
+    canceled = rows[rows["reservation_status"] == "Canceled"]
+    sizes = canceled.groupby(list(EVENT_KEYS), sort=False)["batch_id"].transform("size")
+    return sizes.reindex(rows.index, fill_value=0)
 
 
 def input_hash(rows: pd.DataFrame) -> pd.Series:

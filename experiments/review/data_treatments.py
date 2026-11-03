@@ -46,7 +46,9 @@ def _last_months(months: int) -> Treatment:
     return treat
 
 
-def _recency_weights(half_life_days: float) -> Treatment:
+def recency_weights(half_life_days: float) -> Treatment:
+    """Weigh each training row by its age, halving every `half_life_days`."""
+
     def treat(train: pd.DataFrame) -> tuple[pd.DataFrame, NDArray[np.float64]]:
         age = (train[schema.ARRIVAL_DATE].max() - train[schema.ARRIVAL_DATE]).dt.days
         return train, np.asarray(0.5 ** (age / half_life_days), dtype=float)
@@ -117,8 +119,8 @@ TREATMENTS: tuple[tuple[str, Treatment], ...] = (
     ("without_low_coverage_city_months", _without_low_coverage_city),
     ("last_12_months", _last_months(12)),
     ("last_9_months", _last_months(9)),
-    ("recency_half_life_180", _recency_weights(180.0)),
-    ("recency_half_life_365", _recency_weights(365.0)),
+    ("recency_half_life_180", recency_weights(180.0)),
+    ("recency_half_life_365", recency_weights(365.0)),
     ("batch_weight_inverse", _batch_weights(1.0)),
     ("batch_weight_inverse_sqrt", _batch_weights(0.5)),
     ("without_batches_10_or_more", _without_batches(10)),

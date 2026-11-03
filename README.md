@@ -62,7 +62,7 @@ Con el umbral servido de 0.25, que sale de costes 1:3 supuestos, y con un umbral
 ### Conclusiones
 
 - **0.95 no era creíble, y 0.82 es correcto como cálculo, pero optimista como afirmación.** Coincide con la validación en 2016, de 0.8172 ± 0.0231, y con lo que el [protocolo](docs/protocolo.md) anticipaba, aunque es una sola muestra. La cifra mezcla reservas confirmadas antes del corte de entrenamiento: con las confirmadas desde 2017-01-01 da 0.7917, y con `No Deposit`, 0.7540, en un análisis posterior que no puntúa ninguna fila.
-- **El techo de estas variables ronda 0.84, y 0.76 con `No Deposit`.** En una [segunda revisión](docs/revision_datos_y_validacion.md), ninguno de los 50 cambios probados en datos, variables y modelos mejoró de forma demostrable.
+- **El techo de estas variables ronda 0.83, y 0.75 con `No Deposit`.** En una [segunda revisión](docs/revision_datos_y_validacion.md), ninguno de los 50 cambios probados en datos, variables y modelos mejoró de forma demostrable.
 - **2017 no era virgen:** una auditoría previa lo había visto, y de ella salen `ADR_UPPER_LIMIT`, `min_frequency=50` y las rejillas de búsqueda. Ninguna otra decisión sale de ahí.
 - **Random Forest gana por la regla de 1 error estándar**, no por ser claramente mejor: empata con XGBoost, con una diferencia pareada de [-0.0033, +0.0008].
 - **Lo que el test señala no se corrige, porque el modelo está congelado.** Con el umbral 0.25 se avisa del 77.3 % de las reservas; con costes 1:3 el campeón es el más caro de los cinco modelos, con 0.4761 por reserva; y la mejor PR-AUC es la de la MLP, con 0.7654.
