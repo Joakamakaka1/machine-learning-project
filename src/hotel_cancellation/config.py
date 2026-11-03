@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     outputs_dir: Path = DEFAULT_OUTPUTS_DIR
     mlflow_tracking_uri: str = f"sqlite:///{(PROJECT_ROOT / 'mlflow.db').as_posix()}"
     mlflow_artifacts_dir: Path = PROJECT_ROOT / "mlartifacts"
+    api_url: str = "http://127.0.0.1:8000"
 
     @property
     def raw_dataset_path(self) -> Path:

@@ -120,6 +120,7 @@ module = [
     "joblib.*",
     "keras.*",
     "mlflow.*",
+    "plotly.*",
     "shap.*",
     "sklearn.*",
     "tensorflow.*",
@@ -162,3 +163,5 @@ requirements = { cmd = "uv export --all-extras --no-hashes --format requirements
 _audit-export = { cmd = "uv export --all-extras --no-emit-project --no-hashes --format requirements-txt --output-file .audit-requirements.txt --quiet" }
 _audit-run = { cmd = "pip-audit --requirement .audit-requirements.txt --no-deps --disable-pip --progress-spinner off" }
 audit = { sequence = ["_audit-export", "_audit-run"], help = "Audit every locked dependency with pip-audit" }
+api = { cmd = "uvicorn hotel_cancellation.api.main:app --host 127.0.0.1 --port 8000", help = "Run the API on this machine" }
+ui = { cmd = "streamlit run src/hotel_cancellation/ui/app.py --server.address 127.0.0.1", help = "Run the interface on this machine" }

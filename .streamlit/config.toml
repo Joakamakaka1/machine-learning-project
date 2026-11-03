@@ -1,0 +1,12 @@
+# The saved figures have a light surface, so the interface stays light.
+[theme]
+base = "light"
+primaryColor = "#2a78d6"
+
+[browser]
+gatherUsageStats = false
+# Also keeps Streamlit from looking up this machine's public address on startup.
+serverAddress = "localhost"
+
+[client]
+toolbarMode = "minimal"
