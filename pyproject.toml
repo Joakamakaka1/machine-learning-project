@@ -106,12 +106,13 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ARG001", "ARG002", "D", "N803", "N806", "S101"]
 "experiments/**" = ["T20"]
+"scripts/**" = ["T20"]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 mypy_path = "src"
-files = ["src", "tests", "experiments"]
+files = ["src", "tests", "experiments", "scripts"]
 explicit_package_bases = true
 
 [[tool.mypy.overrides]]
@@ -165,3 +166,5 @@ _audit-run = { cmd = "pip-audit --requirement .audit-requirements.txt --no-deps 
 audit = { sequence = ["_audit-export", "_audit-run"], help = "Audit every locked dependency with pip-audit" }
 api = { cmd = "uvicorn hotel_cancellation.api.main:app --host 127.0.0.1 --port 8000", help = "Run the API on this machine" }
 ui = { cmd = "streamlit run src/hotel_cancellation/ui/app.py --server.address 127.0.0.1", help = "Run the interface on this machine" }
+up = { cmd = "docker compose up --build --detach --wait", help = "Build and start the API, the interface and MLflow in Docker" }
+down = { cmd = "docker compose down", help = "Stop the containers and keep the MLflow volume" }

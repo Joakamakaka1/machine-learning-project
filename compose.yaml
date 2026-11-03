@@ -1,0 +1,88 @@
+# Everything runs on this machine: ports are published on 127.0.0.1 only.
+name: hotel-cancellation
+
+services:
+  api:
+    build:
+      context: .
+      target: api
+    image: hotel-cancellation-api:local
+    ports:
+      - "127.0.0.1:8000:8000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request as r; r.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  ui:
+    build:
+      context: .
+      target: ui
+    image: hotel-cancellation-ui:local
+    environment:
+      HOTEL_ML_API_URL: http://api:8000
+    ports:
+      - "127.0.0.1:8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request as r; r.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=3)
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.17.2
+    command:
+      - mlflow
+      - server
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+      - --workers
+      - "1"
+      - --backend-store-uri
+      - sqlite:////mlflow/mlflow.db
+      - --artifacts-destination
+      - /mlflow/artifacts
+    volumes:
+      - mlflow-data:/mlflow
+    ports:
+      - "127.0.0.1:5000:5000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request as r; r.urlopen('http://127.0.0.1:5000/health', timeout=3)
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 40s
+
+volumes:
+  mlflow-data:
