@@ -1,0 +1,17 @@
+variant,window,roc_auc,roc_auc_no_deposit
+random_forest_temporal,2016Q1,0.81977,0.72468
+xgboost_temporal,2016Q1,0.82544,0.7288
+ensemble_temporal,2016Q1,0.82381,0.7298
+xgboost_same_quarter_grouped_upper_bound,2016Q1,0.8671,0.79381
+random_forest_temporal,2016Q2,0.83458,0.71833
+xgboost_temporal,2016Q2,0.83099,0.71138
+ensemble_temporal,2016Q2,0.8338,0.71673
+xgboost_same_quarter_grouped_upper_bound,2016Q2,0.84369,0.73233
+random_forest_temporal,2016Q3,0.78397,0.71644
+xgboost_temporal,2016Q3,0.77425,0.70343
+ensemble_temporal,2016Q3,0.78163,0.71324
+xgboost_same_quarter_grouped_upper_bound,2016Q3,0.79821,0.73512
+random_forest_temporal,2016Q4,0.83067,0.75804
+xgboost_temporal,2016Q4,0.83399,0.76258
+ensemble_temporal,2016Q4,0.83382,0.76238
+xgboost_same_quarter_grouped_upper_bound,2016Q4,0.83387,0.76229

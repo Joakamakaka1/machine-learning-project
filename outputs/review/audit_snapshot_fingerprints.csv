@@ -1,0 +1,13 @@
+hotel,column,mean_stayed,mean_canceled,auc_as_score
+City Hotel,decimals,0.71684,0.80851,0.53902
+City Hotel,adr,100.93877,103.69092,0.5186
+City Hotel,nights,2.87339,3.29516,0.54792
+City Hotel,adults,1.81938,1.89681,0.53574
+City Hotel,children,0.09347,0.12148,0.50816
+City Hotel,lead_time,73.64394,99.91219,0.60803
+Resort Hotel,decimals,0.63322,0.57872,0.48203
+Resort Hotel,adr,87.2982,102.44536,0.57758
+Resort Hotel,nights,4.16843,4.69513,0.56783
+Resort Hotel,adults,1.83872,1.98685,0.54216
+Resort Hotel,children,0.09858,0.17532,0.52158
+Resort Hotel,lead_time,77.19851,109.25053,0.64522

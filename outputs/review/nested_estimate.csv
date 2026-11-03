@@ -1,0 +1,7 @@
+window,chosen_configuration,nested_roc_auc,best_possible_in_this_window,median_configuration,non_nested_best_overall,model
+2016Q2,18,0.83536,0.83593,0.83043,0.83458,random_forest
+2016Q3,18,0.78097,0.78587,0.77947,0.78397,random_forest
+2016Q4,16,0.83067,0.83219,0.82828,0.83067,random_forest
+2016Q2,9,0.83209,0.83209,0.82852,0.83099,xgboost
+2016Q3,9,0.76771,0.78101,0.77021,0.77425,xgboost
+2016Q4,12,0.83399,0.83399,0.82644,0.83399,xgboost

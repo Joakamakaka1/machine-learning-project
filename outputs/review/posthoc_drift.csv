@@ -1,0 +1,5 @@
+inputs,base_training_vs_2017,control_until_2016_06_vs_2016_second_half
+all_19,0.81208,0.82707
+without_agent,0.82072,0.82674
+without_lead_time,0.78899,0.70972
+without_agent_and_adr,0.72235,0.7502

@@ -1,0 +1,48 @@
+quarter,deposit,in_batch,any_previous,rows,cancellation_rate
+2015Q3,Non Refund,batch_10_or_more,False,420,1.0
+2015Q3,Non Refund,batch_10_or_more,True,1563,1.0
+2015Q3,Non Refund,smaller,False,10,1.0
+2015Q3,Non Refund,smaller,True,20,1.0
+2015Q3,other,batch_10_or_more,False,3493,0.21071
+2015Q3,other,batch_10_or_more,True,979,1.0
+2015Q3,other,smaller,False,4988,0.19767
+2015Q3,other,smaller,True,242,0.97521
+2015Q4,Non Refund,batch_10_or_more,False,696,1.0
+2015Q4,Non Refund,batch_10_or_more,True,926,1.0
+2015Q4,Non Refund,smaller,False,26,0.65385
+2015Q4,Non Refund,smaller,True,6,1.0
+2015Q4,other,batch_10_or_more,False,3451,0.13098
+2015Q4,other,batch_10_or_more,True,316,0.99367
+2015Q4,other,smaller,False,4303,0.10086
+2015Q4,other,smaller,True,381,0.90551
+2016Q1,Non Refund,batch_10_or_more,False,569,1.0
+2016Q1,Non Refund,batch_10_or_more,True,620,1.0
+2016Q1,Non Refund,smaller,False,15,0.73333
+2016Q1,Non Refund,smaller,True,2,1.0
+2016Q1,other,batch_10_or_more,False,4260,0.30423
+2016Q1,other,batch_10_or_more,True,154,0.81818
+2016Q1,other,smaller,False,5117,0.13133
+2016Q1,other,smaller,True,121,0.52066
+2016Q2,Non Refund,batch_10_or_more,False,2176,0.97978
+2016Q2,Non Refund,batch_10_or_more,True,301,1.0
+2016Q2,Non Refund,smaller,False,137,0.88321
+2016Q2,Non Refund,smaller,True,6,1.0
+2016Q2,other,batch_10_or_more,False,6939,0.3133
+2016Q2,other,batch_10_or_more,True,67,0.85075
+2016Q2,other,smaller,False,6341,0.19287
+2016Q2,other,smaller,True,102,0.5
+2016Q3,Non Refund,batch_10_or_more,False,1147,0.99564
+2016Q3,Non Refund,batch_10_or_more,True,93,1.0
+2016Q3,Non Refund,smaller,False,37,0.86486
+2016Q3,Non Refund,smaller,True,14,1.0
+2016Q3,other,batch_10_or_more,False,6123,0.35554
+2016Q3,other,batch_10_or_more,True,25,0.4
+2016Q3,other,smaller,False,7441,0.24634
+2016Q3,other,smaller,True,67,0.56716
+2016Q4,Non Refund,batch_10_or_more,False,1537,1.0
+2016Q4,Non Refund,batch_10_or_more,True,95,1.0
+2016Q4,Non Refund,smaller,False,44,0.95455
+2016Q4,other,batch_10_or_more,False,5537,0.40022
+2016Q4,other,batch_10_or_more,True,3,0.33333
+2016Q4,other,smaller,False,7048,0.23056
+2016Q4,other,smaller,True,96,0.27083

@@ -1,0 +1,69 @@
+{
+  "labels": {
+    "target_1_is_canceled_or_no_show": true,
+    "canceled_rows": 27599,
+    "no_show_rows": 846,
+    "no_show_share_of_positives": 0.029741606609245914,
+    "canceled_after_arrival": 0,
+    "canceled_before_booking": 0,
+    "canceled_status_before_data_start": 2350,
+    "checkout_status_equals_departure": 0.9995565320808725
+  },
+  "batches": {
+    "batches": 20093,
+    "rows": 78054,
+    "rows_in_batches_5_or_more": 0.6551874343403284,
+    "rows_in_batches_10_or_more": 0.5315550772542086,
+    "rows_in_batches_30_or_more": 0.2910420990596254,
+    "largest_batch": 625,
+    "label_purity_batches_10_or_more": 0.808411665461557,
+    "intraclass_correlation": 0.46552306975194874,
+    "mean_batch_size_seen_by_a_row": 54.99679708919466,
+    "design_effect": 26.136754737734986,
+    "effective_rows": 2986.3692253770664,
+    "cancellation_events": 4118,
+    "cancellations_in_events_10_or_more": 0.7314395449110475,
+    "cancellations_in_events_50_or_more": 0.2620747128519149,
+    "by_deposit_share_in_events_10_or_more": {
+      "No Deposit": 0.5812104682875878,
+      "Non Refund": 0.9820411316018152,
+      "Refundable": NaN
+    },
+    "largest_events": [
+      {
+        "key": "('City Hotel', Timestamp('2015-10-21 00:00:00'), '1', 'Groups', 'Non Refund')",
+        "rows": 1112
+      },
+      {
+        "key": "('City Hotel', Timestamp('2015-01-01 00:00:00'), '1', 'Groups', 'Non Refund')",
+        "rows": 540
+      },
+      {
+        "key": "('City Hotel', Timestamp('2015-07-02 00:00:00'), '1', 'Groups', 'Non Refund')",
+        "rows": 450
+      },
+      {
+        "key": "('City Hotel', Timestamp('2015-07-06 00:00:00'), '6', 'Offline TA/TO', 'Non Refund')",
+        "rows": 360
+      },
+      {
+        "key": "('City Hotel', Timestamp('2015-07-06 00:00:00'), '1', 'Groups', 'No Deposit')",
+        "rows": 310
+      },
+      {
+        "key": "('City Hotel', Timestamp('2015-01-01 00:00:00'), '1', 'Groups', 'No Deposit')",
+        "rows": 220
+      }
+    ]
+  },
+  "conflicts": {
+    "distinct_input_vectors": 49342.0,
+    "share_of_rows_in_repeated_vectors": 0.4586440156814513,
+    "share_of_rows_in_vectors_with_both_labels": 0.06312296615163861,
+    "majority_vote_error_within_repeated": 0.035252381351434395,
+    "rows_unique_with_target_in_key": 50050.0,
+    "rows_unique_inputs_only": 49342.0,
+    "prevalence_unique_with_target_in_key": 0.26729270729270727,
+    "prevalence_unique_inputs_only": 0.2667301690243606
+  }
+}

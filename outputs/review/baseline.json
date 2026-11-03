@@ -1,0 +1,13 @@
+{
+  "champion_hash_matches_manifest": true,
+  "development_rows": 78054,
+  "stored_figures_match": true,
+  "windows_max_abs_gap": 0.0,
+  "served_model": {
+    "rows_compared": 78054,
+    "max_abs_difference": 0.0,
+    "identical": true,
+    "calibrators_in_frozen_model": 1,
+    "isotonic_steps": 70
+  }
+}

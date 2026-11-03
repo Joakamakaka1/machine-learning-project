@@ -47,3 +47,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Logs of the second review
+outputs/review/logs/

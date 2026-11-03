@@ -1,0 +1,6 @@
+blocks,block_count,roc_auc,ci_low,ci_high,width
+hotel_arrival_day,486,0.81753,0.80544,0.82924,0.0238
+arrival_week,36,0.81753,0.8016,0.83185,0.03025
+booking_batch,11616,0.81753,0.80408,0.83107,0.02699
+hotel_status_day_agent,5948,0.81753,0.80097,0.83359,0.03261
+agent_booking_month,1020,0.81753,0.7839,0.84789,0.06399
