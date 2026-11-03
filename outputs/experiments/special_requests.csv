@@ -1,0 +1,5 @@
+variant,roc_auc,roc_auc_std,gap,paired_se,roc_auc_unique,roc_auc_no_deposit,roc_auc_non_refund,pr_auc,brier,calibration_slope,f1,cost_1_3
+xgboost_19_variables,0.81412,0.03011,0.0,0.0,0.73592,0.72415,0.9803,0.76843,0.15387,0.78832,0.56523,0.4428
+xgboost_plus_special_requests,0.84814,0.01351,0.03402,0.01211,0.78416,0.77394,0.98441,0.81394,0.13993,0.8834,0.67388,0.42723
+random_forest_19_variables,0.81725,0.02305,0.00313,0.00483,0.74052,0.72937,0.99453,0.77002,0.15308,1.06385,0.53053,0.45184
+random_forest_plus_special_requests,0.84922,0.01714,0.0351,0.01631,0.78611,0.7759,0.99405,0.81357,0.14034,1.17826,0.65637,0.44015

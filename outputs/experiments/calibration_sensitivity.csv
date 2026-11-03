@@ -1,0 +1,6 @@
+model,calibration,calibration_slope,calibration_slope_clip_1e6,calibration_slope_clip_1e2,share_probability_zero,share_probability_one
+logistic_regression,isotonic,1.08093,1.06644,1.10879,0.0,0.09283
+decision_tree,isotonic,0.89223,0.8279,0.95202,0.02019,0.0
+random_forest,isotonic,0.974,0.92893,1.02394,0.02493,0.1149
+xgboost,isotonic,0.99315,0.96305,1.03695,0.01295,0.11462
+mlp,sigmoid,1.07267,1.07267,1.07267,0.0,0.0

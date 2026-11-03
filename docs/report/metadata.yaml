@@ -1,0 +1,10 @@
+lang: es
+toc: true
+toc-depth: 2
+toc-title: Índice
+papersize: a4
+margin:
+  x: 1.8cm
+  y: 2cm
+fontsize: 10pt
+section-numbering: "1.1"

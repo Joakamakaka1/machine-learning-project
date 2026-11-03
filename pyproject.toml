@@ -1,67 +1,173 @@
 [project]
-name = "hotel-booking-ml"
-version = "0.1.0"
-description = "Hotel booking cancellation predictor (binary classification)"
+name = "hotel-cancellation"
+version = "1.0.0"
+description = "Predicción de cancelaciones de reservas de hotel en el momento de confirmar la reserva"
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.12,<3.13"
+authors = [{ name = "Joaquín Castro Salas" }]
 
+# Base profile ("serve"): what is needed to load the champion and expose the API.
+# TensorFlow and MLflow must stay out of here, they only belong to training.
 dependencies = [
-    # Data
-    "pandas>=2.2",
-    "numpy>=1.26",
-
-    # ML
-    "scikit-learn>=1.4",
-    "xgboost>=2.0",
-
-    # Deep Learning
-    "tensorflow>=2.16",
-
-    # Serialization & tracking
-    "joblib>=1.3",
-    "mlflow>=2.13",
-
-    # API
-    "fastapi>=0.111",
-    "uvicorn[standard]>=0.29",
-    "pydantic>=2.7",
-    "python-multipart>=0.0.9",
-
-    # Config
-    "python-dotenv>=1.0",
-
-    # Visualization
-    "matplotlib>=3.9",
-    "seaborn>=0.13",
-    "plotly>=5.22",
+    "fastapi>=0.115",
+    "joblib>=1.4",
+    "numpy>=2.0",
+    "pandas>=3.0,<4",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "scikit-learn>=1.8",
+    "uvicorn[standard]>=0.32",
+    "xgboost>=3.0",
 ]
 
 [project.optional-dependencies]
-streamlit = ["streamlit>=1.35"]
-notebook  = ["jupyter>=1.0", "ipykernel>=6.29"]
-dev       = [
-    "pytest>=8.2",
-    "pytest-cov>=5.0",
-    "httpx>=0.27",   # async test client for FastAPI
-    "ruff>=0.4",
+ui = [
+    "httpx>=0.27",
+    "plotly>=5.24",
+    "streamlit>=1.40",
+]
+train = [
+    "imbalanced-learn>=0.13",
+    "matplotlib>=3.9",
+    "mlflow>=3.0",
+    "shap>=0.48",
+    "tensorflow>=2.20",
+]
+notebook = [
+    "ipykernel>=6.29",
+    "jupyterlab>=4.3",
+    "matplotlib>=3.9",
+    "nbconvert>=7.16",
+]
+dev = [
+    "httpx>=0.27",
+    "mypy>=1.13",
+    "pandas-stubs>=2.2",
+    "pip-audit>=2.7",
+    "poethepoet>=0.31",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.8",
 ]
 
+[project.scripts]
+hotel-ml = "hotel_cancellation.cli:main"
+
 [build-system]
-requires      = ["hatchling"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src", "api"]
+packages = ["src/hotel_cancellation"]
 
-# --- Ruff (linter + formatter) ---
+[tool.uv]
+required-environments = [
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+
 [tool.ruff]
-line-length    = 100
-target-version = "py311"
+line-length = 100
+target-version = "py312"
+src = ["src", "tests", "."]
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I"]  # pycodestyle + pyflakes + isort
-extend-per-file-ignores = { "*.ipynb" = ["E501"] }
+select = [
+    "A",    # builtins shadowing
+    "ARG",  # unused arguments
+    "B",    # bugbear
+    "BLE",  # blind except
+    "C4",   # comprehensions
+    "D",    # docstrings
+    "DTZ",  # naive datetimes
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "G",    # logging format
+    "I",    # isort
+    "LOG",  # logging misuse
+    "N",    # naming
+    "NPY",  # numpy
+    "PD",   # pandas
+    "PIE",  # misc lints
+    "PT",   # pytest style
+    "PTH",  # pathlib
+    "RET",  # returns
+    "RUF",  # ruff
+    "S",    # security (bandit)
+    "SIM",  # simplifications
+    "T20",  # print
+    "UP",   # pyupgrade
+    "W",    # pycodestyle warnings
+]
 
-# --- Pytest ---
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ARG001", "ARG002", "D", "N803", "N806", "S101"]
+"experiments/**" = ["T20"]
+"scripts/**" = ["T20"]
+"notebooks/**" = ["A004", "D", "E402", "PD010", "S101"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+files = ["src", "tests", "experiments", "scripts"]
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = [
+    "imblearn.*",
+    "joblib.*",
+    "keras.*",
+    "mlflow.*",
+    "plotly.*",
+    "shap.*",
+    "sklearn.*",
+    "tensorflow.*",
+    "xgboost.*",
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=hotel_cancellation",
+    "--cov-report=term-missing",
+    "--cov-fail-under=80",
+]
+markers = [
+    "slow: needs the training stack or the real dataset; CI skips these tests",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["hotel_cancellation"]
+omit = ["*/hotel_cancellation/ui/*"]
+
+[tool.poe]
+env = { PYTHONUTF8 = "1" }
+
+[tool.poe.tasks]
+lint = { cmd = "ruff check .", help = "Lint with ruff" }
+format = { cmd = "ruff format .", help = "Apply the ruff formatter" }
+format-check = { cmd = "ruff format --check .", help = "Check formatting without changing files" }
+typecheck = { cmd = "mypy", help = "Type check with mypy" }
+test = { cmd = "pytest", help = "Run every test with coverage" }
+test-fast = { cmd = "pytest -m 'not slow' --no-cov", help = "Run the tests CI runs" }
+check = { sequence = ["lint", "format-check", "typecheck", "test"], help = "Everything a merge needs" }
+requirements = { cmd = "uv export --all-extras --no-hashes --format requirements-txt --output-file requirements.txt", help = "Regenerate requirements.txt from uv.lock" }
+_audit-export = { cmd = "uv export --all-extras --no-emit-project --no-hashes --format requirements-txt --output-file .audit-requirements.txt --quiet" }
+_audit-run = { cmd = "pip-audit --requirement .audit-requirements.txt --no-deps --disable-pip --progress-spinner off" }
+audit = { sequence = ["_audit-export", "_audit-run"], help = "Audit every locked dependency with pip-audit" }
+api = { cmd = "uvicorn hotel_cancellation.api.main:app --host 127.0.0.1 --port 8000", help = "Run the API on this machine" }
+ui = { cmd = "streamlit run src/hotel_cancellation/ui/app.py --server.address 127.0.0.1", help = "Run the interface on this machine" }
+up = { cmd = "docker compose up --build --detach --wait", help = "Build and start the API, the interface and MLflow in Docker" }
+down = { cmd = "docker compose down", help = "Stop the containers and keep the MLflow volume" }
+notebooks = { cmd = "jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.record_timing=False notebooks/01_eda.ipynb notebooks/02_auditoria_fugas.ipynb notebooks/03_resultados.ipynb", help = "Execute the notebooks and keep their output" }
+report = { cmd = "docker run --rm --volume ${POE_ROOT}:/data --workdir /data/docs pandoc/typst:3.7.0.2 informe_final.md --metadata-file=report/metadata.yaml --lua-filter=report/enlaces.lua --include-in-header=report/estilo.typ --shift-heading-level-by=-1 --columns=10000 --pdf-engine=typst --pdf-engine-opt=--root=/data --output=informe_final.pdf", help = "Build docs/informe_final.pdf with pandoc in a container" }

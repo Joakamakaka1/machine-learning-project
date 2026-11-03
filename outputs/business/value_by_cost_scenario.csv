@@ -1,0 +1,4 @@
+false_positive_cost,false_negative_cost,costs_are_assumptions,threshold,recall,precision,true_alarms,false_alarms,missed_cancellations,false_alarm_rate,flagged_share,cost_per_booking,cost_without_model,saving_per_booking
+1.0,2.0,True,0.333333,0.79911,0.612394,12570,7956,3160,0.321078,0.506702,0.352416,0.611691,0.259276
+1.0,3.0,True,0.25,0.940941,0.472891,14801,16498,929,0.665806,0.772643,0.476067,0.611691,0.135624
+1.0,5.0,True,0.166667,0.941068,0.472894,14803,16500,927,0.665886,0.772742,0.521736,0.611691,0.089955

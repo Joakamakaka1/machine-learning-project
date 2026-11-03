@@ -1,0 +1,2 @@
+params,mean_roc_auc,mean_pr_auc,mean_brier,mean_calibration_slope,mean_accuracy,mean_precision,mean_recall,mean_f1,mean_cost_1_2,mean_cost_1_3,mean_cost_1_5,mean_roc_auc_unique,mean_roc_auc_no_deposit,mean_roc_auc_non_refund,std_roc_auc,mean_fit_seconds
+{'model__strategy': 'prior'},0.5,0.3574801349622068,0.2301606607846911,,0.6425198650377932,0.0,0.0,0.0,0.6425198650377932,0.6425198650377932,0.6425198650377932,0.5,0.5,0.5,0.0,0.36257028579711914
