@@ -12,7 +12,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from hotel_cancellation import champion, config, evaluator, schema, stored_evaluation
+from hotel_cancellation import champion, config, evaluator, stored_evaluation
+from hotel_cancellation.data import schema
 
 CHAMPION_COLUMN = "champion"
 TARGET_COLUMN = schema.TARGET

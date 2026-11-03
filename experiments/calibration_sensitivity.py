@@ -16,7 +16,8 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.frozen import FrozenEstimator
 
 from experiments import common
-from hotel_cancellation import config, data_loader, evaluator, model_trainer, models, schema
+from hotel_cancellation import config, evaluator, model_trainer, models
+from hotel_cancellation.data import data_loader, schema
 
 
 def sensitivity(

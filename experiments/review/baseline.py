@@ -19,7 +19,8 @@ from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_s
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import config, data_loader, evaluator, model_trainer, models, schema
+from hotel_cancellation import config, evaluator, model_trainer, models
+from hotel_cancellation.data import data_loader, schema
 
 _TOLERANCE = 1e-5
 

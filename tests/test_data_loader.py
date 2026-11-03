@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from hotel_cancellation import data_loader, schema
+from hotel_cancellation.data import data_loader, schema
 
 RawFrameFactory = Callable[..., pd.DataFrame]
 

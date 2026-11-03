@@ -20,7 +20,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
-from hotel_cancellation import features
+from hotel_cancellation.data import features
 
 ProfileName = Literal["full", "fast"]
 

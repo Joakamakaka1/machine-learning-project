@@ -8,7 +8,8 @@ from typing import Any, Literal
 
 import pandas as pd
 
-from hotel_cancellation import champion, data_loader, features, schema
+from hotel_cancellation import champion
+from hotel_cancellation.data import data_loader, features, schema
 
 Label = Literal["canceled", "not_canceled"]
 CANCELED: Label = "canceled"

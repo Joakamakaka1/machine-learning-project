@@ -12,7 +12,8 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from hotel_cancellation import config, schema
+from hotel_cancellation import config
+from hotel_cancellation.data import schema
 
 logger = logging.getLogger(__name__)
 

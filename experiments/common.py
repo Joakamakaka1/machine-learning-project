@@ -16,7 +16,8 @@ from numpy.typing import ArrayLike, NDArray
 from sklearn.pipeline import Pipeline
 from xgboost import XGBClassifier
 
-from hotel_cancellation import champion, config, data_loader, evaluator, features, models, schema
+from hotel_cancellation import champion, config, evaluator, models
+from hotel_cancellation.data import data_loader, features, schema
 
 SEED = 42
 

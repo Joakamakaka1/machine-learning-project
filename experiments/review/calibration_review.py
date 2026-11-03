@@ -16,7 +16,8 @@ from sklearn.metrics import brier_score_loss, log_loss
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import data_loader, evaluator, schema
+from hotel_cancellation import evaluator
+from hotel_cancellation.data import data_loader, schema
 
 _COST = evaluator.DEFAULT_COST_SCENARIO
 _THRESHOLD = evaluator.optimal_threshold(_COST)

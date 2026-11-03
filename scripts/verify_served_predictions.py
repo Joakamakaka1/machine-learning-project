@@ -18,8 +18,9 @@ from typing import Any
 import httpx
 import pandas as pd
 
-from hotel_cancellation import config, data_loader, schema
+from hotel_cancellation import config
 from hotel_cancellation.api.schemas import MAX_BATCH_SIZE
+from hotel_cancellation.data import data_loader, schema
 
 _STORED_COLUMN = "champion"
 _TOLERANCE = 1e-12

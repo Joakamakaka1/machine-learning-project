@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score
 
 from experiments.review import harness
-from hotel_cancellation import schema
+from hotel_cancellation.data import schema
 
 _LATE_START = pd.Timestamp("2016-10-01")
 _MIN_EVENT = 10

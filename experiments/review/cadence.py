@@ -14,7 +14,7 @@ from scipy import stats  # type: ignore[import-untyped]
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import data_loader, schema
+from hotel_cancellation.data import data_loader, schema
 
 _CADENCES: tuple[str, ...] = ("monthly", "quarterly", "half_yearly", "frozen_at_2016_start")
 

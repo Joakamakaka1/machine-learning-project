@@ -19,7 +19,8 @@ from sklearn.metrics import (
 )
 
 from experiments import common
-from hotel_cancellation import config, data_loader, schema
+from hotel_cancellation import config
+from hotel_cancellation.data import data_loader, schema
 
 OUTPUT_DIR = config.PROJECT_ROOT / "outputs" / "review"
 SEEDS: tuple[int, ...] = (42, 7, 123, 2024, 31337)

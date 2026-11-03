@@ -11,7 +11,8 @@ import pandas as pd
 from numpy.typing import NDArray
 from sklearn.inspection import permutation_importance
 
-from hotel_cancellation import champion, config, data_loader, features, schema
+from hotel_cancellation import champion, config
+from hotel_cancellation.data import data_loader, features, schema
 
 FOREST_NAME = "random_forest"
 PERMUTATION_REPEATS = 10

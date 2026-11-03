@@ -14,7 +14,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from hotel_cancellation import schema
+from hotel_cancellation.data import schema
 
 MIN_CATEGORY_FREQUENCY = 50
 PREPROCESS_STEP = "preprocess"

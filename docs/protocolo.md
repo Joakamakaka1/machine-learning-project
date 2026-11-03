@@ -4,7 +4,7 @@ Este protocolo se fija **antes de comparar ningún modelo**. Si hubiera que camb
 
 ## Qué se evalúa
 
-Clasificación binaria de `is_canceled` **al confirmar la reserva**, con las 19 variables de entrada de [`schema.py`](../src/hotel_cancellation/schema.py). La disponibilidad de cada variable se justifica en la [data card](data_card.md).
+Clasificación binaria de `is_canceled` **al confirmar la reserva**, con las 19 variables de entrada de [`schema.py`](../src/hotel_cancellation/data/schema.py). La disponibilidad de cada variable se justifica en la [data card](data_card.md).
 
 ## Particiones
 

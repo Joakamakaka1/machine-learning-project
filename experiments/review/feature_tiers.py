@@ -22,7 +22,7 @@ from numpy.typing import NDArray
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import data_loader, features, schema
+from hotel_cancellation.data import data_loader, features, schema
 
 BY_DEFINITION: tuple[str, ...] = (
     "hotel",

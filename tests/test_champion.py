@@ -8,7 +8,8 @@ import pytest
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
-from hotel_cancellation import champion, config, data_loader, evaluator, features, schema
+from hotel_cancellation import champion, config, evaluator
+from hotel_cancellation.data import data_loader, features, schema
 from tests.conftest import BASE_BOOKING
 
 

@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from hotel_cancellation import champion, cli, config, data_loader, evaluator, pipeline, schema
+from hotel_cancellation import champion, cli, config, evaluator, pipeline
+from hotel_cancellation.data import data_loader, schema
 from tests.conftest import synthetic_raw
 
 

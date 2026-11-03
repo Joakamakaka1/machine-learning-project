@@ -15,7 +15,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler
 
 from experiments import common
-from hotel_cancellation import config, data_loader, features, models, schema
+from hotel_cancellation import config, models
+from hotel_cancellation.data import data_loader, features, schema
 
 _MISSING = "__missing__"
 _UNKNOWN_INDEX = -1

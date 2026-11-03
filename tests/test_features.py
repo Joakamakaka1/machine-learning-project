@@ -7,7 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.pipeline import Pipeline
 
-from hotel_cancellation import data_loader, features, schema
+from hotel_cancellation.data import data_loader, features, schema
 
 
 @pytest.fixture

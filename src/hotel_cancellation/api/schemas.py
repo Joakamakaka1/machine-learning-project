@@ -17,7 +17,8 @@ from pydantic import (
 )
 from pydantic_core import PydanticCustomError
 
-from hotel_cancellation import config, schema
+from hotel_cancellation import config
+from hotel_cancellation.data import schema
 from hotel_cancellation.predictor import Label, RiskBand
 
 MAX_BATCH_SIZE = 1000

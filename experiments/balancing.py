@@ -18,7 +18,7 @@ from sklearn.neighbors import NearestNeighbors
 from xgboost import XGBClassifier
 
 from experiments import common
-from hotel_cancellation import data_loader, features, schema
+from hotel_cancellation.data import data_loader, features, schema
 
 _NEIGHBORS = 5
 

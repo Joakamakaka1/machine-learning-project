@@ -6,7 +6,8 @@ import pytest
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
 
-from hotel_cancellation import evaluator, schema
+from hotel_cancellation import evaluator
+from hotel_cancellation.data import schema
 
 
 def test_f1_is_the_one_of_the_positive_class() -> None:

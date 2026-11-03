@@ -18,15 +18,8 @@ from typing import Any
 import joblib
 import pandas as pd
 
-from hotel_cancellation import (
-    champion,
-    config,
-    data_loader,
-    evaluator,
-    model_trainer,
-    models,
-    schema,
-)
+from hotel_cancellation import champion, config, evaluator, model_trainer, models
+from hotel_cancellation.data import data_loader, schema
 from hotel_cancellation.tracking import NullTracker, Tracker
 
 logger = logging.getLogger(__name__)

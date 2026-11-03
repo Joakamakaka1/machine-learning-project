@@ -8,7 +8,8 @@ from typing import Any, cast
 import pandas as pd
 import pytest
 
-from hotel_cancellation import champion, config, data_loader, schema
+from hotel_cancellation import champion, config
+from hotel_cancellation.data import data_loader, schema
 from hotel_cancellation.predictor import BookingPredictor, RiskBand, risk_band
 
 CHAMPION_DIR = config.DEFAULT_MODELS_DIR / "champion"

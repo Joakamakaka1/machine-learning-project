@@ -257,7 +257,7 @@ pyproject.toml  uv.lock  requirements.txt  Dependencias
 | Tabla comparativa de modelos | Este README; [informe](docs/informe_final.md), Resultados |
 | Curvas comparativas e importancia de variables | [`outputs/figures/`](outputs/figures/) |
 | EDA que motiva las decisiones | [`01_eda.ipynb`](notebooks/01_eda.ipynb); [informe](docs/informe_final.md), Análisis exploratorio |
-| Módulos separados, funciones y clases reutilizables, Pipeline de scikit-learn | [`src/hotel_cancellation/`](src/hotel_cancellation/), [`features.py`](src/hotel_cancellation/features.py) |
+| Módulos separados, funciones y clases reutilizables, Pipeline de scikit-learn | [`src/hotel_cancellation/`](src/hotel_cancellation/), [`features.py`](src/hotel_cancellation/data/features.py) |
 | PEP 8, docstrings y organización | `uv run poe check` (ruff y mypy); Estructura, arriba |
 | `.gitignore` y `requirements.txt` con versiones | [`.gitignore`](.gitignore), [`requirements.txt`](requirements.txt) |
 | README: autores, problema, entorno y ejecución, resultados | Este README |

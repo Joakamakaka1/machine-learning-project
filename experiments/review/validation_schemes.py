@@ -18,7 +18,8 @@ from sklearn.model_selection import GroupKFold, StratifiedKFold
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import data_loader, evaluator, schema
+from hotel_cancellation import evaluator
+from hotel_cancellation.data import data_loader, schema
 
 _MIN_COHORT_TRAIN_START = pd.Timestamp("2015-10-01")
 _BOOTSTRAP_REPLICATES = 1000

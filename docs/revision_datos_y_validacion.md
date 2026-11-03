@@ -293,7 +293,7 @@ Corregidas en la misma rama, a petición del autor, sin cambiar el modelo ni las
 | [`README.md`](../README.md), [`informe_final.md`](informe_final.md), [`defensa.md`](defensa.md) | La cifra creíble es 0.82, y coincide con lo esperado | Mezcla reservas anteriores al corte, y coincidir en una sola muestra no lo valida |
 | [`informe_final.md`](informe_final.md) | Avisar del 77.3 % es consecuencia de los costes | Incompleto: en 2016, con esos costes, era del 46 % al 63 % |
 | [`informe_final.md`](informe_final.md) | Propone usar la tasa histórica del agente | Medido aquí: no mejora |
-| [`informe_final.md`](informe_final.md), [`data_loader.py`](../src/hotel_cancellation/data_loader.py) | 0.0 % ya en train, y las filas idénticas no cruzan ventanas | Solo es cierto porque la clave incluye la llegada |
+| [`informe_final.md`](informe_final.md), [`data_loader.py`](../src/hotel_cancellation/data/data_loader.py) | 0.0 % ya en train, y las filas idénticas no cruzan ventanas | Solo es cierto porque la clave incluye la llegada |
 
 ## Fuentes
 

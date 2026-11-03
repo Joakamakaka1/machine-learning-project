@@ -5,7 +5,7 @@ from collections.abc import Mapping
 import pandas as pd
 import streamlit as st
 
-from hotel_cancellation import schema
+from hotel_cancellation.data import schema
 from hotel_cancellation.ui import booking, layout, results
 
 # Spanish wording of `schema.FORBIDDEN_FEATURES`. A test checks that both list the same columns.

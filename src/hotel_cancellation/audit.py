@@ -13,7 +13,8 @@ from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_s
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
-from hotel_cancellation import champion, config, schema
+from hotel_cancellation import champion, config
+from hotel_cancellation.data import schema
 
 # Hyperparameters of the starting point: very deep trees, without much regularization.
 STARTING_XGBOOST: Mapping[str, Any] = {

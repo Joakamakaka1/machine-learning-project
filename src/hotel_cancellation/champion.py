@@ -15,7 +15,8 @@ from typing import Any
 import joblib
 import numpy as np
 
-from hotel_cancellation import config, evaluator, features, schema
+from hotel_cancellation import config, evaluator
+from hotel_cancellation.data import features, schema
 
 MODEL_FILE = "model.joblib"
 MANIFEST_FILE = "manifest.json"

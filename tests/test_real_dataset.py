@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from hotel_cancellation import data_loader, schema
+from hotel_cancellation.data import data_loader, schema
 
 pytestmark = pytest.mark.slow
 

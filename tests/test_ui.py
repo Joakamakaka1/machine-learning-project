@@ -8,8 +8,9 @@ from typing import Any
 import httpx
 import pytest
 
-from hotel_cancellation import config, schema
+from hotel_cancellation import config
 from hotel_cancellation.api.schemas import Booking
+from hotel_cancellation.data import schema
 
 pytest.importorskip("streamlit")
 

@@ -19,7 +19,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from hotel_cancellation import config, data_loader, schema
+from hotel_cancellation import config
+from hotel_cancellation.data import data_loader, schema
 
 CONTROL_SEGMENT = "Online TA"
 CONTROL_VARIABLE = "booking_changes"

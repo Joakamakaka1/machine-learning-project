@@ -5,7 +5,7 @@ from typing import Any
 
 import streamlit as st
 
-from hotel_cancellation import schema
+from hotel_cancellation.data import schema
 from hotel_cancellation.ui import booking, client, layout, results
 
 _COLUMNS = 2

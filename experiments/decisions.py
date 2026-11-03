@@ -9,7 +9,8 @@ from numpy.typing import NDArray
 from xgboost import XGBClassifier
 
 from experiments import common
-from hotel_cancellation import data_loader, features, models, schema
+from hotel_cancellation import models
+from hotel_cancellation.data import data_loader, features, schema
 
 CALENDAR_NUMERIC = ("arrival_date_week_number", "arrival_date_day_of_month")
 CALENDAR_MONTH = "arrival_date_month"

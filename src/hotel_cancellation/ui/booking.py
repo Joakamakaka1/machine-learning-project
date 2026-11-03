@@ -9,7 +9,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
 
-from hotel_cancellation import config, schema
+from hotel_cancellation import config
+from hotel_cancellation.data import schema
 
 _ADR_LARGEST_INPUT = config.ADR_UPPER_LIMIT - 0.01
 _NO_AGENT = ""

@@ -9,7 +9,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from hotel_cancellation import champion, cli, config, pipeline, schema
+from hotel_cancellation import champion, cli, config, pipeline
+from hotel_cancellation.data import schema
 
 pytestmark = pytest.mark.slow
 
