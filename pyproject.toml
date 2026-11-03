@@ -1,6 +1,6 @@
 [project]
 name = "hotel-cancellation"
-version = "0.1.0"
+version = "1.0.0"
 description = "Predicción de cancelaciones de reservas de hotel en el momento de confirmar la reserva"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
