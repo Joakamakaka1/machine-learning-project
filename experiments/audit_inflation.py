@@ -4,13 +4,13 @@ It is the same as `hotel-ml audit`, and it refuses to run before the single exec
 """
 
 from hotel_cancellation import config
+from hotel_cancellation.data import data_loader
 from hotel_cancellation.evaluation import audit
-from hotel_cancellation.training import pipeline
 
 
 def main() -> None:
     """Run the audit and print its table."""
-    table = audit.audit_inflation(pipeline.load_cleaned(), settings=config.get_settings())
+    table = audit.audit_inflation(data_loader.load_cleaned(), settings=config.get_settings())
     print(table.round(4).to_string(index=False))
 
 

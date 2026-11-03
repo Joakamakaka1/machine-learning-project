@@ -273,12 +273,12 @@ class TestCommands:
         )
         monkeypatch.setattr(config, "get_settings", lambda: settings)
         frame = data_loader.split_temporal(data_loader.clean(synthetic_raw())).development
-        monkeypatch.setattr(pipeline, "load_development", lambda: frame)
+        monkeypatch.setattr(data_loader, "load_development", lambda: frame)
 
         def fail() -> None:
             raise AssertionError("run-all read the test rows")
 
-        monkeypatch.setattr(pipeline, "load_test", fail)
+        monkeypatch.setattr(data_loader, "load_test", fail)
         assert cli.main(["run-all", "--profile", "fast", "--no-tracking", "--seed", "0"]) == 0
         assert not settings.final_evaluation_dir.exists()
 
@@ -290,9 +290,9 @@ class TestCommands:
         )
         monkeypatch.setattr(config, "get_settings", lambda: settings)
         frame = data_loader.split_temporal(data_loader.clean(synthetic_raw())).development
-        monkeypatch.setattr(pipeline, "load_development", lambda: frame)
+        monkeypatch.setattr(data_loader, "load_development", lambda: frame)
         calls: list[int] = []
-        monkeypatch.setattr(pipeline, "load_test", lambda: calls.append(1))
+        monkeypatch.setattr(data_loader, "load_test", lambda: calls.append(1))
         base = ["--profile", "fast", "--no-tracking", "--seed", "0"]
         assert cli.main(["tune", *base]) == 0
         assert cli.main(["train", *base]) == 0
@@ -305,10 +305,10 @@ class TestCommands:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(config, "get_settings", lambda: evaluated)
-        monkeypatch.setattr(pipeline, "load_test", lambda: test_rows)
+        monkeypatch.setattr(data_loader, "load_test", lambda: test_rows)
         monkeypatch.setattr(pipeline, "_assert_real_execution", lambda *_: None)
         development = data_loader.split_temporal(data_loader.clean(synthetic_raw())).development
-        monkeypatch.setattr(pipeline, "load_development", lambda: development)
+        monkeypatch.setattr(data_loader, "load_development", lambda: development)
         assert cli.main(["evaluate", "--replicates", "20"]) == 1
         assert cli.main(["evaluate", "--replicates", "20", "--force"]) == 0
 
@@ -473,7 +473,7 @@ class TestPreflight:
             raise AssertionError("the test rows were read")
 
         monkeypatch.setattr(config, "get_settings", lambda: settings)
-        monkeypatch.setattr(pipeline, "load_test", read_rows)
+        monkeypatch.setattr(data_loader, "load_test", read_rows)
         monkeypatch.setattr(pipeline, "_assert_real_execution", lambda *_: None)
         return cli.main(["evaluate", "--replicates", "5"]), reads
 
@@ -605,7 +605,7 @@ class TestRealExecutionConditions:
             raise AssertionError("the test rows were read")
 
         monkeypatch.setattr(config, "get_settings", lambda: settings)
-        monkeypatch.setattr(pipeline, "load_test", fail)
+        monkeypatch.setattr(data_loader, "load_test", fail)
         assert cli.main(["evaluate", "--replicates", "5"]) == 1
 
 
@@ -682,7 +682,7 @@ class TestChampionIsFrozenAfterTheTest:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(config, "get_settings", lambda: after_test)
-        monkeypatch.setattr(pipeline, "load_development", lambda: synthetic_development)
+        monkeypatch.setattr(data_loader, "load_development", lambda: synthetic_development)
         base = ["--profile", "fast", "--no-tracking", "--seed", "0"]
         assert cli.main(["tune", *base]) == 1
         assert cli.main(["train", *base]) == 1

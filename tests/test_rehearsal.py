@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from hotel_cancellation import champion, cli, config
-from hotel_cancellation.data import schema
+from hotel_cancellation.data import data_loader, schema
 from hotel_cancellation.training import pipeline
 
 pytestmark = pytest.mark.slow
@@ -42,7 +42,7 @@ def test_rehearsal_runs_on_real_rows_and_never_reads_the_test(
     def fail() -> None:
         raise AssertionError("the rehearsal read the test rows")
 
-    monkeypatch.setattr(pipeline, "load_test", fail)
+    monkeypatch.setattr(data_loader, "load_test", fail)
     champion_before = (real_settings.champion_dir / champion.MODEL_FILE).read_bytes()
     record = real_settings.final_evaluation_record
     record_before = record.read_bytes() if record.exists() else None

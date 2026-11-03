@@ -12,6 +12,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from hotel_cancellation import champion, config
+from hotel_cancellation.data import data_loader
 from hotel_cancellation.evaluation import evaluator
 from hotel_cancellation.training import model_trainer, pipeline, tracking
 
@@ -77,7 +78,7 @@ def _explain(settings: config.Settings) -> None:
     champion.assert_test_executed(settings)
     from hotel_cancellation.evaluation import explain
 
-    explain.explain(pipeline.load_test(), settings=settings)
+    explain.explain(data_loader.load_test(), settings=settings)
     logger.info("Importance in %s", settings.interpretation_dir)
 
 
@@ -85,7 +86,7 @@ def _audit(settings: config.Settings) -> None:
     champion.assert_test_executed(settings)
     from hotel_cancellation.evaluation import audit
 
-    audit.audit_inflation(pipeline.load_cleaned(), settings=settings)
+    audit.audit_inflation(data_loader.load_cleaned(), settings=settings)
     logger.info("Audit in %s", settings.audit_dir)
 
 
@@ -100,8 +101,8 @@ def _evaluate(arguments: argparse.Namespace, settings: config.Settings) -> None:
     # The checks come first, because the rows of the test must not be read if they fail.
     pipeline.prepare_evaluation(settings, force=arguments.force)
     pipeline.evaluate(
-        pipeline.load_test(),
-        pipeline.load_development(),
+        data_loader.load_test(),
+        data_loader.load_development(),
         settings=settings,
         replicates=arguments.replicates,
         force=arguments.force,
@@ -126,7 +127,7 @@ def _train(arguments: argparse.Namespace, settings: config.Settings) -> None:
         if arguments.no_tracking
         else tracking.MlflowTracker(settings.mlflow_tracking_uri, settings.mlflow_artifacts_dir)
     )
-    development = pipeline.load_development()
+    development = data_loader.load_development()
     common = {
         "settings": settings,
         "profile": arguments.profile,
@@ -155,7 +156,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             _rehearse(arguments, settings)
         elif arguments.command == "train-scenario":
             pipeline.train_scenario(
-                pipeline.load_development(), settings=settings, force=arguments.force
+                data_loader.load_development(), settings=settings, force=arguments.force
             )
         elif arguments.command == "explain":
             _explain(settings)

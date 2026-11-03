@@ -257,8 +257,8 @@ class TestCommands:
             raise AssertionError("the test rows were read")
 
         monkeypatch.setattr(config, "get_settings", lambda: settings)
-        monkeypatch.setattr(pipeline, "load_test", fail)
-        monkeypatch.setattr(pipeline, "load_cleaned", fail)
+        monkeypatch.setattr(data_loader, "load_test", fail)
+        monkeypatch.setattr(data_loader, "load_cleaned", fail)
         assert cli.main(["explain"]) == 1
         assert cli.main(["audit"]) == 1
 

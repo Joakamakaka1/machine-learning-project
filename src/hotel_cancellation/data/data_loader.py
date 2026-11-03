@@ -336,3 +336,56 @@ def _arrival_date_column(df: pd.DataFrame) -> pd.Series:
     if schema.ARRIVAL_DATE not in df.columns:
         raise DataContractError([f"missing column {schema.ARRIVAL_DATE}: run `clean` first"])
     return df[schema.ARRIVAL_DATE]
+
+
+def load_development(
+    path: Path | None = None, *, expected_sha256: str = config.RAW_DATASET_SHA256
+) -> pd.DataFrame:
+    """Load the file, check its contract and keep the development rows only.
+
+    Args:
+        path: Compressed CSV. Defaults to the location in the settings.
+        expected_sha256: Hash of the uncompressed CSV.
+
+    Returns:
+        Clean rows with arrivals before the test period, in arrival order.
+    """
+    raw = load_raw(path, expected_sha256=expected_sha256)
+    validate_raw(raw)
+    return split_temporal(clean(raw)).development
+
+
+def load_test(
+    path: Path | None = None, *, expected_sha256: str = config.RAW_DATASET_SHA256
+) -> pd.DataFrame:
+    """Load the rows of the test period.
+
+    Only `hotel-ml evaluate` may call this, or `hotel-ml explain` once the test has been executed.
+
+    Args:
+        path: Compressed CSV. Defaults to the location in the settings.
+        expected_sha256: Hash of the uncompressed CSV.
+
+    Returns:
+        Clean rows with arrivals in the test period, in arrival order.
+    """
+    raw = load_raw(path, expected_sha256=expected_sha256)
+    validate_raw(raw)
+    return split_temporal(clean(raw)).test
+
+
+def load_cleaned(
+    path: Path | None = None, *, expected_sha256: str = config.RAW_DATASET_SHA256
+) -> pd.DataFrame:
+    """Load every clean row. Only `hotel-ml audit` may call this, after the single execution.
+
+    Args:
+        path: Compressed CSV. Defaults to the location in the settings.
+        expected_sha256: Hash of the uncompressed CSV.
+
+    Returns:
+        Clean rows of the whole period.
+    """
+    raw = load_raw(path, expected_sha256=expected_sha256)
+    validate_raw(raw)
+    return clean(raw)

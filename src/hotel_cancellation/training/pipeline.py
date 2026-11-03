@@ -1,9 +1,7 @@
 """Training workflow and the single execution on the test.
 
-Training never reads the test rows: `load_development` drops them as soon as the contract has
-checked the file, and `ModelTrainer` refuses them if they arrive some other way. Only `load_test`
-and `load_cleaned` return them: `hotel-ml evaluate` after `prepare_evaluation`, and
-`hotel-ml explain` and `hotel-ml audit` after the single execution.
+Training never reads the test rows: `data_loader.load_development` drops them as soon as the
+contract has checked the file, and `ModelTrainer` refuses them if they arrive some other way.
 """
 
 import json
@@ -50,59 +48,6 @@ class TrainingReport:
     selection: model_trainer.Selection
     candidates: dict[str, model_trainer.Candidate]
     manifest: dict[str, Any]
-
-
-def load_development(
-    path: Path | None = None, *, expected_sha256: str = config.RAW_DATASET_SHA256
-) -> pd.DataFrame:
-    """Load the file, check its contract and keep the development rows only.
-
-    Args:
-        path: Compressed CSV. Defaults to the location in the settings.
-        expected_sha256: Hash of the uncompressed CSV.
-
-    Returns:
-        Clean rows with arrivals before the test period, in arrival order.
-    """
-    raw = data_loader.load_raw(path, expected_sha256=expected_sha256)
-    data_loader.validate_raw(raw)
-    return data_loader.split_temporal(data_loader.clean(raw)).development
-
-
-def load_test(
-    path: Path | None = None, *, expected_sha256: str = config.RAW_DATASET_SHA256
-) -> pd.DataFrame:
-    """Load the rows of the test period.
-
-    Only `hotel-ml evaluate` may call this, or `hotel-ml explain` once the test has been executed.
-
-    Args:
-        path: Compressed CSV. Defaults to the location in the settings.
-        expected_sha256: Hash of the uncompressed CSV.
-
-    Returns:
-        Clean rows with arrivals in the test period, in arrival order.
-    """
-    raw = data_loader.load_raw(path, expected_sha256=expected_sha256)
-    data_loader.validate_raw(raw)
-    return data_loader.split_temporal(data_loader.clean(raw)).test
-
-
-def load_cleaned(
-    path: Path | None = None, *, expected_sha256: str = config.RAW_DATASET_SHA256
-) -> pd.DataFrame:
-    """Load every clean row. Only `hotel-ml audit` may call this, after the single execution.
-
-    Args:
-        path: Compressed CSV. Defaults to the location in the settings.
-        expected_sha256: Hash of the uncompressed CSV.
-
-    Returns:
-        Clean rows of the whole period.
-    """
-    raw = data_loader.load_raw(path, expected_sha256=expected_sha256)
-    data_loader.validate_raw(raw)
-    return data_loader.clean(raw)
 
 
 def _trainer(
@@ -666,7 +611,7 @@ def rehearse(
         raise ValueError(f"{window} is not a window of the protocol.")
     target = settings.model_copy(update={"outputs_dir": output_dir})
     prepare_evaluation(target, strict=False)
-    development = load_development()
+    development = data_loader.load_development()
     dates = development[schema.ARRIVAL_DATE]
     rows = development[(dates >= chosen.start) & (dates < chosen.end)].reset_index(drop=True)
     _execute(rows, development, settings=target, replicates=replicates, seed=seed)

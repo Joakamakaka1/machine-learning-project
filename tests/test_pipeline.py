@@ -136,7 +136,7 @@ def test_training_and_selection_do_not_read_rows_of_2017(tmp_path: Path) -> None
         folder.mkdir()
         path = folder / "bookings.csv.gz"
         digest = _gzip_csv(frame, path)
-        development = pipeline.load_development(path, expected_sha256=digest)
+        development = data_loader.load_development(path, expected_sha256=digest)
         settings = config.Settings(
             data_dir=folder / "data", models_dir=folder / "models", outputs_dir=folder / "outputs"
         )
@@ -160,7 +160,7 @@ def test_training_and_selection_do_not_read_rows_of_2017(tmp_path: Path) -> None
 def test_load_development_excludes_the_test_period(tmp_path: Path) -> None:
     path = tmp_path / "bookings.csv.gz"
     digest = _gzip_csv(synthetic_raw(rows_per_month=10), path)
-    development = pipeline.load_development(path, expected_sha256=digest)
+    development = data_loader.load_development(path, expected_sha256=digest)
     assert development["arrival_date"].max() < config.TEST_START
     assert development["arrival_date"].is_monotonic_increasing
 
@@ -172,7 +172,7 @@ class TestCli:
     ) -> config.Settings:
         monkeypatch.setattr(config, "get_settings", lambda: settings)
         frame = data_loader.split_temporal(data_loader.clean(synthetic_raw())).development
-        monkeypatch.setattr(pipeline, "load_development", lambda: frame)
+        monkeypatch.setattr(data_loader, "load_development", lambda: frame)
         return settings
 
     def test_run_all_trains_a_champion(self, development: config.Settings) -> None:
