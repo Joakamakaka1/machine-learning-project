@@ -14,8 +14,9 @@ served = results.outcome_at(
 
 st.title("Cancelación de reservas de hotel")
 st.markdown(
-    "Este proyecto estima, **en el momento de confirmar una reserva**, la probabilidad de que se "
-    "cancele. El modelo es un **Random Forest calibrado con isotónica**, entrenado con llegadas "
+    "Este proyecto estima la probabilidad de que se cancele una reserva, con la intención de "
+    "usarla **al confirmarla**, aunque no consta que los datos sean los de ese momento. El modelo "
+    "es un **Random Forest calibrado con isotónica**, entrenado con llegadas "
     "anteriores a 2016-10-01 y calibrado en el último trimestre de 2016. Se evaluó una sola vez "
     f"con las {layout.format_count(len(predictions))} llegadas de enero a agosto de 2017, sin "
     "reentrenar."

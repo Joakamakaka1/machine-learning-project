@@ -193,7 +193,7 @@ uv run hotel-ml run-all --profile fast --no-tracking
 | `poe report` | Genera `docs/informe_final.pdf`, con pandoc en un contenedor |
 | `poe requirements` | Regenera `requirements.txt` desde `uv.lock` |
 
-Los experimentos de diseño se ejecutan con `uv run python -m experiments.run_all`, y solo leen llegadas anteriores a 2017.
+Los experimentos de diseño se ejecutan con `uv run python -m experiments.run_all`, y solo leen llegadas anteriores a 2017. Los de la [segunda revisión](docs/revision_datos_y_validacion.md) tienen sus comandos en ese documento.
 
 ### Configuración
 
@@ -233,13 +233,14 @@ src/hotel_cancellation/    Paquete instalable
   predictor.py  stored_evaluation.py  Inferencia y resultados guardados
   api/  ui/                  FastAPI y Streamlit
 experiments/               Una decisión de diseño por experimento
+  review/                    Segunda revisión de datos y validación
 scripts/                   Paridad entre la API y las predicciones guardadas
 notebooks/                 EDA, auditoría de fugas y resultados, ejecutados
 tests/                     Tests con cobertura mínima del 80 %
 data/raw/                  Dataset comprimido, con hash y cita
 models/champion/           Modelo y manifest, versionados
-outputs/                   Métricas, figuras y resultados del test
-docs/                      Informe, protocolo, cards, ADR, glosario y defensa
+outputs/                   Métricas, figuras, resultados del test y de la revisión
+docs/                      Informe, protocolos, revisión, cards, ADR, glosario y defensa
 Dockerfile  compose.yaml   Imágenes de API e interfaz, y MLflow
 pyproject.toml  uv.lock  requirements.txt  Dependencias
 ```
