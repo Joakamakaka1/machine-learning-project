@@ -14,6 +14,10 @@ Predicción de cancelaciones de reservas al confirmarlas. Lee el `README.md` par
 - Comprueba el flujo de entrenamiento en otra carpeta, con `HOTEL_ML_MODELS_DIR` y `HOTEL_ML_OUTPUTS_DIR`. `--force` cambia lo congelado: úsalo solo si el autor lo pide, y decláralo.
 - Toda decisión nueva sale de las llegadas anteriores a 2017. Los notebooks y `outputs/eda/` también.
 
+## Momento de predicción
+
+Predecir al confirmar es una intención, no un hecho: el artículo del dataset referencia los valores al día anterior a la llegada. No escribas que una variable se conoce al confirmar sin respaldarlo, y lee `docs/revision_datos_y_validacion.md` antes de afirmar qué mide una cifra.
+
 ## Cifras
 
 Copia cada cifra de `outputs/` o de `manifest.json`. `tests/test_documentation.py` compara las principales con el README y el informe. El ROC-AUC global va siempre con filas únicas, `No Deposit` y `Non Refund`. Los costes se nombran como supuestos.

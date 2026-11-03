@@ -8,9 +8,10 @@ Máster en Inteligencia Artificial, Cloud Computing y DevOps. Módulo de Machine
 
 **El campeón, un Random Forest con calibración isotónica, obtiene un ROC-AUC de 0.8175 en el test de 2017, con un intervalo del 95 % de [0.8058, 0.8297].** El baseline da 0.5000. El test se ejecutó una sola vez, con 40 509 reservas y una prevalencia de 0.3883.
 
-- **Coincide con lo esperado:** el protocolo anticipaba unos 0.81, y la validación en 2016 dio 0.8172 ± 0.0231.
+- **Coincide con lo esperado:** el protocolo anticipaba unos 0.81, y la validación en 2016 dio 0.8172 ± 0.0231. Es una sola muestra, así que esa coincidencia no la valida por sí sola.
 - **La cifra global no va sola:** con filas únicas baja a 0.7608, y con `No Deposit` a 0.7529. Esa es la dificultad real cuando se dejan fuera los duplicados y los `Non Refund`, que casi siempre se cancelan.
 - **El 0.952 de partida estaba inflado:** la auditoría lo reproduce y explica de dónde sale.
+- **0.8175 tampoco es el rendimiento al confirmar:** no consta que las variables sean las de ese momento, y con las reservas confirmadas desde 2017-01-01 baja a 0.7917, en un análisis posterior. Lo recoge el apartado [Segunda revisión](#segunda-revisión).
 
 **2017 no era virgen, y se declara.** Una auditoría previa había medido con esos datos la inflación de las métricas, y de ella salen `ADR_UPPER_LIMIT`, `min_frequency=50` y las rejillas de búsqueda. Ninguna otra decisión sale de ahí, y el modelo no se tocó tras ver el test. La cifra es honesta en ese sentido, pero el test no es estrictamente ciego. El [protocolo](protocolo.md) lo detalla.
 
@@ -30,7 +31,7 @@ Autor único, con todos los roles.
 
 Una cancelación tardía deja una habitación vacía que ya no se puede vender. Si el hotel sabe qué reservas tienen más riesgo, puede actuar antes: confirmarlas, pedir un depósito u ofrecer esa disponibilidad a otro cliente. Es un problema real, con un coste asimétrico, y por eso no basta con acertar: hay que decidir a quién avisar.
 
-**Es una clasificación binaria:** `is_canceled` vale 1 si la reserva se cancela. Se predice **al confirmar la reserva**, porque el CSV guarda el valor final de cada reserva y no su historial, y ese es el único momento defendible con este archivo.
+**Es una clasificación binaria:** `is_canceled` vale 1 si la reserva se cancela. La intención es predecir **al confirmar la reserva**. Es un supuesto: el CSV no guarda el historial de cada reserva, y sus autores referencian los valores al día anterior a la llegada.
 
 **Los datos** son los que propone el enunciado: 119 390 reservas de dos hoteles portugueses, con llegadas entre el 1 de julio de 2015 y el 31 de agosto de 2017, publicadas por Antonio, de Almeida y Nunes (2019) en *Data in Brief* con licencia CC BY 4.0. Son reservas reales y anonimizadas. Los propios autores documentan que alguna columna solo se confirma más tarde, y eso obliga a revisar cada variable. El detalle está en la [data card](data_card.md).
 
@@ -46,7 +47,7 @@ Una cancelación tardía deja una habitación vacía que ya no se puede vender. 
 
 **Muchas filas están repetidas.** El 35.9 % repite exactamente otra, si se comparan las 19 variables de entrada y el objetivo. Con una partición aleatoria caerían a los dos lados, y por eso las métricas también se dan con filas únicas.
 
-**`deposit_type` casi decide por sí sola.** `Non Refund`, con 10 460 reservas, se cancela en el 99.2 % de los casos, frente al 26.8 % de `No Deposit`, y el 93.7 % de sus filas está repetido. Es difícil creer que pagar sin devolución haga cancelar más: apunta a tandas de reservas casi idénticas que se cancelan juntas. Se conserva porque se conoce al reservar, sin leerla como causa, y el rendimiento se publica por separado.
+**`deposit_type` casi decide por sí sola.** `Non Refund`, con 10 460 reservas, se cancela en el 99.2 % de los casos, frente al 26.8 % de `No Deposit`, y el 93.7 % de sus filas está repetido. Es difícil creer que pagar sin devolución haga cancelar más: apunta a tandas de reservas casi idénticas que se cancelan juntas. Se conserva sin leerla como causa, y el rendimiento se publica por separado. **No consta que se conozca al reservar:** el artículo la calcula con los pagos anteriores a la llegada o a la cancelación.
 
 ![Cancelación por tipo de depósito](../outputs/figures/eda_deposito.png)
 
@@ -100,7 +101,7 @@ outputs/ ─ figuras, informe y notebooks ◄───────────�
 
 ### Datos y variables
 
-`clean` elimina las reservas imposibles y deja 118 563 filas de 119 390. Entran 19 variables, todas conocidas al confirmar. `coerce_features` es la única entrada al modelo, y la usan el entrenamiento y la API, de modo que no pueden divergir.
+`clean` elimina las reservas imposibles y deja 118 563 filas de 119 390. Entran 19 variables, usadas como si se conocieran al confirmar. `coerce_features` es la única entrada al modelo, y la usan el entrenamiento y la API, de modo que no pueden divergir.
 
 El pipeline es un `ColumnTransformer` con imputación por mediana, escalado solo para regresión logística y MLP, y `OneHotEncoder(handle_unknown="infrequent_if_exist", min_frequency=50)`. Usa solo clases de scikit-learn y XGBoost, así que el artefacto no depende del paquete del proyecto.
 
@@ -350,7 +351,7 @@ Se reproduce con `hotel-ml audit`, y los tres primeros escalones se entrenan de 
 
 ![De la cifra inflada a la oficial](../outputs/figures/inflacion.png)
 
-- **De 0.952 a 0.868:** es el efecto de evaluar en el futuro. En la partición aleatoria, el 32.0 % de las filas de test ya estaba en train.
+- **De 0.952 a 0.868:** es el efecto de evaluar en el futuro. En la partición aleatoria, el 32.0 % de las filas de test ya estaba en train. El 0.0 % de la partición temporal es trivial, porque la comparación incluye la fecha de llegada; con solo las 19 variables, en las ventanas de 2016 va del 0.7 % al 2.5 %. La conclusión se mantiene.
 - **De 0.868 a 0.818:** es lo que aportaban `country` y `booking_changes`.
 - **El tercer escalón y el oficial casi coinciden, y es casualidad.** El tercero conserva `total_of_special_requests`, el calendario y árboles de profundidad 16, y esos efectos se compensan.
 
@@ -386,7 +387,7 @@ Se reproduce con `hotel-ml audit`, y los tres primeros escalones se entrenan de 
 
 ![Importancia de las variables](../outputs/figures/importancia_variables.png)
 
-`deposit_type` domina en los tres métodos. Se conoce al reservar, pero no debe leerse como causa: `Non Refund` concentra grupos de reservas casi idénticas que se cancelan juntas.
+`deposit_type` domina en los tres métodos. No debe leerse como causa: `Non Refund` concentra grupos de reservas casi idénticas que se cancelan juntas, y no consta que se conozca al reservar.
 
 ## Reflexión crítica
 
@@ -396,7 +397,7 @@ Se declara tal cual. El modelo sigue congelado.
 
 1. **El campeón no es el más barato con su propio umbral.** Con costes 1:3 cuesta 0.4761 por reserva, el peor de los cinco modelos: MLP 0.4489, árbol 0.4512, XGBoost 0.4549 y regresión logística 0.4650. La selección se hizo por ROC-AUC, como manda el protocolo.
 2. **El umbral 0.25 cae justo antes de un gran escalón de la isotónica.** Con umbrales entre 0.27 y 0.30, el coste 1:3 baja a unos 0.43. Por el mismo motivo, los escenarios 1:3 y 1:5 toman casi las mismas decisiones: solo 4 filas tienen una probabilidad entre 0.167 y 0.25.
-3. **El umbral servido da muchas falsas alarmas.** Avisa del 77.3% de las reservas, con 16 498 falsas alarmas. Es la consecuencia de suponer que perder una cancelación cuesta tres veces más, no una decisión empírica.
+3. **El umbral servido da muchas falsas alarmas.** Avisa del 77.3% de las reservas, con 16 498 falsas alarmas. Parte de la explicación es suponer que perder una cancelación cuesta tres veces más, pero no toda: con esos mismos costes, en 2016 avisaba del 46 % al 63 %, y ese rango no anticipaba el 77.3 %.
 4. **XGBoost no se distingue del campeón.** La diferencia pareada va de [-0.0033, +0.0008], y la regla de selección ya los había dejado empatados en validación.
 5. **El rendimiento cae al final del periodo.** El ROC-AUC baja de 0.8742 en enero a 0.7568 en julio. El intervalo del bootstrap no cubre esta deriva.
 6. **`agent` deriva mucho** (PSI 0.7591) y `previous_cancellations` algo menos (0.2379). Es una limitación de usar identificadores de agente en un modelo que no se reentrena.
@@ -409,7 +410,7 @@ Mover el umbral o cambiar de modelo tras ver estas cifras convertiría el test e
 ### Limitaciones
 
 - Dos hoteles y dos años de datos: no se puede generalizar a otros hoteles.
-- `adr` y otras variables son la foto final de la reserva, y su disponibilidad al confirmarla no se puede demostrar del todo.
+- **Ninguna variable se puede comprobar al confirmar:** el artículo referencia los valores al día anterior a la llegada. Las definidas al crear o confirmar dan 0.6866 en 2016, y el rendimiento real está entre esa cifra y la publicada.
 - Los costes son supuestos.
 - El test no es estrictamente ciego, como se declara arriba.
 - Una sola calibración, ajustada en 2016T4: si la cancelación se mueve, la probabilidad deja de estar bien calibrada, y la isotónica concentra filas en escalones.
@@ -420,13 +421,43 @@ Mover el umbral o cambiar de modelo tras ver estas cifras convertiría el test e
 - **Historial de la reserva:** con los valores en el momento de confirmar se podría resolver lo que aquí queda en duda, como `total_of_special_requests` o `adr`.
 - **Costes reales:** con los costes del hotel, el umbral sería una decisión de negocio, y no un supuesto.
 - **Selección por coste:** añadir el coste en validación como criterio, y elegir el umbral con datos en lugar de solo con la fórmula.
-- **Reentrenamiento:** el rendimiento cae en verano de 2017 y `agent` deriva mucho. Un reentrenamiento periódico, con su vigilancia del PSI, debería medirse antes de adoptarlo.
-- **Identificadores de agente:** sustituirlos por variables más estables, como su tasa histórica calculada solo con el pasado.
+- **Reentrenamiento:** el rendimiento cae en verano de 2017 y `agent` deriva mucho. En 2016, reentrenar cada mes en lugar de cada trimestre da +0.0083 [+0.0011, +0.0155], y no reentrenar en todo el año pierde 0.0249. Es la mejora real más probable, y debería medirse con datos nuevos antes de adoptarla.
 - **Más hoteles:** con dos, nada de esto se puede generalizar.
+
+Una propuesta inicial se descartó al medirla: sustituir los identificadores de agente por su tasa histórica, calculada solo con el pasado, da -0.0045 [-0.0121, +0.0031].
+
+### Segunda revisión
+
+Tras la entrega se hizo una [revisión independiente](revision_datos_y_validacion.md) de los datos y de la validación, con su [protocolo](revision_protocolo.md) fijado antes de experimentar. **El modelo, el umbral y las cifras publicadas no cambian.** La línea base se reprodujo exactamente.
+
+**Lo que aguanta:** no hay fuga en el preprocesado, la fuga neta por tandas entre ventanas es de 0.0036, y la búsqueda anidada apenas baja las cifras. Ninguno de los 50 cambios probados en datos, variables y modelos cumple la regla de aceptación. El techo con estas variables ronda 0.83, y 0.75 con `No Deposit`.
+
+**Lo que corrige:**
+
+- **El momento de predicción es un supuesto.** Se asumió sin contrastarlo con el artículo del dataset.
+- **La cifra global mezcla reservas que el modelo no vería al confirmar.** Entre el 31 % y el 69 % de las filas de cada ventana de 2016 se confirmaron antes del corte de entrenamiento.
+- **El intervalo se queda algo estrecho,** porque las reservas se cancelan por tandas.
+
+**Análisis posterior sobre 2017.** Se leyeron las predicciones guardadas, sin puntuar ninguna fila, sin cambiar nada y sin que saliera ninguna decisión. No es una evaluación nueva.
+
+| Medida en 2017 | ROC-AUC |
+|---|---:|
+| Publicada, con IC por hotel y fecha | 0.8175 [0.8058, 0.8297] |
+| Publicada, por subconjunto | Únicas 0.7608, `No Deposit` 0.7529, `Non Refund` 0.9998 |
+| Con IC por hotel, día de estado y agente | 0.8175 [0.8010, 0.8336] |
+| Confirmadas desde 2017-01-01 | 0.7917 |
+| Las mismas, con `No Deposit` | 0.7540 |
+| Canceladas 31 días o más antes de llegar, frente a las estancias | 0.8739 |
+| Canceladas de 8 a 30 días antes, frente a las estancias | 0.7623 |
+| Canceladas hasta 7 días antes, frente a las estancias | 0.5541 |
+| `No-Show`, frente a las estancias | 0.5170 |
+
+**El modelo apenas ve las cancelaciones que justifican el proyecto:** las que dejan la habitación vacía a última hora.
 
 ### Qué aprendí
 
 - **Una cifra alta es una pregunta, no una respuesta.** El 0.9524 inicial parecía un buen resultado, y era sobre todo fuga y filas repetidas.
+- **Hay que leer la fuente de los datos antes de afirmar qué se conoce y cuándo.** Corregí 0.95 con cuidado, y aun así di por hecho el momento de captura de las variables, que el artículo del dataset dejaba claro.
 - **La parte difícil del aprendizaje automático suele estar antes del modelo.** Las mayores diferencias salen de cómo se evalúa y de qué variables se conocen en el momento de predecir, no de elegir entre Random Forest y XGBoost.
 - **Fijar el protocolo antes de mirar cuesta, pero compensa.** Obliga a publicar lo que el test señala, también cuando deja mal al modelo elegido.
 

@@ -307,8 +307,9 @@ def split_temporal(df: pd.DataFrame) -> TemporalSplit:
 def expanding_windows(df: pd.DataFrame) -> list[tuple[NDArray[np.intp], NDArray[np.intp]]]:
     """Build the expanding validation folds as row positions, ready for `cv=` in a search.
 
-    Each quarter of 2016 validates and trains with every earlier arrival. Identical rows share
-    their arrival date, so they can never end up on both sides of a fold.
+    Each quarter of 2016 validates and trains with every earlier arrival. Rows identical in every
+    column share their arrival date, so they can never end up on both sides of a fold. Rows with
+    the same 19 inputs can, because the arrival date is not one of them.
 
     Args:
         df: Rows with an arrival date, in any order. Test rows are ignored.

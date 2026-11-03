@@ -1,0 +1,8 @@
+first_weekend_day_in_dataset_dates,weekday_name,rows_coherent
+0,Monday,0.57608
+1,Tuesday,0.41874
+2,Wednesday,0.31751
+3,Thursday,0.29032
+4,Friday,0.34144
+5,Saturday,0.49807
+6,Sunday,1.0

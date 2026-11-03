@@ -15,13 +15,19 @@ ROOT = config.PROJECT_ROOT
 README = ROOT / "README.md"
 REPORT = ROOT / "docs" / "informe_final.md"
 MODEL_CARD = ROOT / "docs" / "model_card.md"
+DATA_CARD = ROOT / "docs" / "data_card.md"
+DEFENSE = ROOT / "docs" / "defensa.md"
+REVIEW_REPORT = ROOT / "docs" / "revision_datos_y_validacion.md"
 RESULTS = ROOT / "outputs" / "final_evaluation"
+REVIEW = ROOT / "outputs" / "review"
 DOCUMENTS = (
     README,
     REPORT,
     MODEL_CARD,
-    ROOT / "docs" / "data_card.md",
-    ROOT / "docs" / "defensa.md",
+    DATA_CARD,
+    DEFENSE,
+    REVIEW_REPORT,
+    ROOT / "docs" / "revision_protocolo.md",
     ROOT / "docs" / "glosario.md",
     ROOT / "CLAUDE.md",
     *sorted((ROOT / "docs" / "adr").glob("*.md")),
@@ -72,6 +78,11 @@ def _has_row(text: str, label: str, values: Iterable[str]) -> bool:
 
 def _decimals(row: Row, columns: Iterable[str]) -> list[str]:
     return [f"{row[column]:.4f}" for column in columns]
+
+
+def _states(text: str, value: float) -> bool:
+    """Check a figure of the review, which keeps five decimals, at the four of the documents."""
+    return f"{value - 5e-6:.4f}" in text or f"{value + 5e-6:.4f}" in text
 
 
 @pytest.fixture(scope="module")
@@ -162,6 +173,52 @@ def test_the_champion_hash_in_the_documents_is_the_one_in_the_manifest() -> None
     sha256 = manifest["model"]["sha256"]
     for path in (REPORT, MODEL_CARD, ROOT / "CLAUDE.md"):
         assert sha256 in _read(path)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [README, REPORT, MODEL_CARD, DEFENSE, REVIEW_REPORT],
+    ids=lambda path: path.name,
+)
+def test_the_figures_after_the_deployment_come_from_the_review(path: Path) -> None:
+    booked = _row(_table(REVIEW / "posthoc_by_booking_date.csv"), subset="booked_from_2017_01_01")
+    late = _row(
+        _table(REVIEW / "posthoc_positive_kinds.csv"), kind="canceled_within_7_days_of_arrival"
+    )
+    text = _read(path)
+    assert _states(text, booked["roc_auc"])
+    assert _states(text, booked["roc_auc_no_deposit"])
+    if path is not REVIEW_REPORT:
+        assert _states(text, late["auc_against_stays"])
+
+
+def test_the_interface_states_the_figure_after_the_deployment() -> None:
+    booked = _row(_table(REVIEW / "posthoc_by_booking_date.csv"), subset="booked_from_2017_01_01")
+    overview = ROOT / "src" / "hotel_cancellation" / "ui" / "views" / "overview.py"
+    assert _states(_read(overview), booked["roc_auc"])
+
+
+@pytest.mark.parametrize(
+    "path", [REPORT, MODEL_CARD, DATA_CARD, DEFENSE, REVIEW_REPORT], ids=lambda path: path.name
+)
+def test_the_figure_with_the_variables_defined_at_booking_comes_from_the_review(path: Path) -> None:
+    tiers = _row(_table(REVIEW / "tiers_m12.csv"), variant="by_definition_only")
+    assert _states(_read(path), tiers["roc_auc"])
+
+
+def test_no_change_of_the_review_passes_the_acceptance_rule() -> None:
+    decisions = _table(REVIEW / "decision_log.csv")
+    assert len(decisions) == 50
+    assert not any(row["accepted"] for row in decisions)
+    assert "0 de 50" in _read(REVIEW_REPORT)
+
+
+def test_the_interval_by_cancellation_event_comes_from_the_review() -> None:
+    interval = _row(_table(REVIEW / "posthoc_intervals.csv"), blocks="hotel_status_day_agent")
+    for path in (REPORT, MODEL_CARD, REVIEW_REPORT):
+        text = _read(path)
+        assert _states(text, interval["ci_low"])
+        assert _states(text, interval["ci_high"])
 
 
 def test_the_report_states_the_repository() -> None:

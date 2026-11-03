@@ -1,0 +1,5 @@
+window,train_rows,valid_rows,same_inputs_in_train,same_batch_in_train,booked_before_cut,train_rows_booked_after_valid_median_booking
+2016Q1,21820,10858,0.02514,0.08206,0.31286,0.0
+2016Q2,32678,16069,0.00815,0.27401,0.67932,0.0848
+2016Q3,48747,14947,0.00709,0.40122,0.69218,0.07904
+2016Q4,63694,14360,0.01685,0.29847,0.62054,0.007

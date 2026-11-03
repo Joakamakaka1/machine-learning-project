@@ -1,0 +1,16 @@
+model,metric,published,recomputed,matches
+champion,roc_auc,0.817532,0.8175316152063324,True
+champion,pr_auc,0.760781,0.7607813331973277,True
+champion,brier,0.162726,0.16272617807852477,True
+random_forest,roc_auc,0.817532,0.8175316152063324,True
+random_forest,pr_auc,0.760781,0.7607813331973277,True
+random_forest,brier,0.162726,0.16272617807852477,True
+xgboost,roc_auc,0.816402,0.8164016209714731,True
+xgboost,pr_auc,0.756427,0.7564271610954766,True
+xgboost,brier,0.163932,0.16393247387439108,True
+logistic_regression,roc_auc,0.795592,0.7955915185343331,True
+logistic_regression,pr_auc,0.735306,0.7353063401735572,True
+logistic_regression,brier,0.16996,0.16996019785457697,True
+decision_tree,roc_auc,0.80404,0.8040397662058598,True
+decision_tree,pr_auc,0.714706,0.7147055601764793,True
+decision_tree,brier,0.165966,0.16596636435486045,True

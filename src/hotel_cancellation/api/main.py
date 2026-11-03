@@ -46,8 +46,9 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Cancelación de reservas de hotel",
         description=(
-            "Predice si se cancelará una reserva al confirmarla. Los costes que fijan el umbral "
-            "son supuestos, no datos de los hoteles."
+            "Estima si se cancelará una reserva, con la intención de usarse al confirmarla, aunque "
+            "no consta que los datos de entrenamiento sean los de ese momento. Los costes que "
+            "fijan el umbral son supuestos, no datos de los hoteles."
         ),
         version=metadata.version("hotel-cancellation"),
         lifespan=_lifespan,

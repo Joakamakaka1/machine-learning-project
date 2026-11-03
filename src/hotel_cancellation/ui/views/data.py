@@ -74,7 +74,10 @@ partition_column.dataframe(
 )
 
 st.header(f"Variables de entrada ({len(schema.INPUT_FEATURES)})")
-st.markdown("Todas se conocen al confirmar la reserva, aunque el archivo guarda su último valor.")
+st.markdown(
+    "Se usan como si se conocieran al confirmar la reserva, pero no consta que sean los valores de "
+    "ese momento: el artículo del dataset los referencia al día anterior a la llegada."
+)
 st.dataframe(
     pd.DataFrame(
         {

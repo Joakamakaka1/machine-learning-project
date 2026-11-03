@@ -1,0 +1,9 @@
+window,subset,rows,protocol_roc_auc,strict_roc_auc
+2016Q1,all,10296,0.81606,0.80508
+2016Q1,booked_before_cut,2835,0.91467,0.88405
+2016Q2,all,14489,0.81476,0.79255
+2016Q2,booked_before_cut,9336,0.82694,0.79621
+2016Q3,all,14120,0.74293,0.696
+2016Q3,booked_before_cut,9519,0.74116,0.69583
+2016Q4,all,13750,0.81136,0.76419
+2016Q4,booked_before_cut,8301,0.79671,0.73865
