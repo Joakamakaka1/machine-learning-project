@@ -16,8 +16,9 @@ from sklearn.frozen import FrozenEstimator
 from sklearn.metrics import brier_score_loss
 from sklearn.model_selection import RandomizedSearchCV
 
-from hotel_cancellation import config, evaluator, models
+from hotel_cancellation import config, models
 from hotel_cancellation.data import data_loader, features, schema
+from hotel_cancellation.evaluation import evaluator
 
 logger = logging.getLogger(__name__)
 

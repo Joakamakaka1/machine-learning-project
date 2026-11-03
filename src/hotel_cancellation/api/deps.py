@@ -4,8 +4,8 @@ from typing import Annotated
 
 from fastapi import Depends, Request
 
+from hotel_cancellation.evaluation.stored_evaluation import StoredEvaluation
 from hotel_cancellation.predictor import BookingPredictor
-from hotel_cancellation.stored_evaluation import StoredEvaluation
 
 
 def get_predictor(request: Request) -> BookingPredictor:

@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from hotel_cancellation import stored_evaluation
+from hotel_cancellation.evaluation import stored_evaluation
 from hotel_cancellation.ui import layout, results
 
 _MODEL_ORDER = (

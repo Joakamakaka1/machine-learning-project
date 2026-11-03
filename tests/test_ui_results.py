@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from hotel_cancellation import evaluator
+from hotel_cancellation.evaluation import evaluator
 
 pytest.importorskip("streamlit")
 

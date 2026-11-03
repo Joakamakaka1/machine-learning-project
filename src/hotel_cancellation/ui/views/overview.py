@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from hotel_cancellation import evaluator
+from hotel_cancellation.evaluation import evaluator
 from hotel_cancellation.ui import layout, results
 
 manifest = results.load_manifest()

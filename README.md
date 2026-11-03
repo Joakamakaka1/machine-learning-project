@@ -271,7 +271,7 @@ pyproject.toml  uv.lock  requirements.txt  Dependencias
 | Optimización de hiperparámetros | [`model_trainer.py`](src/hotel_cancellation/model_trainer.py) | `RandomizedSearchCV` con ventanas temporales; `hotel-ml tune` |
 | Registro de experimentos | [`tracking.py`](src/hotel_cancellation/tracking.py) | MLflow con runs anidados, firma y alias `@champion` sobre el modelo evaluado |
 | Balanceo de clases | [`experiments/balancing.py`](experiments/balancing.py) | SMOTE, undersampling y pesos de clase: medidos, y sin mejora; el campeón no los usa |
-| Interpretabilidad | [`explain.py`](src/hotel_cancellation/explain.py) | `feature_importances_`, permutación y SHAP; `hotel-ml explain` |
+| Interpretabilidad | [`explain.py`](src/hotel_cancellation/evaluation/explain.py) | `feature_importances_`, permutación y SHAP; `hotel-ml explain` |
 | Interfaz visual | [`ui/`](src/hotel_cancellation/ui/) | Streamlit, que consume la API |
 
 **Autoría:** el enunciado pide parejas. Este proyecto tiene un autor único, con todos los roles, como recoge el [informe](docs/informe_final.md).

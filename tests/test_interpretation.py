@@ -7,8 +7,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from hotel_cancellation import audit, champion, cli, config, evaluator, explain, pipeline
+from hotel_cancellation import champion, cli, config, pipeline
 from hotel_cancellation.data import data_loader, features, schema
+from hotel_cancellation.evaluation import audit, evaluator, explain
 from tests.conftest import synthetic_raw
 
 pytestmark = pytest.mark.filterwarnings("ignore::UserWarning")
@@ -176,7 +177,7 @@ class TestFigures:
     @pytest.fixture(scope="class")
     def saved(self, evaluated: config.Settings) -> list[Path]:
         pytest.importorskip("matplotlib")
-        from hotel_cancellation import plots
+        from hotel_cancellation.evaluation import plots
 
         pytest.importorskip("shap")
         explain.explain(
@@ -213,7 +214,7 @@ class TestFigures:
 
     def test_confusion_matrix_gives_counts_and_percentages_in_spanish(self) -> None:
         pytest.importorskip("matplotlib")
-        from hotel_cancellation import plots
+        from hotel_cancellation.evaluation import plots
 
         figure = plots.confusion_figure({"Campeón": (10, 30, 20, 40)})
         texts = " ".join(text.get_text() for text in figure.axes[0].texts)
@@ -229,7 +230,7 @@ class TestFigures:
         pytest.importorskip("matplotlib")
         import shutil
 
-        from hotel_cancellation import plots
+        from hotel_cancellation.evaluation import plots
 
         outputs = tmp_path / "outputs"
         shutil.copytree(evaluated.final_evaluation_dir, outputs / "final_evaluation")

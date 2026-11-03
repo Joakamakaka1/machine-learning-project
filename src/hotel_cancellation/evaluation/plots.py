@@ -15,8 +15,9 @@ import pandas as pd
 from matplotlib.figure import Figure
 from sklearn.metrics import average_precision_score, precision_recall_curve, roc_curve
 
-from hotel_cancellation import champion, config, evaluator
+from hotel_cancellation import champion, config
 from hotel_cancellation.data import schema
+from hotel_cancellation.evaluation import evaluator
 
 SURFACE = "#fcfcfb"
 INK = "#0b0b0b"

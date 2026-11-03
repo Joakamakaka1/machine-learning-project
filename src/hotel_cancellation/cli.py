@@ -11,7 +11,8 @@ import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 
-from hotel_cancellation import champion, config, evaluator, model_trainer, pipeline, tracking
+from hotel_cancellation import champion, config, model_trainer, pipeline, tracking
+from hotel_cancellation.evaluation import evaluator
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ def build_parser() -> argparse.ArgumentParser:
 def _explain(settings: config.Settings) -> None:
     # The check comes first, because the rows of the test must not be read if it fails.
     champion.assert_test_executed(settings)
-    from hotel_cancellation import explain
+    from hotel_cancellation.evaluation import explain
 
     explain.explain(pipeline.load_test(), settings=settings)
     logger.info("Importance in %s", settings.interpretation_dir)
@@ -81,7 +82,7 @@ def _explain(settings: config.Settings) -> None:
 
 def _audit(settings: config.Settings) -> None:
     champion.assert_test_executed(settings)
-    from hotel_cancellation import audit
+    from hotel_cancellation.evaluation import audit
 
     audit.audit_inflation(pipeline.load_cleaned(), settings=settings)
     logger.info("Audit in %s", settings.audit_dir)
@@ -89,7 +90,7 @@ def _audit(settings: config.Settings) -> None:
 
 def _figures(settings: config.Settings) -> None:
     champion.assert_test_executed(settings)
-    from hotel_cancellation import plots
+    from hotel_cancellation.evaluation import plots
 
     logger.info("Figures: %s", [path.name for path in plots.save_all(settings)])
 
