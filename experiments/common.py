@@ -20,7 +20,7 @@ from hotel_cancellation import champion, config, data_loader, evaluator, feature
 
 SEED = 42
 
-# Starting point of the plan, shared by every experiment so that their figures are comparable.
+# Shared by every experiment so that their figures are comparable.
 REFERENCE_XGBOOST: dict[str, Any] = {
     "n_estimators": 400,
     "max_depth": 6,

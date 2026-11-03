@@ -1,4 +1,4 @@
-"""Experiments behind the variable and model decisions of the plan.
+"""Experiments behind the variable and model decisions.
 
 Run them with `uv run python -m experiments.run_all`, which only reads arrivals before 2017.
 """

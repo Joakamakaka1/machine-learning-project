@@ -173,9 +173,9 @@ Se reproduce con `hotel-ml audit`, y los tres primeros escalones se entrenan de 
 
 | Escalón | Modelo | Filas de train | Filas de test | Test ya en train | ROC-AUC | PR-AUC | Brier |
 |---|---|---|---|---|---|---|---|
-| Partición aleatoria, variables de la referencia | XGBoost de la referencia | 94 850 | 23 713 | 32.0 % | 0.9524 | 0.9339 | 0.0838 |
-| Partición temporal, variables de la referencia | XGBoost de la referencia | 78 054 | 40 509 | 0.0 % | 0.8683 | 0.8270 | 0.1630 |
-| Partición temporal, sin country ni booking_changes | XGBoost de la referencia | 78 054 | 40 509 | 0.0 % | 0.8184 | 0.7802 | 0.1775 |
+| Partición aleatoria, variables de partida | XGBoost de partida | 94 850 | 23 713 | 32.0 % | 0.9524 | 0.9339 | 0.0838 |
+| Partición temporal, variables de partida | XGBoost de partida | 78 054 | 40 509 | 0.0 % | 0.8683 | 0.8270 | 0.1630 |
+| Partición temporal, sin country ni booking_changes | XGBoost de partida | 78 054 | 40 509 | 0.0 % | 0.8184 | 0.7802 | 0.1775 |
 | Modelo oficial: 19 variables, sin calendario ni variables acumuladas | Random Forest | 78 054 | 40 509 | n/d | 0.8175 | 0.7608 | 0.1627 |
 
 ![De la cifra inflada a la oficial](../outputs/figures/inflacion.png)

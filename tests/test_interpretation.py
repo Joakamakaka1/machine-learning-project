@@ -135,8 +135,8 @@ class TestAudit:
 
     def test_it_has_the_four_steps_in_order(self, table: pd.DataFrame) -> None:
         assert list(table["step"]) == [
-            "random_split_reference_variables",
-            "temporal_split_reference_variables",
+            "random_split_starting_variables",
+            "temporal_split_starting_variables",
             "temporal_split_without_documented_leaks",
             "official_model",
         ]
@@ -145,8 +145,8 @@ class TestAudit:
     def test_leaking_variables_inflate_the_first_steps(self, table: pd.DataFrame) -> None:
         # On synthetic rows, the accumulating variables copy the outcome.
         aucs = table.set_index("step")["roc_auc"]
-        assert aucs["random_split_reference_variables"] > 0.99
-        assert aucs["temporal_split_reference_variables"] > 0.99
+        assert aucs["random_split_starting_variables"] > 0.99
+        assert aucs["temporal_split_starting_variables"] > 0.99
         assert aucs["temporal_split_without_documented_leaks"] > 0.99
         assert aucs["official_model"] < 0.95
 
@@ -168,8 +168,8 @@ class TestAudit:
         self, table: pd.DataFrame
     ) -> None:
         shares = table.set_index("step")["test_rows_already_in_train"]
-        assert 0 <= shares["random_split_reference_variables"] <= 1
-        assert shares["temporal_split_reference_variables"] <= 1
+        assert 0 <= shares["random_split_starting_variables"] <= 1
+        assert shares["temporal_split_starting_variables"] <= 1
 
     def test_it_writes_its_table(self, evaluated: config.Settings, table: pd.DataFrame) -> None:
         saved = pd.read_csv(evaluated.audit_dir / "inflation.csv")

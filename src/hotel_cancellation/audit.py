@@ -15,8 +15,8 @@ from xgboost import XGBClassifier
 
 from hotel_cancellation import champion, config, schema
 
-# Hyperparameters of the reference: very deep trees, without much regularization.
-REFERENCE_XGBOOST: Mapping[str, Any] = {
+# Hyperparameters of the starting point: very deep trees, without much regularization.
+STARTING_XGBOOST: Mapping[str, Any] = {
     "n_estimators": 600,
     "max_depth": 16,
     "learning_rate": 0.03,
@@ -28,8 +28,8 @@ _SEED = 42
 _MAX_CATEGORIES_TO_ONE_HOT = 8
 _MISSING_CATEGORY = "none"
 
-# The reference already left out these columns, which restate the outcome or come from the check-in.
-_REFERENCE_DROPS = (
+# The start already left out these columns, which restate the outcome or come from the check-in.
+_STARTING_DROPS = (
     "reservation_status",
     "reservation_status_date",
     "arrival_date_year",
@@ -40,10 +40,10 @@ _DOCUMENTED_LEAKS = ("country", "booking_changes")
 _NOT_INPUTS = (schema.TARGET, schema.ARRIVAL_DATE)
 
 
-def _reference_frames(
+def _starting_frames(
     train: pd.DataFrame, test: pd.DataFrame, drops: Sequence[str]
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Prepare the variables as the reference did: native categories, with `none` for missing."""
+    """Prepare the variables as at the start: native categories, with `none` for missing."""
     removed = {*drops, *_NOT_INPUTS}
     columns = [column for column in schema.RAW_COLUMNS if column not in removed]
     x_train, x_test = train[columns].copy(), test[columns].copy()
@@ -72,7 +72,7 @@ def _measure_step(
     drops: Sequence[str],
     params: Mapping[str, Any],
 ) -> dict[str, Any]:
-    x_train, x_test = _reference_frames(train, test, drops)
+    x_train, x_test = _starting_frames(train, test, drops)
     model = XGBClassifier(
         **params,
         enable_categorical=True,
@@ -86,7 +86,7 @@ def _measure_step(
     return {
         "step": step,
         "label": label,
-        "model": "xgboost_reference",
+        "model": "xgboost_starting",
         "train_rows": len(train),
         "test_rows": len(test),
         "test_rows_already_in_train": _share_already_in_train(train, test),
@@ -123,7 +123,7 @@ def audit_inflation(
     cleaned: pd.DataFrame,
     *,
     settings: config.Settings,
-    params: Mapping[str, Any] = REFERENCE_XGBOOST,
+    params: Mapping[str, Any] = STARTING_XGBOOST,
 ) -> pd.DataFrame:
     """Measure the four steps from the inflated figure to the official one.
 
@@ -150,19 +150,19 @@ def audit_inflation(
     table = pd.DataFrame(
         [
             _measure_step(
-                "random_split_reference_variables",
-                "Partición aleatoria, variables de la referencia",
+                "random_split_starting_variables",
+                "Partición aleatoria, variables de partida",
                 random_train,
                 random_test,
-                _REFERENCE_DROPS,
+                _STARTING_DROPS,
                 params,
             ),
             _measure_step(
-                "temporal_split_reference_variables",
-                "Partición temporal, variables de la referencia",
+                "temporal_split_starting_variables",
+                "Partición temporal, variables de partida",
                 temporal_train,
                 temporal_test,
-                _REFERENCE_DROPS,
+                _STARTING_DROPS,
                 params,
             ),
             _measure_step(
@@ -170,7 +170,7 @@ def audit_inflation(
                 "Partición temporal, sin country ni booking_changes",
                 temporal_train,
                 temporal_test,
-                (*_REFERENCE_DROPS, *_DOCUMENTED_LEAKS),
+                (*_STARTING_DROPS, *_DOCUMENTED_LEAKS),
                 params,
             ),
             _official_step(settings),
