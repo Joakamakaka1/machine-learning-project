@@ -107,6 +107,7 @@ convention = "google"
 "tests/**" = ["ARG001", "ARG002", "D", "N803", "N806", "S101"]
 "experiments/**" = ["T20"]
 "scripts/**" = ["T20"]
+"notebooks/**" = ["A004", "D", "E402", "PD010", "S101"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -168,3 +169,4 @@ api = { cmd = "uvicorn hotel_cancellation.api.main:app --host 127.0.0.1 --port 8
 ui = { cmd = "streamlit run src/hotel_cancellation/ui/app.py --server.address 127.0.0.1", help = "Run the interface on this machine" }
 up = { cmd = "docker compose up --build --detach --wait", help = "Build and start the API, the interface and MLflow in Docker" }
 down = { cmd = "docker compose down", help = "Stop the containers and keep the MLflow volume" }
+notebooks = { cmd = "jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.record_timing=False notebooks/01_eda.ipynb notebooks/02_auditoria_fugas.ipynb notebooks/03_resultados.ipynb", help = "Execute the notebooks and keep their output" }

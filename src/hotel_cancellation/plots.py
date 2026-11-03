@@ -54,7 +54,8 @@ _PSI_LARGE = 0.25
 _DARK_CELL = 0.5
 _DPI = 160
 
-_STYLE: Any = {
+# Public because the notebooks draw with the same system.
+STYLE: Any = {
     "font.family": ["Segoe UI", "DejaVu Sans"],
     "font.size": 10,
     "figure.facecolor": SURFACE,
@@ -426,7 +427,7 @@ def save_all(settings: config.Settings) -> list[Path]:
     evaluator.business_value_table(actual, served).round(6).to_csv(
         settings.business_dir / "value_by_cost_scenario.csv", index=False, lineterminator="\n"
     )
-    with mpl.rc_context(_STYLE):
+    with mpl.rc_context(STYLE):
         scenarios = {
             _scenario_title(scenario, evaluator.optimal_threshold(scenario)): _confusion_counts(
                 actual, served, evaluator.optimal_threshold(scenario)

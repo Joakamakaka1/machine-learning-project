@@ -1,0 +1,23 @@
+clave,valor,descripcion
+filas,78054.0,Filas de desarrollo
+prevalencia,0.364427,Cancelación en desarrollo
+cancelacion_mes_min,0.210117,Mes con menos cancelación
+cancelacion_mes_max,0.457153,Mes con más cancelación
+duplicadas,0.358777,Filas repetidas según las 19 variables y el objetivo
+non_refund_reservas,10460.0,Reservas Non Refund
+non_refund_cancelacion,0.991874,Cancelación de Non Refund
+non_refund_repetidas,0.937285,Filas repetidas dentro de Non Refund
+no_deposit_cancelacion,0.267718,Cancelación de No Deposit
+parking_cancelacion,0.0,Cancelación de las reservas con plaza de parking
+antelacion_baja,0.101477,Cancelación con 0-7 días
+antelacion_alta,0.777653,Cancelación con más de 365 días
+adr_mediana,89.25,Mediana de adr
+adr_p99,235.0,Percentil 99 de adr
+adr_max,508.0,Máximo de adr tras limpiar
+adr_cero,0.011236,Filas con adr igual a 0
+company_nulos,0.943552,Nulos en company
+agent_nulos,0.134394,Nulos en agent
+agent_valores,284.0,Valores distintos de agent
+agent_raros,185.0,Valores de agent con menos de 50 filas
+city_cancelacion,0.415285,Cancelación en City Hotel
+resort_cancelacion,0.26578,Cancelación en Resort Hotel
