@@ -11,6 +11,7 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score
 
 from experiments.review import harness
+from hotel_cancellation import config
 from hotel_cancellation.data import schema
 
 _LATE_START = pd.Timestamp("2016-10-01")
@@ -312,7 +313,7 @@ def main() -> None:
         "batches": batch_structure(rows),
         "conflicts": label_conflicts(rows),
     }
-    (harness.OUTPUT_DIR / "audit_summary.json").write_text(
+    (config.get_settings().review_dir / "audit_summary.json").write_text(
         json.dumps(summary, indent=2, default=str) + "\n", encoding="utf-8", newline="\n"
     )
     pd.set_option("display.width", 220, "display.max_columns", 30, "display.max_rows", 200)

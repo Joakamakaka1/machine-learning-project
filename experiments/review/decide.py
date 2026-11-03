@@ -7,6 +7,7 @@ Run it with `uv run python -m experiments.review.decide`.
 import pandas as pd
 
 from experiments.review import harness
+from hotel_cancellation import config
 
 _FAMILIES: tuple[str, ...] = ("treatments", "tiers", "ablation", "engineered", "parsimony")
 _COLUMNS = ("roc_auc", "roc_auc_no_deposit")
@@ -34,8 +35,10 @@ def main() -> None:
     """Write one row per comparison, with the verdict of the rule."""
     log = []
     for family in _FAMILIES:
-        monthly = pd.read_csv(harness.OUTPUT_DIR / f"{family}_m12.csv")
-        quarterly = pd.read_csv(harness.OUTPUT_DIR / f"{family}_q4.csv").set_index("variant")
+        monthly = pd.read_csv(config.get_settings().review_dir / f"{family}_m12.csv")
+        quarterly = pd.read_csv(config.get_settings().review_dir / f"{family}_q4.csv").set_index(
+            "variant"
+        )
         for _, row in monthly[monthly["roc_auc_gap"].notna()].iterrows():
             accepted, reason = _accepted(row, quarterly.loc[row["variant"]])
             log.append(

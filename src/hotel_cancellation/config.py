@@ -77,6 +77,11 @@ class Settings(BaseSettings):
         return self.outputs_dir / "audit"
 
     @property
+    def review_dir(self) -> Path:
+        """Tables of the second review of data and validation."""
+        return self.outputs_dir / "review"
+
+    @property
     def business_dir(self) -> Path:
         """Value of the champion under the assumed costs."""
         return self.outputs_dir / "business"

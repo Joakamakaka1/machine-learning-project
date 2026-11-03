@@ -21,7 +21,6 @@ from sklearn.metrics import (
 from hotel_cancellation import config
 from hotel_cancellation.data import data_loader, schema
 
-OUTPUT_DIR = config.PROJECT_ROOT / "outputs" / "review"
 SEEDS: tuple[int, ...] = (42, 7, 123, 2024, 31337)
 MIN_GAIN = 0.002
 
@@ -225,6 +224,7 @@ def add_holm(
 
 
 def save(name: str, table: pd.DataFrame) -> None:
-    """Store a table in `outputs/review/`, rounded so that the diffs stay readable."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    table.round(5).to_csv(OUTPUT_DIR / f"{name}.csv", index=False, lineterminator="\n")
+    """Store a table in the folder of the review, rounded so that the diffs stay readable."""
+    folder = config.get_settings().review_dir
+    folder.mkdir(parents=True, exist_ok=True)
+    table.round(5).to_csv(folder / f"{name}.csv", index=False, lineterminator="\n")
