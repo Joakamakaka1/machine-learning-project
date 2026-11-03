@@ -9,7 +9,7 @@ import pytest
 
 from hotel_cancellation import champion, cli, config
 from hotel_cancellation.data import data_loader, features, schema
-from hotel_cancellation.evaluation import audit, evaluator, explain
+from hotel_cancellation.evaluation import audit, evaluator, explain, final_evaluation
 from hotel_cancellation.training import pipeline
 from tests.conftest import synthetic_raw
 
@@ -24,7 +24,9 @@ def evaluated(tmp_path_factory: pytest.TempPathFactory) -> config.Settings:
     )
     split = data_loader.split_temporal(data_loader.clean(synthetic_raw()))
     pipeline.run_all(split.development, settings=settings, profile="fast", seed=0)
-    pipeline.evaluate(split.test, split.development, settings=settings, replicates=5, strict=False)
+    final_evaluation.evaluate(
+        split.test, split.development, settings=settings, replicates=5, strict=False
+    )
     return settings
 
 

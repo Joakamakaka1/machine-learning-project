@@ -335,3 +335,8 @@ def model_catalog(profile: ProfileName = "full") -> tuple[ModelSpec, ...]:
         The specifications, without the baseline.
     """
     return _full_catalog() if profile == "full" else _fast_catalog()
+
+
+def specs_by_name(profile: ProfileName = "full") -> dict[str, ModelSpec]:
+    """Index the baseline and the models of a profile by their name."""
+    return {spec.name: spec for spec in (BASELINE, *model_catalog(profile))}

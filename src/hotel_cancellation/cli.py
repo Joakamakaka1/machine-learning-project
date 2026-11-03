@@ -13,7 +13,7 @@ from pathlib import Path
 
 from hotel_cancellation import champion, config
 from hotel_cancellation.data import data_loader
-from hotel_cancellation.evaluation import evaluator
+from hotel_cancellation.evaluation import evaluator, final_evaluation
 from hotel_cancellation.training import model_trainer, pipeline, tracking
 
 logger = logging.getLogger(__name__)
@@ -99,8 +99,8 @@ def _figures(settings: config.Settings) -> None:
 
 def _evaluate(arguments: argparse.Namespace, settings: config.Settings) -> None:
     # The checks come first, because the rows of the test must not be read if they fail.
-    pipeline.prepare_evaluation(settings, force=arguments.force)
-    pipeline.evaluate(
+    final_evaluation.prepare_evaluation(settings, force=arguments.force)
+    final_evaluation.evaluate(
         data_loader.load_test(),
         data_loader.load_development(),
         settings=settings,
@@ -112,7 +112,7 @@ def _evaluate(arguments: argparse.Namespace, settings: config.Settings) -> None:
 
 def _rehearse(arguments: argparse.Namespace, settings: config.Settings) -> None:
     output = arguments.output or Path(tempfile.mkdtemp(prefix="hotel-ml-rehearsal-"))
-    folder = pipeline.rehearse(
+    folder = final_evaluation.rehearse(
         settings=settings,
         window=arguments.window,
         output_dir=output,
@@ -167,8 +167,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             _train(arguments, settings)
     except (
-        pipeline.TestAlreadyEvaluatedError,
-        pipeline.EvaluationNotReadyError,
+        champion.TestAlreadyEvaluatedError,
+        champion.EvaluationNotReadyError,
         champion.ChampionIntegrityError,
         champion.TestNotExecutedError,
     ) as error:

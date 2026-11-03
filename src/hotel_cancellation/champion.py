@@ -38,6 +38,16 @@ class TestNotExecutedError(RuntimeError):
     __test__ = False
 
 
+class TestAlreadyEvaluatedError(RuntimeError):
+    """The test was already executed, and it is executed only once."""
+
+    __test__ = False
+
+
+class EvaluationNotReadyError(RuntimeError):
+    """The models or the environment are not the ones the single execution demands."""
+
+
 def assert_test_executed(settings: config.Settings) -> None:
     """Refuse anything that reads the test for interpreting before the single execution.
 

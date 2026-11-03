@@ -110,6 +110,11 @@ def get_settings() -> Settings:
     return Settings()
 
 
+def same_path(first: Path, second: Path) -> bool:
+    """Tell whether two paths lead to the same place."""
+    return first.resolve() == second.resolve()
+
+
 @dataclass(frozen=True)
 class ValidationWindow:
     """Validates on `[start, end)` and trains on every arrival before `start`."""
