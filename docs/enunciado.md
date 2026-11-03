@@ -169,6 +169,8 @@
 | **Embeddings personalizados**       | Uso de Word2Vec, TF-IDF o embeddings categóricos para representar variables complejas.       |
 | **Optimización de hiperparámetros** | Aplicación de `GridSearchCV` o `RandomizedSearchCV`.                                         |
 | **Registro de experimentos**        | Utilizar MLFlow para registrar los experimentos con diferentes algoritmos y el modelo final. |
+| **Balanceo de clases**              | Aplicación de técnicas como SMOTE, undersampling o `class_weight`.                           |
+| **Interpretabilidad**               | Uso de SHAP, LIME o `feature_importances_`.                                                  |
 | **Interfaz visual**                 | Presentación de la solución vía Streamlit, Gradio o una interfaz web UI simple.              |
 
 [cite_start][cite: 144]

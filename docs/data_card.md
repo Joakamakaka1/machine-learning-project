@@ -1,10 +1,24 @@
 # Data card: reservas de hotel
 
-Documento en construcción: por ahora recoge el origen, la limpieza, las particiones y el registro de disponibilidad de cada variable. La versión definitiva llega con la documentación final.
+Qué datos usa el proyecto, de dónde salen, cómo se limpian y por qué cada variable entra o no al modelo.
 
 ## Origen
 
-Reservas de dos hoteles portugueses con llegadas entre el 1 de julio de 2015 y el 31 de agosto de 2017. Fuente, hash, licencia y descripción de las columnas en [`data/raw/README.md`](../data/raw/README.md).
+Reservas reales y anonimizadas de dos hoteles portugueses, uno urbano y otro vacacional, con llegadas entre el 1 de julio de 2015 y el 31 de agosto de 2017: 119 390 filas y 32 columnas. El hash del archivo y la descripción de las columnas están en [`data/raw/README.md`](../data/raw/README.md).
+
+## Cita y licencia
+
+Antonio, N., de Almeida, A. y Nunes, L. (2019). *Hotel booking demand datasets*. Data in Brief, 22, 41-49. <https://doi.org/10.1016/j.dib.2018.11.126>
+
+**Licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**, que permite reutilizar los datos y exige citar la fuente. El archivo se versiona comprimido y sin más cambios, salvo el nombre que le da el enunciado; `load_raw` comprueba su hash.
+
+La fuga de `country` la documentan los mismos autores en *An Automated Machine Learning Based Decision Support System to Predict Hotel Booking Cancellations*, Data Science Journal, 18, 32. <https://doi.org/10.5334/dsj-2019-032>
+
+## Usos y límites
+
+- **Para qué sirve:** aprender a predecir cancelaciones con datos reales.
+- **Para qué no:** generalizar a otros hoteles, o saber qué pasó durante la vida de cada reserva.
+- **Personas:** no hay datos identificativos. `country` y `agent` son los campos más cercanos a una persona o empresa, y el primero queda fuera del modelo.
 
 El CSV guarda **el valor final de cada reserva, no su historial**. Por eso importa cuándo se conoce cada variable: lo que el archivo muestra no es necesariamente lo que se sabía al confirmar la reserva.
 
@@ -68,7 +82,7 @@ Todas se conocen al confirmar la reserva, aunque el CSV guarda su último valor.
 |---|---|---|
 | `reservation_status` | Al terminar la reserva | Repite el objetivo |
 | `reservation_status_date` | Al terminar la reserva | Fecha del resultado |
-| `country` | Se corrige en el check-in | Fuga documentada por Antonio et al. (2019). V 0.087 |
+| `country` | Se corrige en el check-in | Fuga documentada por Antonio et al. (2019, *Data Science Journal*). V 0.087 |
 | `required_car_parking_spaces` | En el check-in o después | Ninguna de las 27 389 canceladas analizadas tiene plaza |
 | `assigned_room_type` | En el check-in o después | V 0.051 |
 | `booking_changes` | Durante la vida de la reserva | Cuenta cambios por definición. Es el control positivo: ρ +0.105 (+0.108) |
