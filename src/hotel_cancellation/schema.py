@@ -8,6 +8,7 @@ value that is absent before 2017.
 import re
 from collections.abc import Mapping
 from types import MappingProxyType
+from typing import Any
 
 TARGET = "is_canceled"
 
@@ -40,6 +41,35 @@ CATEGORICAL_FEATURES: tuple[str, ...] = (
 )
 
 INPUT_FEATURES: tuple[str, ...] = NUMERIC_FEATURES + CATEGORICAL_FEATURES
+
+# Not a business rule: it keeps every count convertible to a float. The largest in the dataset,
+# `lead_time`, is far below it.
+MAX_COUNT = 10_000
+
+# A valid booking that the API documents and the prediction form opens with.
+EXAMPLE_BOOKING: Mapping[str, Any] = MappingProxyType(
+    {
+        "hotel": "City Hotel",
+        "lead_time": 45,
+        "stays_in_weekend_nights": 1,
+        "stays_in_week_nights": 2,
+        "adults": 2,
+        "children": 0,
+        "babies": 0,
+        "meal": "BB",
+        "market_segment": "Online TA",
+        "distribution_channel": "TA/TO",
+        "is_repeated_guest": 0,
+        "previous_cancellations": 0,
+        "previous_bookings_not_canceled": 0,
+        "reserved_room_type": "A",
+        "deposit_type": "No Deposit",
+        "agent": "9",
+        "days_in_waiting_list": 0,
+        "customer_type": "Transient",
+        "adr": 110.0,
+    }
+)
 
 # Forbidden in every model that can win. It only enters the informative scenario of the protocol.
 SPECIAL_REQUESTS = "total_of_special_requests"

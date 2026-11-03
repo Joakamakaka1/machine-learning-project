@@ -79,6 +79,13 @@ def test_allowed_values_are_declared_for_low_cardinality_categoricals() -> None:
     assert "agent" not in schema.ALLOWED_VALUES
 
 
+def test_the_example_booking_holds_exactly_the_input_features() -> None:
+    assert set(schema.EXAMPLE_BOOKING) == set(schema.INPUT_FEATURES)
+    for column, allowed in schema.ALLOWED_VALUES.items():
+        if column in schema.EXAMPLE_BOOKING:
+            assert schema.EXAMPLE_BOOKING[column] in allowed
+
+
 def test_agent_ids_are_integers_written_as_text() -> None:
     assert schema.ID_PATTERN.fullmatch("9")
     assert schema.ID_PATTERN.fullmatch("240")
