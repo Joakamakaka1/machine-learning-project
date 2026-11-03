@@ -25,7 +25,7 @@ STARTING_XGBOOST: Mapping[str, Any] = {
     "colsample_bytree": 1.0,
 }
 _RANDOM_TEST_SIZE = 0.2
-_SEED = 42
+_SEED = config.DEFAULT_SEED
 _MAX_CATEGORIES_TO_ONE_HOT = 8
 _MISSING_CATEGORY = "none"
 

@@ -21,6 +21,8 @@ RAW_DATASET_SHA256 = "d10cdeb07de9309007f528d6499a2c0467ae7a6b287b80ffd759e11e61
 
 ADR_UPPER_LIMIT = 5400.0
 
+DEFAULT_SEED = 42
+
 
 class Settings(BaseSettings):
     """Filesystem locations, which `HOTEL_ML_*` environment variables can override."""

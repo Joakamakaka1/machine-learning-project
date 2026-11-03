@@ -15,7 +15,6 @@ from hotel_cancellation.data import data_loader, features, schema
 CALENDAR_NUMERIC = ("arrival_date_week_number", "arrival_date_day_of_month")
 CALENDAR_MONTH = "arrival_date_month"
 CALENDAR_YEAR = "arrival_date_year"
-SPECIAL_REQUESTS = "total_of_special_requests"
 _NOT_BOOKING_CONTENT = {"reservation_status", "reservation_status_date", schema.ARRIVAL_DATE}
 
 
@@ -166,7 +165,7 @@ def special_requests(development: pd.DataFrame, *, tuned: str | None) -> common.
         common.Variant("xgboost_19_variables", common.tabular_predictor(_reference)),
         common.Variant(
             "xgboost_plus_special_requests",
-            common.tabular_predictor(_reference, extra_numeric=(SPECIAL_REQUESTS,)),
+            common.tabular_predictor(_reference, extra_numeric=(schema.SPECIAL_REQUESTS,)),
         ),
     ]
     if tuned is not None:
@@ -182,7 +181,7 @@ def special_requests(development: pd.DataFrame, *, tuned: str | None) -> common.
             common.Variant(
                 f"{tuned}_plus_special_requests",
                 common.tabular_predictor(
-                    tuned_estimator, family=family, extra_numeric=(SPECIAL_REQUESTS,)
+                    tuned_estimator, family=family, extra_numeric=(schema.SPECIAL_REQUESTS,)
                 ),
             ),
         ]

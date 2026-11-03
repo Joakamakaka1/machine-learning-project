@@ -54,7 +54,7 @@ def explain(
     n_repeats: int = PERMUTATION_REPEATS,
     shap_rows: int = SHAP_ROWS,
     n_jobs: int = -1,
-    seed: int = 42,
+    seed: int = config.DEFAULT_SEED,
 ) -> pd.DataFrame:
     """Measure the importance of each original variable with the three methods of the protocol.
 

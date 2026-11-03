@@ -11,6 +11,7 @@ from collections.abc import Callable
 import pandas as pd
 
 from experiments import balancing, common, decisions, embeddings, encodings
+from hotel_cancellation.data import data_loader
 
 EXPERIMENTS: dict[str, Callable[[pd.DataFrame], common.ExperimentResult]] = {
     "calendar": decisions.calendar,
@@ -32,7 +33,7 @@ def main() -> None:
     arguments = parser.parse_args()
     warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 
-    development = common.load_development()
+    development = data_loader.load_development()
     for name in arguments.names or EXPERIMENTS:
         common.save(EXPERIMENTS[name](development))
 

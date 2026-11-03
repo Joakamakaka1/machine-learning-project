@@ -5,7 +5,6 @@ for the validation rows. Both frames hold every raw column, so a variant decides
 the metrics always come from `evaluator.validation_metrics`, exactly as in the model search.
 """
 
-import json
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -20,7 +19,7 @@ from hotel_cancellation import champion, config, models
 from hotel_cancellation.data import data_loader, features, schema
 from hotel_cancellation.evaluation import evaluator
 
-SEED = 42
+SEED = config.DEFAULT_SEED
 
 # Shared by every experiment so that their figures are comparable.
 REFERENCE_XGBOOST: dict[str, Any] = {
@@ -73,13 +72,6 @@ def reference_xgboost(**overrides: Any) -> XGBClassifier:
     return XGBClassifier(**{**REFERENCE_XGBOOST, **overrides})
 
 
-def load_development() -> pd.DataFrame:
-    """Load the development rows of the real dataset."""
-    raw = data_loader.load_raw()
-    data_loader.validate_raw(raw)
-    return data_loader.split_temporal(data_loader.clean(raw)).development
-
-
 def model_frame(
     rows: pd.DataFrame, *, extra_numeric: Sequence[str] = (), extra_categorical: Sequence[str] = ()
 ) -> pd.DataFrame:
@@ -128,15 +120,13 @@ def tuned_pipeline(name: str) -> Pipeline:
         An unfitted pipeline.
     """
     spec = next(spec for spec in models.model_catalog("full") if spec.name == name)
-    content = json.loads(config.get_settings().best_params_path.read_text("utf-8"))
+    content = champion.read_json(config.get_settings().best_params_path)
     return spec.pipeline(SEED).set_params(**content["models"][name]["params"])
 
 
 def champion_name() -> str:
     """Name of the model that the selection chose."""
-    manifest = json.loads(
-        (config.get_settings().champion_dir / champion.MANIFEST_FILE).read_text("utf-8")
-    )
+    manifest = champion.read_json(config.get_settings().champion_dir / champion.MANIFEST_FILE)
     name: str = manifest["model"]["name"]
     return name
 

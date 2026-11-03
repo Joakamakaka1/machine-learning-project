@@ -117,7 +117,7 @@ def main() -> None:
     manifest = json.loads((settings.champion_dir / "manifest.json").read_text("utf-8"))
     model_path = settings.champion_dir / manifest["model"]["file"]
     actual_hash = hashlib.sha256(model_path.read_bytes()).hexdigest()
-    development = common.load_development()
+    development = data_loader.load_development()
 
     test_figures = stored_test_figures(settings.final_evaluation_dir)
     test_figures.to_csv(

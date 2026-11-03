@@ -18,7 +18,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from experiments import common
 from hotel_cancellation import config
 from hotel_cancellation.data import data_loader, schema
 
@@ -78,7 +77,7 @@ M12: tuple[Window, ...] = _monthly()
 
 def load_rows() -> pd.DataFrame:
     """Load development rows with the derived columns that the analysis uses, never the models."""
-    rows = common.load_development()
+    rows = data_loader.load_development()
     if (rows[schema.ARRIVAL_DATE] >= config.TEST_START).any():
         raise ValueError("The review only accepts development rows.")
     return add_derived(rows)

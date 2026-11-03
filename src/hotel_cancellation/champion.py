@@ -24,7 +24,7 @@ MANIFEST_FILE = "manifest.json"
 
 _VERSIONED_LIBRARIES = ("scikit-learn", "xgboost", "pandas", "numpy", "joblib")
 _CODE_PATHS = ("src", "pyproject.toml", "uv.lock")
-_COMPRESSION_LEVEL = 3
+COMPRESSION_LEVEL = 3
 _GIT = "git"
 
 
@@ -206,7 +206,7 @@ def save_champion(
     features.assert_no_forbidden_inputs(model)
     folder.mkdir(parents=True, exist_ok=True)
     model_path = folder / MODEL_FILE
-    joblib.dump(model, model_path, compress=_COMPRESSION_LEVEL)
+    joblib.dump(model, model_path, compress=COMPRESSION_LEVEL)
     content = model_path.read_bytes()
     manifest = {
         "created_at": datetime.now(tz=UTC).isoformat(timespec="seconds"),
@@ -251,7 +251,7 @@ def load_champion(folder: Path) -> LoadedChampion:
     Raises:
         ChampionIntegrityError: If the file changed or a library is on another version.
     """
-    manifest = json.loads((folder / MANIFEST_FILE).read_text("utf-8"))
+    manifest = read_json(folder / MANIFEST_FILE)
     model_path = folder / MODEL_FILE
     actual = hashlib.sha256(model_path.read_bytes()).hexdigest()
     if actual != manifest["model"]["sha256"]:

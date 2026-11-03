@@ -4,7 +4,6 @@ Training never reads the test rows: `data_loader.load_development` drops them as
 contract has checked the file, and `ModelTrainer` refuses them if they arrive some other way.
 """
 
-import json
 import logging
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -21,8 +20,6 @@ from hotel_cancellation.training import model_trainer
 from hotel_cancellation.training.tracking import NullTracker, Tracker
 
 logger = logging.getLogger(__name__)
-
-_COMPRESSION_LEVEL = 3
 
 
 @dataclass(frozen=True)
@@ -58,17 +55,12 @@ def _model_record(outcome: model_trainer.SearchOutcome) -> dict[str, Any]:
     }
 
 
-def _read_best_params(path: Path) -> dict[str, Any]:
-    content: dict[str, Any] = json.loads(path.read_text("utf-8"))
-    return content
-
-
 def tune(
     development: pd.DataFrame,
     *,
     settings: config.Settings,
     profile: models.ProfileName = "full",
-    seed: int = model_trainer.DEFAULT_SEED,
+    seed: int = config.DEFAULT_SEED,
     tracker: Tracker | None = None,
     only: Sequence[str] | None = None,
     force: bool = False,
@@ -99,7 +91,7 @@ def tune(
     path = settings.best_params_path
     records: dict[str, Any] = {}
     if only is not None and path.exists():
-        records = _read_best_params(path).get("models", {})
+        records = champion.read_json(path).get("models", {})
     content = {
         "profile": profile,
         "seed": seed,
@@ -152,7 +144,7 @@ def _load_outcomes(
     path = settings.best_params_path
     if not path.exists():
         raise FileNotFoundError(f"{path} does not exist: run `hotel-ml tune` first.")
-    content = _read_best_params(path)
+    content = champion.read_json(path)
     if content["profile"] != profile:
         raise ValueError(f"{path} comes from profile {content['profile']}, not from {profile}.")
     outcomes = {
@@ -172,7 +164,7 @@ def train(
     *,
     settings: config.Settings,
     profile: models.ProfileName = "full",
-    seed: int = model_trainer.DEFAULT_SEED,
+    seed: int = config.DEFAULT_SEED,
     tracker: Tracker | None = None,
     force: bool = False,
 ) -> TrainingReport:
@@ -208,7 +200,9 @@ def train(
     settings.candidates_dir.mkdir(parents=True, exist_ok=True)
     for name, candidate in candidates.items():
         joblib.dump(
-            candidate.model, settings.candidates_dir / f"{name}.joblib", compress=_COMPRESSION_LEVEL
+            candidate.model,
+            settings.candidates_dir / f"{name}.joblib",
+            compress=champion.COMPRESSION_LEVEL,
         )
 
     chosen = candidates[selection.champion]
@@ -295,7 +289,7 @@ def _write_registry(
     path = settings.candidates_registry_path
     candidates = None
     if keep_candidates and path.exists():
-        candidates = json.loads(path.read_text("utf-8"))["candidates"]
+        candidates = champion.read_json(path)["candidates"]
     if candidates is None:
         candidates = {
             model.stem: _artifact_entry(model, settings)
@@ -325,7 +319,7 @@ def _fit_and_save_scenario(
         spec, manifest["model"]["params"], manifest["model"]["calibration"]
     )
     settings.scenario_model_path.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(scenario, settings.scenario_model_path, compress=_COMPRESSION_LEVEL)
+    joblib.dump(scenario, settings.scenario_model_path, compress=champion.COMPRESSION_LEVEL)
 
 
 def train_scenario(
@@ -367,7 +361,7 @@ def run_all(
     *,
     settings: config.Settings,
     profile: models.ProfileName = "full",
-    seed: int = model_trainer.DEFAULT_SEED,
+    seed: int = config.DEFAULT_SEED,
     tracker: Tracker | None = None,
     force: bool = False,
 ) -> TrainingReport:

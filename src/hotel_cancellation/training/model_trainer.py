@@ -22,7 +22,6 @@ from hotel_cancellation.evaluation import evaluator
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SEED = 42
 NO_CALIBRATION = "none"
 CALIBRATION_METHODS: tuple[str, ...] = ("sigmoid", "isotonic")
 MIN_BRIER_GAIN = 0.001
@@ -153,7 +152,7 @@ class ModelTrainer:
         development: pd.DataFrame,
         *,
         catalog: Sequence[models.ModelSpec],
-        seed: int = DEFAULT_SEED,
+        seed: int = config.DEFAULT_SEED,
         n_jobs: int = -1,
     ) -> None:
         """Keep the rows in arrival order: Keras validates on the last ones."""

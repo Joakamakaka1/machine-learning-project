@@ -78,7 +78,7 @@ def main() -> None:
     search = json.loads(settings.best_params_path.read_text("utf-8"))["models"]
     calibration = json.loads((settings.validation_dir / "calibration.json").read_text("utf-8"))
     table = sensitivity(
-        common.load_development(),
+        data_loader.load_development(),
         models.model_catalog("full"),
         {name: record["params"] for name, record in search.items()},
         {name: record["method"] for name, record in calibration.items()},

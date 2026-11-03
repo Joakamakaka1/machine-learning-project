@@ -14,7 +14,7 @@ from pathlib import Path
 from hotel_cancellation import champion, config
 from hotel_cancellation.data import data_loader
 from hotel_cancellation.evaluation import evaluator, final_evaluation
-from hotel_cancellation.training import model_trainer, pipeline, tracking
+from hotel_cancellation.training import pipeline, tracking
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
     ):
         command = commands.add_parser(name, help=description, description=description)
         command.add_argument("--profile", choices=("full", "fast"), default="full")
-        command.add_argument("--seed", type=int, default=model_trainer.DEFAULT_SEED)
+        command.add_argument("--seed", type=int, default=config.DEFAULT_SEED)
         command.add_argument(
             "--no-tracking", action="store_true", help="No registra nada en MLflow."
         )

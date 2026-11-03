@@ -4,7 +4,6 @@ Nothing gets trained here. Only `evaluate` measures the test rows, and `prepare_
 everything it needs before they are read.
 """
 
-import json
 import shutil
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -114,7 +113,7 @@ def _previous_executions(settings: config.Settings) -> list[dict[str, Any]]:
     path = settings.final_evaluation_record
     if not path.exists():
         return []
-    executions: list[dict[str, Any]] = json.loads(path.read_text("utf-8"))["executions"]
+    executions: list[dict[str, Any]] = champion.read_json(path)["executions"]
     return executions
 
 
@@ -154,7 +153,7 @@ def _verify_registry(settings: config.Settings, manifest: Mapping[str, Any]) -> 
         raise champion.EvaluationNotReadyError(
             f"{path} does not exist. Run `hotel-ml train-scenario`."
         )
-    registry = json.loads(path.read_text("utf-8"))
+    registry = champion.read_json(path)
     candidates = registry["candidates"]
     missing = sorted(set(models.specs_by_name(manifest["profile"])).difference(candidates))
     if missing:
@@ -205,7 +204,7 @@ def evaluate(
     settings: config.Settings,
     replicates: int = evaluator.BOOTSTRAP_REPLICATES,
     force: bool = False,
-    seed: int = model_trainer.DEFAULT_SEED,
+    seed: int = config.DEFAULT_SEED,
     strict: bool = True,
 ) -> None:
     """Execute the test once, on the models exactly as they were saved, and write every table.
@@ -240,7 +239,7 @@ def rehearse(
     window: str = "2016Q4",
     output_dir: Path,
     replicates: int = evaluator.BOOTSTRAP_REPLICATES,
-    seed: int = model_trainer.DEFAULT_SEED,
+    seed: int = config.DEFAULT_SEED,
 ) -> Path:
     """Run the whole evaluation with a window of 2016 as a pseudo test, in another folder.
 
@@ -284,7 +283,7 @@ def _execute(
     dates = test[schema.ARRIVAL_DATE]
     loaded = champion.load_champion(settings.champion_dir)
     manifest = loaded.manifest
-    registry = json.loads(settings.candidates_registry_path.read_text("utf-8"))
+    registry = champion.read_json(settings.candidates_registry_path)
     candidates = {
         name: joblib.load(settings.models_dir / entry["file"])
         for name, entry in sorted(registry["candidates"].items())
