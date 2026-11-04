@@ -1,6 +1,6 @@
 # El paquete se organiza por etapas, con `models.py` fijo
 
-`src/hotel_cancellation/` agrupa sus módulos en `data/`, `training/`, `evaluation/` y `serving/`, para que cada etapa del flujo tenga un sitio. En la raíz solo quedan `cli.py`, `config.py`, `champion.py`, que usan todas las etapas, y `models.py`. Los `__init__.py` no importan nada, para que la imagen de la API siga sin TensorFlow ni MLflow.
+`src/hotel_cancellation/` agrupa sus módulos en `data/`, `training/`, `evaluation/` y `serving/`, para que cada etapa del flujo tenga un sitio. En la raíz solo quedan `cli.py`, que las llama; `config.py` y `champion.py`, que usan todas; y `models.py`. Los `__init__.py` no importan nada, para que la imagen de la API siga sin TensorFlow ni MLflow.
 
 **`models.py` no se mueve.** `models/candidates/mlp.joblib` guarda la ruta `hotel_cancellation.models.KerasMLPClassifier`, y su hash está registrado en `models/candidates.json`. Moverlo rompería `evaluate` y `rehearse`, porque [pickle necesita importar la clase](https://scikit-learn.org/stable/model_persistence.html), y regenerar el archivo cambiaría lo evaluado.
 

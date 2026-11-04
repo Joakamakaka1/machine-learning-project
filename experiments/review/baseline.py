@@ -112,7 +112,7 @@ def served_model(development: pd.DataFrame, manifest: dict[str, Any]) -> dict[st
 def main() -> None:
     """Write the reproduction of the baseline to `outputs/review/`."""
     settings = config.get_settings()
-    config.get_settings().review_dir.mkdir(parents=True, exist_ok=True)
+    settings.review_dir.mkdir(parents=True, exist_ok=True)
     manifest = json.loads((settings.champion_dir / "manifest.json").read_text("utf-8"))
     model_path = settings.champion_dir / manifest["model"]["file"]
     actual_hash = hashlib.sha256(model_path.read_bytes()).hexdigest()
@@ -120,13 +120,13 @@ def main() -> None:
 
     test_figures = stored_test_figures(settings.final_evaluation_dir)
     test_figures.to_csv(
-        config.get_settings().review_dir / "baseline_test_figures.csv",
+        settings.review_dir / "baseline_test_figures.csv",
         index=False,
         lineterminator="\n",
     )
     windows = validation_windows(development, manifest["model"]["params"])
     windows.round(6).to_csv(
-        config.get_settings().review_dir / "baseline_windows.csv", index=False, lineterminator="\n"
+        settings.review_dir / "baseline_windows.csv", index=False, lineterminator="\n"
     )
     served = served_model(development, manifest)
 
@@ -139,7 +139,7 @@ def main() -> None:
         ),
         "served_model": served,
     }
-    (config.get_settings().review_dir / "baseline.json").write_text(
+    (settings.review_dir / "baseline.json").write_text(
         json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n"
     )
     print(test_figures.round(6).to_string(index=False))
