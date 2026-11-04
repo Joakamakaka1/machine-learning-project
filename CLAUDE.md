@@ -13,6 +13,7 @@ Predicción de cancelaciones de reservas al confirmarlas. Lee el `README.md` par
 - El test de 2017 ya se ejecutó, una sola vez: `hotel-ml evaluate` nunca se repite. Lo que señala se declara, no se corrige.
 - Comprueba el flujo de entrenamiento en otra carpeta, con `HOTEL_ML_MODELS_DIR` y `HOTEL_ML_OUTPUTS_DIR`. `--force` cambia lo congelado: úsalo solo si el autor lo pide, y decláralo.
 - Toda decisión nueva sale de las llegadas anteriores a 2017. Los notebooks y `outputs/eda/` también.
+- `src/hotel_cancellation/models.py` no se mueve: `models/candidates/mlp.joblib` guarda su ruta, y su hash está registrado.
 
 ## Momento de predicción
 
@@ -24,7 +25,8 @@ Copia cada cifra de `outputs/` o de `manifest.json`. `tests/test_documentation.p
 
 ## Comandos
 
-- `uv run poe check` en verde antes de cada commit. Tarda unos 8 minutos.
+- `uv run poe check` en verde antes de cada commit. Tarda unos 8 minutos. No ejecuta los notebooks.
+- `uv run pre-commit install` una vez por clon, para las comprobaciones rápidas.
 - `uv run poe notebooks` tras cambiar los notebooks o lo que leen.
 - `uv run poe report` tras cambiar `docs/informe_final.md`, con Docker encendido, y commitea el PDF.
 - `uv run poe requirements` tras cambiar las dependencias.
