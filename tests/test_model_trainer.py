@@ -221,7 +221,7 @@ class TestSpecialRequestsScenario:
         cut = config.CHAMPION_CUT
         scenario = trainer.fit_special_requests_scenario(spec, {"model__C": 1.0}, "sigmoid")
 
-        frame = model_trainer.scenario_frame(synthetic_development)
+        frame = data_loader.scenario_frame(synthetic_development)
         assert list(frame.columns) == [*schema.INPUT_FEATURES, schema.SPECIAL_REQUESTS]
         dates = synthetic_development[schema.ARRIVAL_DATE]
         target = synthetic_development[schema.TARGET]

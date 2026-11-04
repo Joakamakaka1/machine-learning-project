@@ -72,12 +72,6 @@ class Candidate:
     model: Any
 
 
-def scenario_frame(rows: pd.DataFrame) -> pd.DataFrame:
-    """Give the inputs of the informative scenario: the 19 features and the special requests."""
-    values = pd.to_numeric(rows[schema.SPECIAL_REQUESTS]).astype("float64")
-    return data_loader.coerce_features(rows).assign(**{schema.SPECIAL_REQUESTS: values})
-
-
 def select_by_one_standard_error(window_scores: Mapping[str, Sequence[float]]) -> Selection:
     """Apply the one standard error rule on paired differences per window.
 
@@ -274,10 +268,10 @@ class ModelTrainer:
             method: Its calibration method, or `none`.
 
         Returns:
-            The fitted model. It expects the columns of `scenario_frame`.
+            The fitted model. It expects the columns of `data_loader.scenario_frame`.
         """
         cut = config.CHAMPION_CUT
-        frame = scenario_frame(self.development)
+        frame = data_loader.scenario_frame(self.development)
         preprocessor = features.build_preprocessor(
             spec.family, numeric=(*schema.NUMERIC_FEATURES, schema.SPECIAL_REQUESTS)
         )

@@ -16,7 +16,6 @@ import pandas as pd
 from hotel_cancellation import champion, config, models
 from hotel_cancellation.data import data_loader, schema
 from hotel_cancellation.evaluation import evaluator
-from hotel_cancellation.training import model_trainer
 
 _SEGMENTS = ("hotel", "market_segment", "customer_type", "distribution_channel", "deposit_type")
 
@@ -298,7 +297,7 @@ def _execute(
     )
     served = pd.Series(loaded.model.predict_proba(rows)[:, 1], index=test.index, name="champion")
     informative = pd.DataFrame(
-        {SCENARIO_NAME: scenario.predict_proba(model_trainer.scenario_frame(test))[:, 1]},
+        {SCENARIO_NAME: scenario.predict_proba(data_loader.scenario_frame(test))[:, 1]},
         index=test.index,
     )
     decision = float(manifest["decision"]["threshold"])

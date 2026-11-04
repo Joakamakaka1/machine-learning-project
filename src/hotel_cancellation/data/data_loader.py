@@ -252,6 +252,12 @@ def coerce_features(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(coerced, columns=list(schema.INPUT_FEATURES))
 
 
+def scenario_frame(rows: pd.DataFrame) -> pd.DataFrame:
+    """Give the inputs of the informative scenario: the 19 features and the special requests."""
+    values = pd.to_numeric(rows[schema.SPECIAL_REQUESTS]).astype("float64")
+    return coerce_features(rows).assign(**{schema.SPECIAL_REQUESTS: values})
+
+
 def _as_text(values: pd.Series) -> pd.Series:
     if isinstance(values.dtype, pd.StringDtype):
         return values.astype("str")
