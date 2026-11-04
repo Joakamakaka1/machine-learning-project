@@ -29,6 +29,7 @@ DOCUMENTS = (
     REVIEW_REPORT,
     ROOT / "docs" / "revision_protocolo.md",
     ROOT / "docs" / "protocolo.md",
+    ROOT / "docs" / "reproducibilidad_artefactos.md",
     ROOT / "docs" / "enunciado.md",
     ROOT / "data" / "raw" / "README.md",
     ROOT / "docs" / "glosario.md",

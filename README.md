@@ -298,6 +298,7 @@ El [ADR 0008](docs/adr/0008-estructura-del-proyecto.md) explica por qué `models
 - [Informe final](docs/informe_final.md) y su [PDF](docs/informe_final.pdf).
 - [Protocolo de evaluación](docs/protocolo.md), fijado antes de comparar modelos.
 - [Segunda revisión de datos y validación](docs/revision_datos_y_validacion.md), con su [protocolo](docs/revision_protocolo.md).
+- [Reproducibilidad de los artefactos](docs/reproducibilidad_artefactos.md): qué hashes cambian al reentrenar, y por qué.
 - [Model card](docs/model_card.md) y [data card](docs/data_card.md).
 - [ADR](docs/adr/): las decisiones difíciles de revertir.
 - [Glosario](docs/glosario.md), pensado para aprender.
