@@ -76,7 +76,7 @@ Las tablas completas, las figuras y la reflexión crítica están en el [informe
 
 ### Con `uv` (recomendado)
 
-Instala las versiones exactas de `uv.lock`, y Python 3.12 si no lo tienes.
+Instala las versiones exactas de `uv.lock`, con las herramientas de desarrollo del grupo `dev`, y Python 3.12 si no lo tienes.
 
 ```bash
 uv sync --all-extras
@@ -84,7 +84,7 @@ uv sync --all-extras
 
 ### Con `python -m venv` y `pip`
 
-Con un Python 3.12 ya instalado. `requirements.txt` fija todas las versiones e instala el proyecto.
+Con un Python 3.12 ya instalado. `requirements.txt` fija todas las versiones, herramientas de desarrollo incluidas, e instala el proyecto.
 
 ```bash
 python -m venv .venv

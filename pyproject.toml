@@ -39,6 +39,10 @@ notebook = [
     "matplotlib>=3.9",
     "nbconvert>=7.16",
 ]
+
+# Tools for working on the project, not part of what it publishes. uv installs this group by
+# default, so anything that must stay without it (the Docker images) has to set `UV_NO_DEV`.
+[dependency-groups]
 dev = [
     "httpx>=0.27",
     "mypy>=1.13",

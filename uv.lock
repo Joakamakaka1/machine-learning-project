@@ -962,17 +962,6 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-dev = [
-    { name = "httpx" },
-    { name = "mypy" },
-    { name = "pandas-stubs" },
-    { name = "pip-audit" },
-    { name = "poethepoet" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
 notebook = [
     { name = "ipykernel" },
     { name = "jupyterlab" },
@@ -992,10 +981,22 @@ ui = [
     { name = "streamlit" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "httpx" },
+    { name = "mypy" },
+    { name = "pandas-stubs" },
+    { name = "pip-audit" },
+    { name = "poethepoet" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
     { name = "httpx", marker = "extra == 'ui'", specifier = ">=0.27" },
     { name = "imbalanced-learn", marker = "extra == 'train'", specifier = ">=0.13" },
     { name = "ipykernel", marker = "extra == 'notebook'", specifier = ">=6.29" },
@@ -1004,20 +1005,12 @@ requires-dist = [
     { name = "matplotlib", marker = "extra == 'notebook'", specifier = ">=3.9" },
     { name = "matplotlib", marker = "extra == 'train'", specifier = ">=3.9" },
     { name = "mlflow", marker = "extra == 'train'", specifier = ">=3.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13" },
     { name = "nbconvert", marker = "extra == 'notebook'", specifier = ">=7.16" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "pandas", specifier = ">=3.0,<4" },
-    { name = "pandas-stubs", marker = "extra == 'dev'", specifier = ">=2.2" },
-    { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.7" },
     { name = "plotly", marker = "extra == 'ui'", specifier = ">=5.24" },
-    { name = "poethepoet", marker = "extra == 'dev'", specifier = ">=0.31" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0" },
     { name = "pydantic", specifier = ">=2.9" },
     { name = "pydantic-settings", specifier = ">=2.6" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
     { name = "scikit-learn", specifier = ">=1.8" },
     { name = "shap", marker = "extra == 'train'", specifier = ">=0.48" },
     { name = "streamlit", marker = "extra == 'ui'", specifier = ">=1.40" },
@@ -1025,7 +1018,20 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32" },
     { name = "xgboost", specifier = ">=3.0" },
 ]
-provides-extras = ["ui", "train", "notebook", "dev"]
+provides-extras = ["ui", "train", "notebook"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "mypy", specifier = ">=1.13" },
+    { name = "pandas-stubs", specifier = ">=2.2" },
+    { name = "pip-audit", specifier = ">=2.7" },
+    { name = "poethepoet", specifier = ">=0.31" },
+    { name = "pre-commit", specifier = ">=4.0" },
+    { name = "pytest", specifier = ">=8.3" },
+    { name = "pytest-cov", specifier = ">=6.0" },
+    { name = "ruff", specifier = ">=0.8" },
+]
 
 [[package]]
 name = "httpcore"
