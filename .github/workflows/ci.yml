@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master, "feature/**"]
+    branches: [master, "feature/**", "refactor/**", "review/**"]
   pull_request:
     branches: [master]
 
@@ -10,6 +10,7 @@ permissions:
   contents: read
 
 jobs:
+  # Only the dev group, on purpose: it proves the fast tests need neither `train` nor `ui`.
   lint-and-test:
     runs-on: ubuntu-latest
     steps:
@@ -18,6 +19,8 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
+          # The same uv as the Dockerfile: its export format decides the requirements check.
+          version: "0.13.5"
 
       - name: Install dependencies
         run: uv sync --locked
@@ -28,5 +31,28 @@ jobs:
       - name: Check formatting
         run: uv run ruff format --check .
 
+      - name: Check that requirements.txt matches uv.lock
+        run: |
+          uv run poe requirements
+          git diff --exit-code -- requirements.txt
+
       - name: Run fast tests
         run: uv run pytest -m "not slow" --no-cov
+
+  # Every extra, as `poe check` does: missing packages become import errors, and MLflow ships
+  # its own types, so a smaller install would check less than a local run does.
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          enable-cache: true
+          version: "0.13.5"
+
+      - name: Install dependencies
+        run: uv sync --locked --all-extras
+
+      - name: Type check
+        run: uv run mypy
