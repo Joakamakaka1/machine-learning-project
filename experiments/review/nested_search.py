@@ -18,7 +18,8 @@ from sklearn.model_selection import ParameterSampler
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import config, data_loader, models, schema
+from hotel_cancellation import config, models
+from hotel_cancellation.data import data_loader, schema
 
 _MODELS = ("random_forest", "xgboost")
 _DRAWS = 20

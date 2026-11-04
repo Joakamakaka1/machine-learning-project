@@ -13,7 +13,8 @@ from sklearn.metrics import roc_auc_score
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import config, data_loader, features, schema
+from hotel_cancellation import config
+from hotel_cancellation.data import data_loader, features, schema
 
 _REPLICATES = 2000
 _THRESHOLD = 0.25

@@ -12,10 +12,11 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from hotel_cancellation import champion, config, data_loader, schema
-from hotel_cancellation.api import deps
-from hotel_cancellation.api.main import create_app
-from hotel_cancellation.api.schemas import MAX_BATCH_SIZE
+from hotel_cancellation import champion, config
+from hotel_cancellation.data import data_loader, schema
+from hotel_cancellation.serving.api import deps
+from hotel_cancellation.serving.api.main import create_app
+from hotel_cancellation.serving.api.schemas import MAX_BATCH_SIZE
 
 CHAMPION_SHA256 = "41d3a28592ae93367b8a88ca80ed60bb1e5ac2356ec2344d4984c0770f13d7f1"
 PREFIX = "/api/v1"
@@ -354,8 +355,8 @@ def test_the_runtime_imports_nothing_from_the_training_stack() -> None:
 
         from fastapi.testclient import TestClient
 
-        from hotel_cancellation import schema
-        from hotel_cancellation.api.main import create_app
+        from hotel_cancellation.data import schema
+        from hotel_cancellation.serving.api.main import create_app
 
         with TestClient(create_app()) as client:
             booking = dict(schema.EXAMPLE_BOOKING)

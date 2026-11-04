@@ -18,8 +18,9 @@ from typing import Any
 import httpx
 import pandas as pd
 
-from hotel_cancellation import config, data_loader, schema
-from hotel_cancellation.api.schemas import MAX_BATCH_SIZE
+from hotel_cancellation import config
+from hotel_cancellation.data import data_loader, schema
+from hotel_cancellation.serving.api.schemas import MAX_BATCH_SIZE
 
 _STORED_COLUMN = "champion"
 _TOLERANCE = 1e-12
@@ -110,7 +111,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-url", default="http://127.0.0.1:8000")
     parser.add_argument("--rows", type=int, default=2000)
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--seed", type=int, default=config.DEFAULT_SEED)
     options = parser.parse_args(arguments)
     with httpx.Client(
         base_url=options.api_url, timeout=_TIMEOUT_SECONDS, trust_env=False

@@ -8,7 +8,8 @@ from sklearn.metrics import roc_auc_score
 pytest.importorskip("xgboost")
 
 from experiments.review import feature_tiers, harness
-from hotel_cancellation import config, schema
+from hotel_cancellation import config
+from hotel_cancellation.data import schema
 
 
 def test_monthly_windows_cover_2016_without_reaching_the_test() -> None:

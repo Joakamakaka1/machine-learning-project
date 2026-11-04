@@ -34,7 +34,7 @@ uv run mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5001
 uv run hotel-ml --help
 ```
 
-Explica los comandos en orden: `tune`, `train`, `evaluate`, y que solo `evaluate` mide el test. Enseña [`schema.py`](../src/hotel_cancellation/schema.py), con las 19 variables y las 12 prohibidas.
+Explica los comandos en orden: `tune`, `train`, `evaluate`, y que solo `evaluate` mide el test. Enseña [`schema.py`](../src/hotel_cancellation/data/schema.py), con las 19 variables y las 12 prohibidas.
 
 ### 2. El flujo completo, sin tocar nada (3 min)
 

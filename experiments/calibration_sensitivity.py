@@ -16,7 +16,10 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.frozen import FrozenEstimator
 
 from experiments import common
-from hotel_cancellation import config, data_loader, evaluator, model_trainer, models, schema
+from hotel_cancellation import config, models
+from hotel_cancellation.data import data_loader, schema
+from hotel_cancellation.evaluation import evaluator
+from hotel_cancellation.training import model_trainer
 
 
 def sensitivity(
@@ -75,7 +78,7 @@ def main() -> None:
     search = json.loads(settings.best_params_path.read_text("utf-8"))["models"]
     calibration = json.loads((settings.validation_dir / "calibration.json").read_text("utf-8"))
     table = sensitivity(
-        common.load_development(),
+        data_loader.load_development(),
         models.model_catalog("full"),
         {name: record["params"] for name, record in search.items()},
         {name: record["method"] for name, record in calibration.items()},

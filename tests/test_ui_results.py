@@ -3,11 +3,11 @@
 import pandas as pd
 import pytest
 
-from hotel_cancellation import evaluator
+from hotel_cancellation.evaluation import evaluator
 
 pytest.importorskip("streamlit")
 
-from hotel_cancellation.ui import results
+from hotel_cancellation.serving.ui import results
 
 SERVED = evaluator.DEFAULT_COST_SCENARIO
 

@@ -20,7 +20,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
-from hotel_cancellation import features
+from hotel_cancellation.data import features
 
 ProfileName = Literal["full", "fast"]
 
@@ -335,3 +335,8 @@ def model_catalog(profile: ProfileName = "full") -> tuple[ModelSpec, ...]:
         The specifications, without the baseline.
     """
     return _full_catalog() if profile == "full" else _fast_catalog()
+
+
+def specs_by_name(profile: ProfileName = "full") -> dict[str, ModelSpec]:
+    """Index the baseline and the models of a profile by their name."""
+    return {spec.name: spec for spec in (BASELINE, *model_catalog(profile))}

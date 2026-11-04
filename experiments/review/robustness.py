@@ -14,7 +14,7 @@ from sklearn.model_selection import StratifiedGroupKFold
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import data_loader, features, schema
+from hotel_cancellation.data import data_loader, features, schema
 
 _FRACTIONS = (0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0)
 _RF_SEED_PARAM = "model__random_state"

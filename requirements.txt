@@ -75,6 +75,8 @@ cffi==2.1.1
     #   argon2-cffi-bindings
     #   cryptography
     #   pyzmq
+cfgv==3.5.0
+    # via pre-commit
 charset-normalizer==3.5.2
     # via requests
 click==8.5.0
@@ -117,6 +119,8 @@ defusedxml==0.7.1
     # via
     #   nbconvert
     #   py-serializable
+distlib==0.4.4
+    # via virtualenv
 docker==7.2.0
     # via mlflow
 executing==2.3.0
@@ -128,7 +132,10 @@ fastapi==0.162.0
 fastjsonschema==2.22.3
     # via nbformat
 filelock==4.2.7
-    # via cachecontrol
+    # via
+    #   cachecontrol
+    #   python-discovery
+    #   virtualenv
 flask==3.1.3
     # via
     #   flask-cors
@@ -185,6 +192,8 @@ httpx==0.28.1
     #   jupyterlab
 huey==3.5.4
     # via mlflow
+identify==2.6.20
+    # via pre-commit
 idna==3.20
     # via
     #   anyio
@@ -350,6 +359,8 @@ nbformat==5.11.1
     #   nbconvert
 nest-asyncio2==1.7.4
     # via ipykernel
+nodeenv==1.12.0
+    # via pre-commit
 notebook-shim==0.2.4
     # via jupyterlab
 numpy==2.5.4
@@ -418,6 +429,7 @@ packaging==26.3
     #   skops
     #   streamlit
     #   tensorflow
+    #   virtualenv
     #   wheel
 pandas==3.1.0
     # via
@@ -451,6 +463,7 @@ platformdirs==4.14.3
     # via
     #   jupyter-core
     #   pip-audit
+    #   virtualenv
 plotly==7.1.0
     # via hotel-cancellation
 pluggy==1.7.0
@@ -458,6 +471,8 @@ pluggy==1.7.0
     #   pytest
     #   pytest-cov
 poethepoet==0.49.0
+    # via hotel-cancellation
+pre-commit==4.7.0
     # via hotel-cancellation
 prettytable==3.18.0
     # via skops
@@ -533,6 +548,8 @@ python-dateutil==4.0.0
     #   jupyter-client
     #   matplotlib
     #   pandas
+python-discovery==1.9.4
+    # via virtualenv
 python-dotenv==1.2.4
     # via
     #   mlflow-skinny
@@ -554,6 +571,7 @@ pyyaml==6.0.3
     #   jupyter-events
     #   mlflow-skinny
     #   poethepoet
+    #   pre-commit
     #   uvicorn
 pyzmq==27.2.0
     # via
@@ -743,6 +761,8 @@ uvicorn==0.54.0
     #   streamlit
 uvloop==0.23.0 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
     # via uvicorn
+virtualenv==21.15.5
+    # via pre-commit
 waitress==3.0.2 ; sys_platform == 'win32'
     # via mlflow
 watchdog==6.0.0 ; sys_platform != 'darwin'

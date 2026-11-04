@@ -7,7 +7,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from hotel_cancellation import champion, cli, config, data_loader, evaluator, models, pipeline
+from hotel_cancellation import champion, cli, config, models
+from hotel_cancellation.data import data_loader
+from hotel_cancellation.evaluation import evaluator
+from hotel_cancellation.training import pipeline
 from tests.conftest import synthetic_raw
 
 
@@ -133,7 +136,7 @@ def test_training_and_selection_do_not_read_rows_of_2017(tmp_path: Path) -> None
         folder.mkdir()
         path = folder / "bookings.csv.gz"
         digest = _gzip_csv(frame, path)
-        development = pipeline.load_development(path, expected_sha256=digest)
+        development = data_loader.load_development(path, expected_sha256=digest)
         settings = config.Settings(
             data_dir=folder / "data", models_dir=folder / "models", outputs_dir=folder / "outputs"
         )
@@ -157,7 +160,7 @@ def test_training_and_selection_do_not_read_rows_of_2017(tmp_path: Path) -> None
 def test_load_development_excludes_the_test_period(tmp_path: Path) -> None:
     path = tmp_path / "bookings.csv.gz"
     digest = _gzip_csv(synthetic_raw(rows_per_month=10), path)
-    development = pipeline.load_development(path, expected_sha256=digest)
+    development = data_loader.load_development(path, expected_sha256=digest)
     assert development["arrival_date"].max() < config.TEST_START
     assert development["arrival_date"].is_monotonic_increasing
 
@@ -169,7 +172,7 @@ class TestCli:
     ) -> config.Settings:
         monkeypatch.setattr(config, "get_settings", lambda: settings)
         frame = data_loader.split_temporal(data_loader.clean(synthetic_raw())).development
-        monkeypatch.setattr(pipeline, "load_development", lambda: frame)
+        monkeypatch.setattr(data_loader, "load_development", lambda: frame)
         return settings
 
     def test_run_all_trains_a_champion(self, development: config.Settings) -> None:
@@ -199,7 +202,7 @@ def test_mlflow_tracks_the_run_and_points_the_alias_at_the_evaluated_artifact(
     settings: config.Settings, synthetic_development: pd.DataFrame
 ) -> None:
     mlflow = pytest.importorskip("mlflow")
-    tracking = pytest.importorskip("hotel_cancellation.tracking")
+    tracking = pytest.importorskip("hotel_cancellation.training.tracking")
     tracker = tracking.MlflowTracker(
         settings.mlflow_tracking_uri, settings.mlflow_artifacts_dir, experiment="tests"
     )

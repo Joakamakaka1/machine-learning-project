@@ -18,10 +18,9 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from experiments import common
-from hotel_cancellation import config, data_loader, schema
+from hotel_cancellation import config
+from hotel_cancellation.data import data_loader, schema
 
-OUTPUT_DIR = config.PROJECT_ROOT / "outputs" / "review"
 SEEDS: tuple[int, ...] = (42, 7, 123, 2024, 31337)
 MIN_GAIN = 0.002
 
@@ -77,7 +76,7 @@ M12: tuple[Window, ...] = _monthly()
 
 def load_rows() -> pd.DataFrame:
     """Load development rows with the derived columns that the analysis uses, never the models."""
-    rows = common.load_development()
+    rows = data_loader.load_development()
     if (rows[schema.ARRIVAL_DATE] >= config.TEST_START).any():
         raise ValueError("The review only accepts development rows.")
     return add_derived(rows)
@@ -225,6 +224,7 @@ def add_holm(
 
 
 def save(name: str, table: pd.DataFrame) -> None:
-    """Store a table in `outputs/review/`, rounded so that the diffs stay readable."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    table.round(5).to_csv(OUTPUT_DIR / f"{name}.csv", index=False, lineterminator="\n")
+    """Store a table in the folder of the review, rounded so that the diffs stay readable."""
+    folder = config.get_settings().review_dir
+    folder.mkdir(parents=True, exist_ok=True)
+    table.round(5).to_csv(folder / f"{name}.csv", index=False, lineterminator="\n")

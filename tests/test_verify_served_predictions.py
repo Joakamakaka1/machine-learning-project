@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from hotel_cancellation.api.main import create_app
+from hotel_cancellation.serving.api.main import create_app
 from scripts.verify_served_predictions import Comparison, compare
 
 

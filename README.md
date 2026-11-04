@@ -116,6 +116,12 @@ uv run poe check
 
 Ejecuta ruff, mypy y todos los tests, con una cobertura mínima del 80 %. Tarda unos minutos.
 
+Para que ruff y otras comprobaciones rápidas se ejecuten antes de cada commit, instala los hooks una vez:
+
+```bash
+uv run pre-commit install
+```
+
 ## Cómo se ejecuta
 
 ### La solución entera, con Docker
@@ -197,7 +203,7 @@ Los experimentos de diseño se ejecutan con `uv run python -m experiments.run_al
 
 ### Configuración
 
-No hace falta ninguna, y no hay secretos. Si quieres cambiar algo, usa estas variables de entorno o un archivo `.env`: `HOTEL_ML_DATA_DIR`, `HOTEL_ML_MODELS_DIR`, `HOTEL_ML_OUTPUTS_DIR`, `HOTEL_ML_API_URL`, `HOTEL_ML_MLFLOW_TRACKING_URI` y `HOTEL_ML_MLFLOW_ARTIFACTS_DIR`.
+No hace falta ninguna, y no hay secretos. Si quieres cambiar algo, usa estas variables de entorno o un archivo `.env`, partiendo de [`.env.example`](.env.example): `HOTEL_ML_DATA_DIR`, `HOTEL_ML_MODELS_DIR`, `HOTEL_ML_OUTPUTS_DIR`, `HOTEL_ML_API_URL`, `HOTEL_ML_MLFLOW_TRACKING_URI` y `HOTEL_ML_MLFLOW_ARTIFACTS_DIR`.
 
 ## Arquitectura
 
@@ -222,16 +228,25 @@ Solo `evaluate` mide el test; `explain` y `audit` leen sus filas después, para 
 
 ```text
 src/hotel_cancellation/    Paquete instalable
-  config.py  schema.py       Rutas y ventanas; fuente única de columnas
-  data_loader.py             Hash, contrato, limpieza y particiones
-  features.py  models.py     Preprocesado y catálogo de modelos
-  model_trainer.py           Búsqueda, regla 1-SE y calibración
-  evaluator.py               Métricas, costes, bootstrap y PSI
-  pipeline.py  cli.py        Orquestación y comandos
-  champion.py  tracking.py   Paquete del campeón y MLflow
-  explain.py  audit.py  plots.py  Importancia, auditoría y figuras
-  predictor.py  stored_evaluation.py  Inferencia y resultados guardados
-  api/  ui/                  FastAPI y Streamlit
+  config.py  cli.py          Rutas y ventanas; comandos
+  champion.py  models.py     Paquete del campeón; catálogo de modelos
+  data/
+    schema.py                Fuente única de columnas
+    data_loader.py           Hash, contrato, limpieza y particiones
+    features.py              Preprocesado
+  training/
+    pipeline.py              Búsqueda, entrenamiento y registro de modelos
+    model_trainer.py         Búsqueda, regla 1-SE y calibración
+    tracking.py              MLflow
+  evaluation/
+    evaluator.py             Métricas, costes, bootstrap y PSI
+    final_evaluation.py      Ejecución única del test y su ensayo
+    stored_evaluation.py     Resultados guardados
+    explain.py  audit.py  plots.py  Importancia, auditoría y figuras
+    notebook_helpers.py      Formato de los textos de los notebooks
+  serving/
+    predictor.py             Inferencia
+    api/  ui/                FastAPI y Streamlit
 experiments/               Una decisión de diseño por experimento
   review/                    Segunda revisión de datos y validación
 scripts/                   Paridad entre la API y las predicciones guardadas
@@ -245,6 +260,8 @@ Dockerfile  compose.yaml   Imágenes de API e interfaz, y MLflow
 pyproject.toml  uv.lock  requirements.txt  Dependencias
 ```
 
+El [ADR 0008](docs/adr/0008-estructura-del-proyecto.md) explica por qué `models.py` sigue en la raíz del paquete, y qué partes de la plantilla habitual se dejaron fuera.
+
 ## Dónde se cumple cada requisito
 
 | Requisito del enunciado | Dónde |
@@ -253,11 +270,11 @@ pyproject.toml  uv.lock  requirements.txt  Dependencias
 | 5 modelos: logística, árbol, Random Forest, boosting y red de Keras | [`models.py`](src/hotel_cancellation/models.py) |
 | Métrica principal justificada | [Protocolo](docs/protocolo.md); [informe](docs/informe_final.md), Diseño |
 | Matriz de confusión y curva ROC | [`matrices_confusion_modelos.png`](outputs/figures/matrices_confusion_modelos.png), [`roc.png`](outputs/figures/roc.png) |
-| Pipeline: carga, preprocesado, entrenamiento, evaluación y selección | [`pipeline.py`](src/hotel_cancellation/pipeline.py), `hotel-ml run-all` y `evaluate` |
+| Pipeline: carga, preprocesado, entrenamiento, evaluación y selección | [`pipeline.py`](src/hotel_cancellation/training/pipeline.py), [`final_evaluation.py`](src/hotel_cancellation/evaluation/final_evaluation.py), `hotel-ml run-all` y `evaluate` |
 | Tabla comparativa de modelos | Este README; [informe](docs/informe_final.md), Resultados |
 | Curvas comparativas e importancia de variables | [`outputs/figures/`](outputs/figures/) |
 | EDA que motiva las decisiones | [`01_eda.ipynb`](notebooks/01_eda.ipynb); [informe](docs/informe_final.md), Análisis exploratorio |
-| Módulos separados, funciones y clases reutilizables, Pipeline de scikit-learn | [`src/hotel_cancellation/`](src/hotel_cancellation/), [`features.py`](src/hotel_cancellation/features.py) |
+| Módulos separados, funciones y clases reutilizables, Pipeline de scikit-learn | [`src/hotel_cancellation/`](src/hotel_cancellation/), [`features.py`](src/hotel_cancellation/data/features.py) |
 | PEP 8, docstrings y organización | `uv run poe check` (ruff y mypy); Estructura, arriba |
 | `.gitignore` y `requirements.txt` con versiones | [`.gitignore`](.gitignore), [`requirements.txt`](requirements.txt) |
 | README: autores, problema, entorno y ejecución, resultados | Este README |
@@ -266,13 +283,13 @@ pyproject.toml  uv.lock  requirements.txt  Dependencias
 
 | Bonus del enunciado | Dónde | Cómo se usa |
 |---|---|---|
-| API con FastAPI | [`api/`](src/hotel_cancellation/api/) | `/predict`, `/predict/batch` y `/evaluate`, sin `/train` ([ADR 0006](docs/adr/0006-sin-endpoint-train.md)) |
+| API con FastAPI | [`api/`](src/hotel_cancellation/serving/api/) | `/predict`, `/predict/batch` y `/evaluate`, sin `/train` ([ADR 0006](docs/adr/0006-sin-endpoint-train.md)) |
 | Embeddings personalizados | [`experiments/embeddings.py`](experiments/embeddings.py) | MLP con embeddings categóricos: solo como experimento, porque aporta +0.0010 |
-| Optimización de hiperparámetros | [`model_trainer.py`](src/hotel_cancellation/model_trainer.py) | `RandomizedSearchCV` con ventanas temporales; `hotel-ml tune` |
-| Registro de experimentos | [`tracking.py`](src/hotel_cancellation/tracking.py) | MLflow con runs anidados, firma y alias `@champion` sobre el modelo evaluado |
+| Optimización de hiperparámetros | [`model_trainer.py`](src/hotel_cancellation/training/model_trainer.py) | `RandomizedSearchCV` con ventanas temporales; `hotel-ml tune` |
+| Registro de experimentos | [`tracking.py`](src/hotel_cancellation/training/tracking.py) | MLflow con runs anidados, firma y alias `@champion` sobre el modelo evaluado |
 | Balanceo de clases | [`experiments/balancing.py`](experiments/balancing.py) | SMOTE, undersampling y pesos de clase: medidos, y sin mejora; el campeón no los usa |
-| Interpretabilidad | [`explain.py`](src/hotel_cancellation/explain.py) | `feature_importances_`, permutación y SHAP; `hotel-ml explain` |
-| Interfaz visual | [`ui/`](src/hotel_cancellation/ui/) | Streamlit, que consume la API |
+| Interpretabilidad | [`explain.py`](src/hotel_cancellation/evaluation/explain.py) | `feature_importances_`, permutación y SHAP; `hotel-ml explain` |
+| Interfaz visual | [`ui/`](src/hotel_cancellation/serving/ui/) | Streamlit, que consume la API |
 
 **Autoría:** el enunciado pide parejas. Este proyecto tiene un autor único, con todos los roles, como recoge el [informe](docs/informe_final.md).
 

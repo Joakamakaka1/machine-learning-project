@@ -21,6 +21,8 @@ RAW_DATASET_SHA256 = "d10cdeb07de9309007f528d6499a2c0467ae7a6b287b80ffd759e11e61
 
 ADR_UPPER_LIMIT = 5400.0
 
+DEFAULT_SEED = 42
+
 
 class Settings(BaseSettings):
     """Filesystem locations, which `HOTEL_ML_*` environment variables can override."""
@@ -75,6 +77,11 @@ class Settings(BaseSettings):
         return self.outputs_dir / "audit"
 
     @property
+    def review_dir(self) -> Path:
+        """Tables of the second review of data and validation."""
+        return self.outputs_dir / "review"
+
+    @property
     def business_dir(self) -> Path:
         """Value of the champion under the assumed costs."""
         return self.outputs_dir / "business"
@@ -108,6 +115,11 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Read the settings from the environment."""
     return Settings()
+
+
+def same_path(first: Path, second: Path) -> bool:
+    """Tell whether two paths lead to the same place."""
+    return first.resolve() == second.resolve()
 
 
 @dataclass(frozen=True)

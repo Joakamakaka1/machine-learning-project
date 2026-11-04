@@ -1,6 +1,6 @@
 """Tests of the single source of truth for columns and allowed values."""
 
-from hotel_cancellation import schema
+from hotel_cancellation.data import schema
 
 EXPECTED_NUMERIC = (
     "lead_time",

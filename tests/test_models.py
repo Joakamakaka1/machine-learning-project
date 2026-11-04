@@ -11,7 +11,8 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.frozen import FrozenEstimator
 from sklearn.metrics import roc_auc_score
 
-from hotel_cancellation import data_loader, features, models, schema
+from hotel_cancellation import models
+from hotel_cancellation.data import data_loader, features, schema
 
 
 @pytest.fixture

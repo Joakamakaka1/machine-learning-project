@@ -15,7 +15,7 @@ from numpy.typing import NDArray
 
 from experiments import common
 from experiments.review import data_treatments, feature_tiers, harness
-from hotel_cancellation import data_loader, features, schema
+from hotel_cancellation.data import data_loader, features, schema
 
 CORE_5: tuple[str, ...] = (
     "lead_time",

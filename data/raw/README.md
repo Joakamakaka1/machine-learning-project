@@ -22,7 +22,7 @@ Licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), que exige ci
 
 ## Variables
 
-Qué variables entran al modelo y por qué se indica en [`schema.py`](../../src/hotel_cancellation/schema.py) y en la [data card](../../docs/data_card.md).
+Qué variables entran al modelo y por qué se indica en [`schema.py`](../../src/hotel_cancellation/data/schema.py) y en la [data card](../../docs/data_card.md).
 
 | Nombre Variable                  | Descripción                                              |
 | -------------------------------- | -------------------------------------------------------- |

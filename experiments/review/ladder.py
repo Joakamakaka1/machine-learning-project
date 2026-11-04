@@ -17,7 +17,7 @@ from sklearn.preprocessing import OneHotEncoder, SplineTransformer, StandardScal
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import data_loader, features, schema
+from hotel_cancellation.data import data_loader, features, schema
 
 
 def prior(train: pd.DataFrame, valid: pd.DataFrame) -> NDArray[np.float64]:

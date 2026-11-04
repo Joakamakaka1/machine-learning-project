@@ -8,7 +8,8 @@ import pytest
 from xgboost import XGBClassifier
 
 from experiments import calibration_sensitivity, common, decisions, encodings
-from hotel_cancellation import config, data_loader, models
+from hotel_cancellation import config, models
+from hotel_cancellation.data import data_loader
 from tests.conftest import synthetic_raw
 
 

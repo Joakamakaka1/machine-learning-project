@@ -46,6 +46,7 @@ def test_default_paths_point_to_the_repository(
     assert settings.models_dir == root / "models"
     assert settings.outputs_dir == root / "outputs"
     assert settings.experiments_dir == root / "outputs" / "experiments"
+    assert settings.review_dir == root / "outputs" / "review"
 
 
 def test_test_period_is_january_to_august_2017() -> None:

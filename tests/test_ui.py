@@ -8,15 +8,16 @@ from typing import Any
 import httpx
 import pytest
 
-from hotel_cancellation import config, schema
-from hotel_cancellation.api.schemas import Booking
+from hotel_cancellation import config
+from hotel_cancellation.data import schema
+from hotel_cancellation.serving.api.schemas import Booking
 
 pytest.importorskip("streamlit")
 
 from streamlit.testing.v1 import AppTest
 
-from hotel_cancellation import ui
-from hotel_cancellation.ui import booking, client
+from hotel_cancellation.serving import ui
+from hotel_cancellation.serving.ui import booking, client
 
 pytestmark = pytest.mark.slow
 

@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from experiments import feature_availability
-from hotel_cancellation import schema
+from hotel_cancellation.data import schema
 
 ROWS = 4000
 

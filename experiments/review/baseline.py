@@ -18,8 +18,10 @@ import pandas as pd
 from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_score
 
 from experiments import common
-from experiments.review import harness
-from hotel_cancellation import config, data_loader, evaluator, model_trainer, models, schema
+from hotel_cancellation import config, models
+from hotel_cancellation.data import data_loader, schema
+from hotel_cancellation.evaluation import evaluator
+from hotel_cancellation.training import model_trainer
 
 _TOLERANCE = 1e-5
 
@@ -110,19 +112,21 @@ def served_model(development: pd.DataFrame, manifest: dict[str, Any]) -> dict[st
 def main() -> None:
     """Write the reproduction of the baseline to `outputs/review/`."""
     settings = config.get_settings()
-    harness.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    settings.review_dir.mkdir(parents=True, exist_ok=True)
     manifest = json.loads((settings.champion_dir / "manifest.json").read_text("utf-8"))
     model_path = settings.champion_dir / manifest["model"]["file"]
     actual_hash = hashlib.sha256(model_path.read_bytes()).hexdigest()
-    development = common.load_development()
+    development = data_loader.load_development()
 
     test_figures = stored_test_figures(settings.final_evaluation_dir)
     test_figures.to_csv(
-        harness.OUTPUT_DIR / "baseline_test_figures.csv", index=False, lineterminator="\n"
+        settings.review_dir / "baseline_test_figures.csv",
+        index=False,
+        lineterminator="\n",
     )
     windows = validation_windows(development, manifest["model"]["params"])
     windows.round(6).to_csv(
-        harness.OUTPUT_DIR / "baseline_windows.csv", index=False, lineterminator="\n"
+        settings.review_dir / "baseline_windows.csv", index=False, lineterminator="\n"
     )
     served = served_model(development, manifest)
 
@@ -135,7 +139,7 @@ def main() -> None:
         ),
         "served_model": served,
     }
-    (harness.OUTPUT_DIR / "baseline.json").write_text(
+    (settings.review_dir / "baseline.json").write_text(
         json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n"
     )
     print(test_figures.round(6).to_string(index=False))

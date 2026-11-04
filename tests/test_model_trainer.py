@@ -7,7 +7,9 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.frozen import FrozenEstimator
 from sklearn.metrics import brier_score_loss, roc_auc_score
 
-from hotel_cancellation import config, data_loader, features, model_trainer, models, schema
+from hotel_cancellation import config, models
+from hotel_cancellation.data import data_loader, features, schema
+from hotel_cancellation.training import model_trainer
 from tests.conftest import synthetic_raw
 
 
@@ -219,7 +221,7 @@ class TestSpecialRequestsScenario:
         cut = config.CHAMPION_CUT
         scenario = trainer.fit_special_requests_scenario(spec, {"model__C": 1.0}, "sigmoid")
 
-        frame = model_trainer.scenario_frame(synthetic_development)
+        frame = data_loader.scenario_frame(synthetic_development)
         assert list(frame.columns) == [*schema.INPUT_FEATURES, schema.SPECIAL_REQUESTS]
         dates = synthetic_development[schema.ARRIVAL_DATE]
         target = synthetic_development[schema.TARGET]

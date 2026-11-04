@@ -19,7 +19,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, TargetEncoder
 
 from experiments import common
-from hotel_cancellation import data_loader, features, schema
+from hotel_cancellation.data import data_loader, features, schema
 
 HIGH_CARDINALITY = ("agent",)
 _INNER_FOLDS = 5

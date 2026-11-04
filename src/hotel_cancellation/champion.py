@@ -15,14 +15,16 @@ from typing import Any
 import joblib
 import numpy as np
 
-from hotel_cancellation import config, evaluator, features, schema
+from hotel_cancellation import config
+from hotel_cancellation.data import features, schema
+from hotel_cancellation.evaluation import evaluator
 
 MODEL_FILE = "model.joblib"
 MANIFEST_FILE = "manifest.json"
 
 _VERSIONED_LIBRARIES = ("scikit-learn", "xgboost", "pandas", "numpy", "joblib")
 _CODE_PATHS = ("src", "pyproject.toml", "uv.lock")
-_COMPRESSION_LEVEL = 3
+COMPRESSION_LEVEL = 3
 _GIT = "git"
 
 
@@ -34,6 +36,16 @@ class TestNotExecutedError(RuntimeError):
     """Rows of the test period can only be read for interpreting after the single execution."""
 
     __test__ = False
+
+
+class TestAlreadyEvaluatedError(RuntimeError):
+    """The test was already executed, and it is executed only once."""
+
+    __test__ = False
+
+
+class EvaluationNotReadyError(RuntimeError):
+    """The models or the environment are not the ones the single execution demands."""
 
 
 def assert_test_executed(settings: config.Settings) -> None:
@@ -194,7 +206,7 @@ def save_champion(
     features.assert_no_forbidden_inputs(model)
     folder.mkdir(parents=True, exist_ok=True)
     model_path = folder / MODEL_FILE
-    joblib.dump(model, model_path, compress=_COMPRESSION_LEVEL)
+    joblib.dump(model, model_path, compress=COMPRESSION_LEVEL)
     content = model_path.read_bytes()
     manifest = {
         "created_at": datetime.now(tz=UTC).isoformat(timespec="seconds"),
@@ -239,7 +251,7 @@ def load_champion(folder: Path) -> LoadedChampion:
     Raises:
         ChampionIntegrityError: If the file changed or a library is on another version.
     """
-    manifest = json.loads((folder / MANIFEST_FILE).read_text("utf-8"))
+    manifest = read_json(folder / MANIFEST_FILE)
     model_path = folder / MODEL_FILE
     actual = hashlib.sha256(model_path.read_bytes()).hexdigest()
     if actual != manifest["model"]["sha256"]:

@@ -11,7 +11,10 @@ import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 
-from hotel_cancellation import champion, config, evaluator, model_trainer, pipeline, tracking
+from hotel_cancellation import champion, config
+from hotel_cancellation.data import data_loader
+from hotel_cancellation.evaluation import evaluator, final_evaluation
+from hotel_cancellation.training import pipeline, tracking
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
     ):
         command = commands.add_parser(name, help=description, description=description)
         command.add_argument("--profile", choices=("full", "fast"), default="full")
-        command.add_argument("--seed", type=int, default=model_trainer.DEFAULT_SEED)
+        command.add_argument("--seed", type=int, default=config.DEFAULT_SEED)
         command.add_argument(
             "--no-tracking", action="store_true", help="No registra nada en MLflow."
         )
@@ -73,33 +76,33 @@ def build_parser() -> argparse.ArgumentParser:
 def _explain(settings: config.Settings) -> None:
     # The check comes first, because the rows of the test must not be read if it fails.
     champion.assert_test_executed(settings)
-    from hotel_cancellation import explain
+    from hotel_cancellation.evaluation import explain
 
-    explain.explain(pipeline.load_test(), settings=settings)
+    explain.explain(data_loader.load_test(), settings=settings)
     logger.info("Importance in %s", settings.interpretation_dir)
 
 
 def _audit(settings: config.Settings) -> None:
     champion.assert_test_executed(settings)
-    from hotel_cancellation import audit
+    from hotel_cancellation.evaluation import audit
 
-    audit.audit_inflation(pipeline.load_cleaned(), settings=settings)
+    audit.audit_inflation(data_loader.load_cleaned(), settings=settings)
     logger.info("Audit in %s", settings.audit_dir)
 
 
 def _figures(settings: config.Settings) -> None:
     champion.assert_test_executed(settings)
-    from hotel_cancellation import plots
+    from hotel_cancellation.evaluation import plots
 
     logger.info("Figures: %s", [path.name for path in plots.save_all(settings)])
 
 
 def _evaluate(arguments: argparse.Namespace, settings: config.Settings) -> None:
     # The checks come first, because the rows of the test must not be read if they fail.
-    pipeline.prepare_evaluation(settings, force=arguments.force)
-    pipeline.evaluate(
-        pipeline.load_test(),
-        pipeline.load_development(),
+    final_evaluation.prepare_evaluation(settings, force=arguments.force)
+    final_evaluation.evaluate(
+        data_loader.load_test(),
+        data_loader.load_development(),
         settings=settings,
         replicates=arguments.replicates,
         force=arguments.force,
@@ -109,7 +112,7 @@ def _evaluate(arguments: argparse.Namespace, settings: config.Settings) -> None:
 
 def _rehearse(arguments: argparse.Namespace, settings: config.Settings) -> None:
     output = arguments.output or Path(tempfile.mkdtemp(prefix="hotel-ml-rehearsal-"))
-    folder = pipeline.rehearse(
+    folder = final_evaluation.rehearse(
         settings=settings,
         window=arguments.window,
         output_dir=output,
@@ -124,7 +127,7 @@ def _train(arguments: argparse.Namespace, settings: config.Settings) -> None:
         if arguments.no_tracking
         else tracking.MlflowTracker(settings.mlflow_tracking_uri, settings.mlflow_artifacts_dir)
     )
-    development = pipeline.load_development()
+    development = data_loader.load_development()
     common = {
         "settings": settings,
         "profile": arguments.profile,
@@ -153,7 +156,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             _rehearse(arguments, settings)
         elif arguments.command == "train-scenario":
             pipeline.train_scenario(
-                pipeline.load_development(), settings=settings, force=arguments.force
+                data_loader.load_development(), settings=settings, force=arguments.force
             )
         elif arguments.command == "explain":
             _explain(settings)
@@ -164,8 +167,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             _train(arguments, settings)
     except (
-        pipeline.TestAlreadyEvaluatedError,
-        pipeline.EvaluationNotReadyError,
+        champion.TestAlreadyEvaluatedError,
+        champion.EvaluationNotReadyError,
         champion.ChampionIntegrityError,
         champion.TestNotExecutedError,
     ) as error:

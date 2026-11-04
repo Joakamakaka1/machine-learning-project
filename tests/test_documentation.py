@@ -28,9 +28,13 @@ DOCUMENTS = (
     DEFENSE,
     REVIEW_REPORT,
     ROOT / "docs" / "revision_protocolo.md",
+    ROOT / "docs" / "protocolo.md",
+    ROOT / "docs" / "enunciado.md",
+    ROOT / "data" / "raw" / "README.md",
     ROOT / "docs" / "glosario.md",
     ROOT / "CLAUDE.md",
     *sorted((ROOT / "docs" / "adr").glob("*.md")),
+    *sorted((ROOT / "notebooks").glob("*.ipynb")),
 )
 
 CHAMPION = "random_forest"
@@ -194,7 +198,7 @@ def test_the_figures_after_the_deployment_come_from_the_review(path: Path) -> No
 
 def test_the_interface_states_the_figure_after_the_deployment() -> None:
     booked = _row(_table(REVIEW / "posthoc_by_booking_date.csv"), subset="booked_from_2017_01_01")
-    overview = ROOT / "src" / "hotel_cancellation" / "ui" / "views" / "overview.py"
+    overview = ROOT / "src" / "hotel_cancellation" / "serving" / "ui" / "views" / "overview.py"
     assert _states(_read(overview), booked["roc_auc"])
 
 

@@ -51,7 +51,7 @@ Una cancelación tardía deja una habitación vacía que ya no se puede vender. 
 
 ![Cancelación por tipo de depósito](../outputs/figures/eda_deposito.png)
 
-**Algunas variables no se conocen al confirmar.** Ninguna reserva con plaza de parking se cancela, porque la plaza se pide al llegar. `reservation_status` repite el objetivo. Antonio, de Almeida y Nunes (2019), en su artículo de *Data Science Journal*, documentan la fuga de `country`: el sistema rellena Portugal por defecto, y el país real solo se confirma en el check-in. Las 12 variables prohibidas están en [`schema.py`](../src/hotel_cancellation/schema.py) con su motivo, y un test falla si alguna llega al modelo.
+**Algunas variables no se conocen al confirmar.** Ninguna reserva con plaza de parking se cancela, porque la plaza se pide al llegar. `reservation_status` repite el objetivo. Antonio, de Almeida y Nunes (2019), en su artículo de *Data Science Journal*, documentan la fuga de `country`: el sistema rellena Portugal por defecto, y el país real solo se confirma en el check-in. Las 12 variables prohibidas están en [`schema.py`](../src/hotel_cancellation/data/schema.py) con su motivo, y un test falla si alguna llega al modelo.
 
 **`total_of_special_requests` se acumula.** Una reserva cancelada deja de cambiar al cancelarse, de modo que una variable que se acumula debe crecer con la parte de vida transcurrida. En Online TA, las canceladas tienen alguna petición en el 24.0 % de los casos en el primer tramo de vida y en el 58.5 % en el último, mucho más que `booking_changes`, el control positivo. Supera al control en seis de las ocho cohortes, no en todas, y por eso se excluye por cautela y se publica también un escenario con ella.
 
@@ -88,16 +88,16 @@ outputs/ ─ figuras, informe y notebooks ◄───────────�
 
 | Módulo | Responsabilidad |
 |---|---|
-| `config.py`, `schema.py` | Rutas, fechas y ventanas; fuente única de columnas y valores permitidos |
-| `data_loader.py` | Hash, contrato, limpieza, tipos y particiones |
-| `features.py`, `models.py` | Preprocesado por familia, catálogo de modelos y adaptador de Keras |
-| `model_trainer.py` | Búsqueda, regla 1-SE, calibración y entrenamiento final |
-| `evaluator.py` | Métricas, costes, bootstrap por bloques y PSI |
-| `pipeline.py`, `cli.py` | Orquestación y comandos `hotel-ml` |
-| `champion.py`, `tracking.py` | Paquete del campeón con manifest, y registro en MLflow |
-| `explain.py`, `audit.py`, `plots.py` | Importancia, auditoría de inflación y figuras |
-| `predictor.py`, `stored_evaluation.py` | Inferencia y lectura de los resultados guardados |
-| `api/`, `ui/` | FastAPI y Streamlit |
+| `config.py`, `cli.py` | Rutas, fechas y ventanas; comandos `hotel-ml` |
+| `champion.py`, `models.py` | Paquete del campeón con manifest; catálogo de modelos y adaptador de Keras |
+| `data/schema.py`, `data/data_loader.py` | Fuente única de columnas y valores permitidos; hash, contrato, limpieza, tipos y particiones |
+| `data/features.py` | Preprocesado por familia |
+| `training/pipeline.py`, `training/tracking.py` | Orquestación del entrenamiento y registro en MLflow |
+| `training/model_trainer.py` | Búsqueda, regla 1-SE, calibración y entrenamiento final |
+| `evaluation/evaluator.py` | Métricas, costes, bootstrap por bloques y PSI |
+| `evaluation/final_evaluation.py`, `evaluation/stored_evaluation.py` | Ejecución única del test y su ensayo; lectura de los resultados guardados |
+| `evaluation/explain.py`, `evaluation/audit.py`, `evaluation/plots.py` | Importancia, auditoría de inflación y figuras |
+| `serving/predictor.py`, `serving/api/`, `serving/ui/` | Inferencia, FastAPI y Streamlit |
 
 ### Datos y variables
 

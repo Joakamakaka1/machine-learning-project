@@ -12,7 +12,7 @@ from sklearn.metrics import brier_score_loss
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import data_loader, schema
+from hotel_cancellation.data import data_loader, schema
 
 _MIN_ROWS = 100
 

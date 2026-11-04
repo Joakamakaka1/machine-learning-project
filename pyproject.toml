@@ -45,6 +45,7 @@ dev = [
     "pandas-stubs>=2.2",
     "pip-audit>=2.7",
     "poethepoet>=0.31",
+    "pre-commit>=4.0",
     "pytest>=8.3",
     "pytest-cov>=6.0",
     "ruff>=0.8",
@@ -148,7 +149,7 @@ markers = [
 [tool.coverage.run]
 branch = true
 source = ["hotel_cancellation"]
-omit = ["*/hotel_cancellation/ui/*"]
+omit = ["*/hotel_cancellation/serving/ui/*"]
 
 [tool.poe]
 env = { PYTHONUTF8 = "1" }
@@ -165,8 +166,8 @@ requirements = { cmd = "uv export --all-extras --no-hashes --format requirements
 _audit-export = { cmd = "uv export --all-extras --no-emit-project --no-hashes --format requirements-txt --output-file .audit-requirements.txt --quiet" }
 _audit-run = { cmd = "pip-audit --requirement .audit-requirements.txt --no-deps --disable-pip --progress-spinner off" }
 audit = { sequence = ["_audit-export", "_audit-run"], help = "Audit every locked dependency with pip-audit" }
-api = { cmd = "uvicorn hotel_cancellation.api.main:app --host 127.0.0.1 --port 8000", help = "Run the API on this machine" }
-ui = { cmd = "streamlit run src/hotel_cancellation/ui/app.py --server.address 127.0.0.1", help = "Run the interface on this machine" }
+api = { cmd = "uvicorn hotel_cancellation.serving.api.main:app --host 127.0.0.1 --port 8000", help = "Run the API on this machine" }
+ui = { cmd = "streamlit run src/hotel_cancellation/serving/ui/app.py --server.address 127.0.0.1", help = "Run the interface on this machine" }
 up = { cmd = "docker compose up --build --detach --wait", help = "Build and start the API, the interface and MLflow in Docker" }
 down = { cmd = "docker compose down", help = "Stop the containers and keep the MLflow volume" }
 notebooks = { cmd = "jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.record_timing=False notebooks/01_eda.ipynb notebooks/02_auditoria_fugas.ipynb notebooks/03_resultados.ipynb", help = "Execute the notebooks and keep their output" }

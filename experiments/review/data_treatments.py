@@ -13,7 +13,7 @@ from numpy.typing import NDArray
 
 from experiments import common
 from experiments.review import harness
-from hotel_cancellation import data_loader, features, schema
+from hotel_cancellation.data import data_loader, features, schema
 
 _CITY_START = pd.Timestamp("2015-09-01")
 _LOW_COVERAGE_MONTHS = ("2015-07", "2015-08", "2015-11", "2015-12", "2016-01")
