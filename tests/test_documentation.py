@@ -28,9 +28,13 @@ DOCUMENTS = (
     DEFENSE,
     REVIEW_REPORT,
     ROOT / "docs" / "revision_protocolo.md",
+    ROOT / "docs" / "protocolo.md",
+    ROOT / "docs" / "enunciado.md",
+    ROOT / "data" / "raw" / "README.md",
     ROOT / "docs" / "glosario.md",
     ROOT / "CLAUDE.md",
     *sorted((ROOT / "docs" / "adr").glob("*.md")),
+    *sorted((ROOT / "notebooks").glob("*.ipynb")),
 )
 
 CHAMPION = "random_forest"
