@@ -45,6 +45,7 @@ dev = [
     "pandas-stubs>=2.2",
     "pip-audit>=2.7",
     "poethepoet>=0.31",
+    "pre-commit>=4.0",
     "pytest>=8.3",
     "pytest-cov>=6.0",
     "ruff>=0.8",
